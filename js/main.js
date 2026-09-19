@@ -2837,7 +2837,7 @@
             <div style="font-size:48px;margin-bottom:16px;">🛠️</div>
             <h1 style="margin:0 0 12px;font-family:Cinzel,serif;">Realm Under Repair</h1>
             <p style="color:#b8c2d1;line-height:1.6;margin:0 0 24px;">This version is temporarily unavailable. Please use the official game link below.</p>
-            <a href="https://vicsanity623.github.io/Elden-Earth-WORLDBANNED/" style="display:inline-block;padding:13px 20px;border-radius:8px;background:#4fd6c4;color:#0e1522;font-weight:800;text-decoration:none;">Open Elden Earth</a>
+            <a href="https://vicsanity623.github.io/Elden-Earth-Pre-Release/" style="display:inline-block;padding:13px 20px;border-radius:8px;background:#4fd6c4;color:#0e1522;font-weight:800;text-decoration:none;">Open Elden Earth</a>
           </section>
         </main>`;
       return;
