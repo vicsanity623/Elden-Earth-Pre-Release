@@ -350,10 +350,6 @@ const Leaderboard = (() => {
 
           let finalLifetime = calculatePreciseLifetimeRent(doc.id, d, allPlots);
 
-          if ((doc.data().player?.name || "").toLowerCase().includes("cwood")) {
-            finalLifetime = Math.max(finalLifetime, 0.854236);
-          }
-
           if (target) {
             target.cash = d.cash || 0;
             target.lifetimeRent = finalLifetime;
@@ -384,9 +380,6 @@ const Leaderboard = (() => {
         plots: player.plots
       };
       player.lifetimeRent = calculatePreciseLifetimeRent(player.id, playerDoc, allPlots);
-      if ((playerDoc.player?.name || player.name || "").toLowerCase().includes("cwood")) {
-        player.lifetimeRent = Math.max(player.lifetimeRent, 0.854236);
-      }
     }
 
     const me = playerArray.find(p => p.id === state.player?.id);
@@ -579,11 +572,16 @@ const Leaderboard = (() => {
       const isSelf = oid === state.player?.id;
 
       if (isSelf) {
-        state.eb = (Number(state.eb) || 0) + p.amount;
-        state.totalDividends = (Number(state.totalDividends) || 0) + p.amount;
-        Store.save(true);
-        if (typeof showToast === "function") {
-          showToast(`👑 Royalty Payout! +${p.amount} EB (${p.titles.join(" + ")})!`);
+        // Drop into own mailbox and claim via server so save.eb stays authoritative
+        if (db) {
+          db.collection("dividends").add({
+            recipientId: oid,
+            amount: p.amount,
+            titleBadge: p.titles.join(" & "),
+            territory: territory.city,
+            claimed: false,
+            createdAt: Date.now()
+          }).then(() => claimPendingDividends()).catch(e => console.warn("[Dividends] Mailbox drop notice:", e));
         }
       } else if (db) {
         db.collection("dividends").add({
@@ -609,39 +607,28 @@ const Leaderboard = (() => {
   }
 
   // Automatically collects all royalties deposited into your mailbox while offline!
+  // Server-authoritative: save.eb is incremented by the claimMailbox callable so
+  // the displayed balance and the server balance never drift apart.
   async function claimPendingDividends() {
     const state = Store.get();
-    const db = Store.getDb();
     const myId = state?.player?.id;
-    if (!db || !myId) return;
+    if (!myId) return;
+    if (typeof ServerAntiCheat === "undefined" || !ServerAntiCheat.isReady()) return;
 
     try {
-      const snap = await db.collection("dividends")
-        .where("recipientId", "==", myId)
-        .where("claimed", "==", false)
-        .get();
+      const result = await ServerAntiCheat.claimMailbox();
+      if (!result || !result.claimed) return;
 
-      if (snap.empty) return;
+      if (typeof result.nextEb === "number") state.eb = result.nextEb;
+      if (typeof result.nextTotalDividends === "number") state.totalDividends = result.nextTotalDividends;
+      Store.save(true);
+      if (typeof updateTopbar === "function") updateTopbar();
 
-      let totalEarned = 0;
-      const batch = db.batch();
-
-      snap.forEach(doc => {
-        const d = doc.data();
-        totalEarned += (Number(d.amount) || 2);
-        batch.update(doc.ref, { claimed: true });
-      });
-
-      if (totalEarned > 0) {
-        state.eb = (Number(state.eb) || 0) + totalEarned;
-        state.totalDividends = (Number(state.totalDividends) || 0) + totalEarned;
-        Store.save(true);
-
-        await batch.commit();
-
-        const toastFn = window.showToast || alert;
-        toastFn(`👑 Royal Payout! You collected +${totalEarned} EB in territory royalties while away!`, 5000);
-      }
+      const toastFn = window.showToast || alert;
+      const parts = [];
+      if (result.dividendsEb > 0) parts.push(`+${result.dividendsEb} EB royalties`);
+      if (result.giftsEb > 0) parts.push(`+${result.giftsEb} EB friend gifts`);
+      toastFn(`👑 Royal Payout! You collected ${parts.join(" and ")}!`, 5000);
     } catch (e) {
       console.warn("[Dividends] Auto-claim notice:", e);
     }

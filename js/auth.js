@@ -23,9 +23,10 @@ const Auth = (() => {
       console.warn("[Auth] Access control server unreachable, using fallback check:", e.message);
     }
 
-    // Fallback: if server is down, block everyone (fail-closed)
-    console.warn("[Auth] No server response — blocking access (fail-closed)");
-    return false;
+    // Fallback: if the gate server is down, fail OPEN — the game is public and
+    // banned emails are still blocked by the Firestore banned_users check above.
+    console.warn("[Auth] No server response — allowing access (bans still enforced via Firestore)");
+    return true;
   }
 
   function showCWOODBanScreen() {
@@ -35,7 +36,7 @@ const Auth = (() => {
           <div style="font-size:64px;margin-bottom:16px;">🔒</div>
           <h1 style="color:#ff0000;font-size:28px;font-weight:900;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:2px;">ACCESS DENIED</h1>
           <p style="color:#ff4444;font-size:18px;font-weight:700;margin:0 0 20px 0;">
-            This game is FRIENDS ONLY.
+            This account is blocked from the Realm.
           </p>
           <div style="background:rgba(255,0,0,0.1);border:1px solid rgba(255,0,0,0.3);border-radius:8px;padding:16px;margin-bottom:20px;">
             <p style="color:#ccc;font-size:14px;margin:0 0 12px 0;">If you know Vic, call him up and be like:<br><span style="color:#fff;font-weight:700;">"Yo, let me play that dope ass game, bro!"</span></p>
@@ -173,7 +174,7 @@ const Auth = (() => {
           <div style="font-size:64px;margin-bottom:16px;">🚫</div>
           <h1 style="color:#ff0000;font-size:28px;font-weight:900;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:2px;">ACCESS DENIED</h1>
           <p style="color:#ff4444;font-size:18px;font-weight:700;margin:0 0 20px 0;">
-            This game is FRIENDS ONLY.
+            This account is blocked from the Realm.
           </p>
           <div style="background:rgba(255,0,0,0.1);border:1px solid rgba(255,0,0,0.3);border-radius:8px;padding:16px;margin-bottom:20px;">
             <p style="color:#ccc;font-size:14px;margin:0 0 12px 0;">If you know Vic, call him up and be like:<br><span style="color:#fff;font-weight:700;">"Yo, let me play that dope ass game, bro!"</span></p>

@@ -231,9 +231,6 @@ const Store = (() => {
     //       state.cash = 0.087474587225872;
     //     }
     //   }
-    //   if (pName.includes("cwood") && (Number(state.lifetimeRent) || 0) < 0.854230) {
-    //     state.lifetimeRent = 0.854230;
-    //   }
     //
     //   try {
     //     localStorage.setItem(KEY, JSON.stringify(state));

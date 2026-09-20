@@ -279,38 +279,21 @@ const Friends = (() => {
   // ======================== CLAIM DAILY GIFTS ========================
   async function claimDailyGifts() {
     const id = myId();
-    const d = db();
-    if (!id || !d) return;
-
+    if (!id) return;
+    // Server-authoritative claim (includes gifts + dividends) so save.eb never drifts
+    if (typeof ServerAntiCheat === "undefined" || !ServerAntiCheat.isReady()) return;
     try {
-      const snap = await d.collection("daily_gifts")
-        .where("toId", "==", id)
-        .where("claimed", "==", false)
-        .get();
-
-      if (snap.empty) return;
-
-      let totalClaimed = 0;
-      const batch = d.batch();
-
-      for (const doc of snap.docs) {
-        const data = doc.data();
-        totalClaimed += data.amount || 0;
-        batch.update(doc.ref, { claimed: true });
+      const result = await ServerAntiCheat.claimMailbox();
+      if (!result || !result.claimed) return;
+      const state = Store.get();
+      if (state) {
+        if (typeof result.nextEb === "number") state.eb = result.nextEb;
+        if (typeof result.nextTotalDividends === "number") state.totalDividends = result.nextTotalDividends;
+        Store.save(true);
+        if (typeof updateTopbar === "function") updateTopbar();
       }
-
-      await batch.commit();
-
-      if (totalClaimed > 0) {
-        const state = Store.get();
-        if (state) {
-          // Economy balance lives on state.eb, not state.player.eb — that field is never read/displayed.
-          state.eb = (Number(state.eb) || 0) + totalClaimed;
-          state.lifetimeRent = (Number(state.lifetimeRent) || 0) + totalClaimed;
-          Store.save(true);
-          if (typeof updateTopbar === "function") updateTopbar();
-        }
-        toast(`🎁 Claimed ${totalClaimed} EB from friend gift${totalClaimed > 1 ? 's' : ''}!`, 4000);
+      if (result.giftsEb > 0) {
+        toast(`🎁 Claimed ${result.giftsEb} EB from friend gift${result.giftsEb > 1 ? 's' : ''}!`, 4000);
       }
     } catch (e) {
       console.warn("[Friends] Claim gifts error:", e);

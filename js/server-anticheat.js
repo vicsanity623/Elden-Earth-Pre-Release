@@ -252,5 +252,16 @@ const ServerAntiCheat = (() => {
     }
   }
 
-  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData };
+  async function claimMailbox() {
+    if (!functions) return { claimed: 0, dividendsEb: 0, giftsEb: 0 };
+    try {
+      const fn = functions.httpsCallable("claimMailbox");
+      return (await fn({})).data;
+    } catch (e) {
+      console.warn("[ServerAntiCheat] claimMailbox failed:", e.message);
+      return { claimed: 0, dividendsEb: 0, giftsEb: 0 };
+    }
+  }
+
+  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData, claimMailbox };
 })();
