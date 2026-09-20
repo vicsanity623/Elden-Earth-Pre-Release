@@ -199,24 +199,27 @@ const Diamonds = (() => {
     const d = state.liveDiamonds[did];
     if (!d) return;
 
-    if (!withinCollectRange(d.lat, d.lon)) {
-      onDenied();
-      return;
-    }
-
+    // No client-side distance block: the server validates proximity against
+    // canonical diamond coordinates. Client caches can be stale and were
+    // wrongly rejecting valid in-radius pickups.
     let serverResult = null;
+    // Fallback position: map center follows the player, so a missing/stale
+    // GPS fix must never block an in-radius pickup.
+    let pos = playerPos;
+    if (!pos && map) {
+      const c = map.getCenter();
+      pos = { lat: c.lat, lon: c.lng };
+    }
     // 🛡️ SERVER-SIDE COLLECT — the Admin SDK owns the balance increment.
-    if (typeof ServerAntiCheat === "undefined" || !ServerAntiCheat.isReady() || !playerPos) {
+    if (typeof ServerAntiCheat === "undefined" || !ServerAntiCheat.isReady() || !pos) {
       if (typeof showToast === "function") showToast("⚠️ Server connection required to collect diamonds.", 3500);
-      onDenied();
       return;
     }
 
-    if (typeof ServerAntiCheat !== "undefined" && ServerAntiCheat.isReady() && playerPos) {
-      try {
-        serverResult = await ServerAntiCheat.validateCollect(
-          playerPos.lat, playerPos.lon, did, d.lat, d.lon
-        );
+    try {
+      serverResult = await ServerAntiCheat.validateCollect(
+        pos.lat, pos.lon, did, d.lat, d.lon
+      );
       if (!serverResult.allowed) {
         const toastFn = window.showToast || alert;
         if (serverResult.reason === "too_far") {
@@ -231,23 +234,30 @@ const Diamonds = (() => {
           const measuredDistance = Number(serverResult.distance);
           const distanceText = Number.isFinite(measuredDistance) ? ` (${Math.round(measuredDistance)}m away)` : "";
           toastFn(`🚶 Walk closer to collect that diamond${distanceText}.`, 3000);
-          } else if (serverResult.reason === "position_mismatch") {
-            toastFn("📍 Position updated — try again in a moment.", 3000);
-          } else if (serverResult.reason === "already_collected") {
-            toastFn("💎 Already collected!", 2500);
-          } else if (serverResult.reason === "velocity_check_failed") {
-            toastFn("🚫 Movement anomaly — collection blocked.", 3500);
-          } else {
-            toastFn("🛡️ Collection rejected by server.", 3000);
-          }
-          onDenied();
-          return;
+        } else if (serverResult.reason === "diamond_expired" || serverResult.reason === "unknown_diamond") {
+          delete state.liveDiamonds[did];
+          if (markers[did]) { markers[did].remove(); delete markers[did]; }
+          Store.save(false);
+          toastFn("💎 That diamond has vanished.", 2500);
+        } else if (serverResult.reason === "position_mismatch") {
+          toastFn("📍 Position updated — try again in a moment.", 3000);
+        } else if (serverResult.reason === "already_collected") {
+          delete state.liveDiamonds[did];
+          if (markers[did]) { markers[did].remove(); delete markers[did]; }
+          toastFn("💎 Already collected!", 2500);
+        } else if (serverResult.reason === "velocity_check_failed") {
+          toastFn("🚫 Movement anomaly — collection blocked.", 3500);
+        } else if (serverResult.reason === "rate_limited") {
+          toastFn("⏳ Too many taps — wait a moment.", 2500);
+        } else {
+          toastFn("⚠️ Collect could not be verified.", 3000);
         }
-      } catch (e) {
-        console.warn("[Diamonds] Server validation failed:", e.message);
-        onDenied();
         return;
       }
+    } catch (e) {
+      console.warn("[Diamonds] Server validation failed:", e.message);
+      if (typeof showToast === "function") showToast("⚠️ Collect could not be verified.", 3000);
+      return;
     }
 
     if (map) {

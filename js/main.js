@@ -1225,7 +1225,7 @@
 
       Diamonds.init(map, {
         onCollect: () => { updateTopbar(); showToast("Found a diamond! ◆ +1"); },
-        onDenied: () => showToast("Too far — walk closer to collect it."),
+        onDenied: () => {},
       });
       Diamonds.setPlayerPosition(currentPos.lat, currentPos.lon);
       // Hoist 3D Character to top of all map layers so it always renders above ground plots!
