@@ -96,6 +96,14 @@ const Referrals = (() => {
     state.player.referredBy = referrerId;
     state.player.referredByName = referrerData.name || "Unknown";
     Store.save(true);
+    try {
+      await d.collection("saves").doc(id).set({
+        player: { referredBy: referrerId, referredByName: referrerData.name || "Unknown" },
+        referredBy: referrerId
+      }, { merge: true });
+    } catch (e) {
+      console.warn("[Referrals] Cloud save error:", e);
+    }
 
     const input = document.getElementById("referral-code-input");
     if (input) {
@@ -235,15 +243,15 @@ const Referrals = (() => {
             <span class="referral-stat-label">Referrals</span>
           </div>
           <div class="referral-stat">
-            <span class="referral-stat-val">${totalBonusEarned} EB</span>
+            <span class="referral-stat-val">${totalBonusEarned} <span class="eb-coin-icon"></span></span>
             <span class="referral-stat-label">Bonus Earned</span>
           </div>
           <div class="referral-stat">
-            <span class="referral-stat-val">${pendingBonus} EB</span>
+            <span class="referral-stat-val">${pendingBonus} <span class="eb-coin-icon"></span></span>
             <span class="referral-stat-label">Pending</span>
           </div>
           <div class="referral-stat referral-stat-royalty">
-            <span class="referral-stat-val">${formatRoyalty(royaltyTotal)} EB</span>
+            <span class="referral-stat-val">${Math.floor(royaltyTotal)} <span class="eb-coin-icon"></span></span>
             <span class="referral-stat-label">Royalties</span>
           </div>
         </div>`;

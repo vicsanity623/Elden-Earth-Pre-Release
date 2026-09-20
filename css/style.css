@@ -1232,7 +1232,11 @@ html,body{
 
 /* ---------- Player Info Modal ---------- */
 .player-info-card {
-  text-align: left;
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 .player-info-card h2 {
   text-align: center;
@@ -1484,8 +1488,31 @@ html,body{
 .pi-tab-panel {
   display: none;
 }
+
 .pi-tab-panel.active {
   display: block;
+  flex: 1 1 auto;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(85vh - 120px); /* Restricts panel to frame bounds */
+  padding-right: 6px;
+  padding-bottom: 30px; /* Clean breathing room at the bottom */
+  box-sizing: border-box;
+}
+
+/* Red scrollbar to match the cyberpunk HUD */
+.pi-tab-panel.active::-webkit-scrollbar {
+  width: 5px;
+}
+
+.pi-tab-panel.active::-webkit-scrollbar-track {
+  background: rgba(13, 20, 32, 0.6);
+  border-radius: 4px;
+}
+
+.pi-tab-panel.active::-webkit-scrollbar-thumb {
+  background: #ff1744;
+  border-radius: 4px;
 }
 
 /* Avatar Upload Overlay */
