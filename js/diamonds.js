@@ -36,11 +36,11 @@ const Diamonds = (() => {
     gem.style.left = `${startX}px`;
     gem.style.top = `${startY}px`;
     gem.innerHTML = `
-      <svg viewBox="0 0 32 38">
-        <polygon points="16,2 29,12 16,16 3,12" fill="#a8f5ec"/>
-        <polygon points="3,12 16,16 16,36" fill="#1d7a6e"/>
-        <polygon points="29,12 16,16 16,36" fill="#4fd6c4"/>
-        <polygon points="16,2 20,8 16,16 12,8" fill="#ffffff"/>
+      <svg viewBox="0 0 32 38" style="filter: drop-shadow(0 0 6px rgba(255, 0, 40, 0.8));">
+        <polygon points="16,2 29,12 16,16 3,12" fill="#ff6b81"/>
+        <polygon points="3,12 16,16 16,36" fill="#8b0000"/>
+        <polygon points="29,12 16,16 16,36" fill="#ff1744"/>
+        <polygon points="16,2 20,8 16,16 12,8" fill="rgba(255,255,255,0.85)"/>
       </svg>
     `;
     document.body.appendChild(gem);
@@ -90,9 +90,9 @@ const Diamonds = (() => {
         <div class="gem-anchor">
           <div class="gem-3d static-crystal">
             <svg viewBox="0 0 32 38" class="gem-svg">
-              <polygon points="16,2 29,12 16,16 3,12" fill="#a8f5ec"/>
-              <polygon points="3,12 16,16 16,36" fill="#1d7a6e"/>
-              <polygon points="29,12 16,16 16,36" fill="#4fd6c4"/>
+              <polygon points="16,2 29,12 16,16 3,12" fill="#ff4d6d"/>
+              <polygon points="3,12 16,16 16,36" fill="#8b0000"/>
+              <polygon points="29,12 16,16 16,36" fill="#e60026"/>
               <polygon points="16,2 20,8 16,16 12,8" fill="rgba(255,255,255,0.85)"/>
             </svg>
           </div>
@@ -108,9 +108,9 @@ const Diamonds = (() => {
           <div class="gem-shadow"></div>
           <div class="gem-3d">
             <svg viewBox="0 0 32 38" class="gem-svg">
-              <polygon points="16,2 29,12 16,16 3,12" fill="#a8f5ec"/>
-              <polygon points="3,12 16,16 16,36" fill="#1d7a6e"/>
-              <polygon points="29,12 16,16 16,36" fill="#4fd6c4"/>
+              <polygon points="16,2 29,12 16,16 3,12" fill="#ff4d6d"/>
+              <polygon points="3,12 16,16 16,36" fill="#8b0000"/>
+              <polygon points="29,12 16,16 16,36" fill="#e60026"/>
               <polygon points="16,2 20,8 16,16 12,8" fill="rgba(255,255,255,0.85)"/>
             </svg>
             <div class="gem-sparkle-1">✦</div>

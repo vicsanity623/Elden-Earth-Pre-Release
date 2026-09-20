@@ -1,5 +1,5 @@
 // Bump this version string whenever you deploy an update!
-const CACHE_NAME = 'elden-EARTH-v21.77';
+const CACHE_NAME = 'elden-EARTH-v21.93';
 
 const ASSETS_TO_CACHE = [
     './',
@@ -33,7 +33,7 @@ const ASSETS_TO_CACHE = [
     './js/server-anticheat.js'
 ];
 
-// 1. Force Immediate Installation
+// 1. Force Immediate Activation without waiting for tabs to close
 self.addEventListener('install', (e) => {
     self.skipWaiting();
     e.waitUntil(
@@ -43,7 +43,7 @@ self.addEventListener('install', (e) => {
     );
 });
 
-// 2. Instant Cache Purge & Take Immediate Control
+// 2. Instant Cache Purge & Force-Refresh All Open Tabs
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -56,12 +56,27 @@ self.addEventListener('activate', (e) => {
                 })
             );
         }).then(() => {
+            // Take control of all open clients/tabs immediately
             return self.clients.claim();
+        }).then(() => {
+            // Send a reload broadcast to all active open tabs
+            return self.clients.matchAll({ type: 'window' });
+        }).then((clients) => {
+            clients.forEach((client) => {
+                client.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME });
+            });
         })
     );
 });
 
-// 3. Network-First with cache-busting (bypasses browser HTTP cache entirely)
+// Allow clients to trigger skipWaiting manually if needed
+self.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
+// 3. Network-First with cache-busting
 self.addEventListener('fetch', (e) => {
     if (e.request.method !== 'GET') return;
     if (!e.request.url.startsWith(self.location.origin)) return;

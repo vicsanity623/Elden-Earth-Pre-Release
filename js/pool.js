@@ -51,11 +51,11 @@ const WeeklyPool = (() => {
     // --- 14-Day (2-Week) Fiscal Period Reset Engine ---
     const now = Date.now();
     const TWO_WEEKS_MS = 14 * 24 * 3600 * 1000; // 14-Day Period
-    const PERIOD_ANCHOR_MS = 1788912000000;      // Aligned with Monday 00:00 UTC cycle
+    const MAX_PERIOD_SEC = 14 * 86400;           // Hard cap: Cannot exceed 14 days!
+    const PERIOD_ANCHOR_MS = 1704067200000;      // Monday, Jan 1, 2024 00:00:00 UTC (In the PAST)
 
-    let periodElapsed = (now - PERIOD_ANCHOR_MS) % TWO_WEEKS_MS;
-    if (periodElapsed < 0) periodElapsed += TWO_WEEKS_MS;
-    const periodStartTime = now - periodElapsed; // Exact start of current 14-day window!
+    const periodElapsed = Math.abs((now - PERIOD_ANCHOR_MS) % TWO_WEEKS_MS);
+    const periodStartTime = now - periodElapsed;
 
     // Calculate rent generated ONLY during this active 14-day fiscal period
     players.forEach(p => {
@@ -65,17 +65,20 @@ const WeeklyPool = (() => {
           const rKey = plot.rarity?.key || plot.rarity || "common";
           const rate = RATE_MAP[rKey] || 0.0000000011;
 
-          // Rent is only counted from when the 14-day period began!
-          const plotClaimedTime = Number(plot.claimedAt) || periodStartTime;
+          // Safe timestamp check
+          let plotClaimedTime = Number(plot.claimedAt) || periodStartTime;
+          if (plotClaimedTime > 0 && plotClaimedTime < 1e11) plotClaimedTime *= 1000; // convert sec to ms
+          
           const activeSince = Math.max(plotClaimedTime, periodStartTime);
-          const periodAgeSec = Math.max(0, (now - activeSince) / 1000);
+          // Hard-cap at MAX_PERIOD_SEC so it can NEVER calculate years of rent
+          const periodAgeSec = Math.min(MAX_PERIOD_SEC, Math.max(0, (now - activeSince) / 1000));
 
           totalGlobalRent += (periodAgeSec * rate);
           globalRateSec += rate;
         }
       } else if (p.plotsCount) {
         const fallbackRate = p.plotsCount * 0.0000000011;
-        const periodSec = Math.max(0, (now - periodStartTime) / 1000);
+        const periodSec = Math.min(MAX_PERIOD_SEC, Math.max(0, (now - periodStartTime) / 1000));
         totalGlobalRent += (periodSec * fallbackRate);
         globalRateSec += fallbackRate;
       }

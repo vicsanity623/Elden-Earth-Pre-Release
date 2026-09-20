@@ -169,7 +169,7 @@ html,body{
 /* Elden Earth Brand Title */
 .hero-brand-title {
   font-family: var(--font-display, 'Cinzel', serif);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 1.5px;
   color: #ff3344;
@@ -232,6 +232,24 @@ html,body{
   letter-spacing: 0.3px;
 }
 
+/* Golden EB Coin Icon */
+.eb-coin-icon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  vertical-align: -3px;
+  margin-left: 3px;
+  background: url('../assets/eb-coin.png') no-repeat center center / contain;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
+}
+
+/* Slightly larger coin for headers/modals */
+.eb-coin-icon.large {
+  width: 22px;
+  height: 22px;
+  vertical-align: -4px;
+}
+
 /* Secondary Substats Row */
 .substats-row {
   display: flex;
@@ -259,7 +277,7 @@ html,body{
   display:block;
   font-family:var(--font-display);
   font-weight:700;
-  font-size:11px;
+  font-size:16px;
   color:var(--gold-hi);
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
@@ -275,6 +293,9 @@ html,body{
   align-items: center;
   gap: 6px;
   filter: drop-shadow(0 0 6px rgba(255, 0, 40, 0.3));
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
 }
 
 .player-chip span {
@@ -290,7 +311,13 @@ html,body{
   display:flex; align-items:center; justify-content:center;
   font-size:13px;
 }
-#player-chip-wrap{ position:relative; }
+#player-chip-wrap {
+  position: relative;
+  cursor: pointer;
+  z-index: 10;
+  /* If the wrap itself is sitting up high, push it down: */
+  /* top: 8px; */ /* <-- Tweak this value if the entire wrapper needs to move */
+}
 .friend-request-dot{
   position:absolute; top:-3px; right:-3px;
   width:10px; height:10px;
@@ -489,7 +516,11 @@ html,body{
   display:flex; align-items:center; gap:2px;
 }
 .wheel-result{
-  min-height:20px; font-weight:700; color:var(--teal); font-size:15px;
+  min-height:20px; 
+  font-weight:700; 
+  color: #ff3344;
+  font-size:15px;
+  text-shadow: 0 0 8px rgba(255, 0, 40, 0.4);
 }
 
 /* ---------- Live Balances in Diamond Wheel Modal ---------- */
@@ -519,7 +550,7 @@ html,body{
 }
 
 .wheel-chip.diamond-chip {
-  border-color: rgba(79, 214, 196, 0.4);
+  border-color: rgba(255, 23, 68, 0.5);
 }
 
 .wheel-chip-label {
@@ -541,7 +572,8 @@ html,body{
 }
 
 .wheel-chip.diamond-chip .wheel-chip-val {
-  color: var(--teal);
+  color: #ff1744;
+  text-shadow: 0 0 8px rgba(255, 23, 68, 0.6);
 }
 
 /* ---------- Land modal ---------- */
@@ -2016,7 +2048,7 @@ html,body{
 .extractor-glow-icon {
   font-size: 42px;
   margin-bottom: 6px;
-  filter: drop-shadow(0 0 14px rgba(79, 214, 196, 0.8));
+  filter: drop-shadow(0 0 14px rgba(255, 0, 40, 0.85));
   animation: boostPulse 2s infinite ease-in-out;
 }
 .extractor-status-box {
@@ -2052,7 +2084,7 @@ html,body{
 
 .diamond-3d-wrapper.far {
   opacity: 0.85 !important;
-  pointer-events: none; /* Disables hit-testing on distant diamonds */
+  pointer-events: none;
 }
 
 /* 1. Scale down distant crystal */
@@ -2060,14 +2092,14 @@ html,body{
   transform: scale(0.72);
 }
 
-/* 2. Kill 3D Hover/Bounce Loop on distant diamonds (Zero GPU Compositor Work!) */
+/* 2. Kill 3D Hover/Bounce Loop on distant diamonds */
 .diamond-3d-wrapper.far .gem-3d {
   animation: none !important;
   transform: none !important;
   will-change: auto !important;
 }
 
-/* 3. Delete Ground Shadows on distant diamonds (Saves 36 blur filter passes!) */
+/* 3. Delete Ground Shadows on distant diamonds */
 .diamond-3d-wrapper.far .gem-shadow {
   display: none !important;
   animation: none !important;
@@ -2096,7 +2128,7 @@ html,body{
   animation-delay: var(--hover-delay, 0s);
 }
 
-/* 3D Gem Floating / Hovering Animation (Slower, softer, individual) */
+/* 3D Gem Floating / Hovering Animation */
 .gem-3d {
   position: relative;
   width: 20px;
@@ -2104,12 +2136,13 @@ html,body{
   animation: gemHover var(--hover-dur, 3.2s) ease-in-out infinite;
   animation-delay: var(--hover-delay, 0s);
   will-change: transform;
-  transform: translateZ(0); /* Forces mobile GPU compositing layer */
+  transform: translateZ(0);
 }
 .gem-svg {
   width: 100%;
   height: 100%;
   display: block;
+  filter: drop-shadow(0 0 6px rgba(255, 0, 40, 0.65));
 }
 
 /* Specular Star Sparkles */
@@ -2124,14 +2157,14 @@ html,body{
 .gem-sparkle-1 { top: 2px; right: 4px; animation: sparkleTwinkle 2.8s infinite 0.4s; }
 .gem-sparkle-2 { bottom: 8px; left: 2px; animation: sparkleTwinkle 2.8s infinite 1.6s; font-size: 8px; }
 
-/* Rising Ambient Stardust Particles */
+/* Rising Ambient Stardust Particles (Red) */
 .dust-particle {
   position: absolute;
   width: 3px;
   height: 3px;
-  background: #a8f5ec;
+  background: #ff6b81;
   border-radius: 50%;
-  box-shadow: 0 0 6px #4fd6c4;
+  box-shadow: 0 0 6px #ff0033;
   opacity: 0;
   pointer-events: none;
 }
@@ -2141,7 +2174,7 @@ html,body{
 
 @keyframes gemHover {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-3.5px) rotate(1deg); } /* Subtle 3.5px hover */
+  50% { transform: translateY(-3.5px) rotate(1deg); }
 }
 
 @keyframes shadowPulse {
@@ -2160,7 +2193,7 @@ html,body{
   100% { opacity: 0; transform: translateY(-22px) scale(1.4); }
 }
 
-/* ================= TAP EXPLOSION VFX ================= */
+/* ================= TAP EXPLOSION VFX (Red Crimson Burst) ================= */
 .gem-explosion-container {
   position: fixed;
   pointer-events: none;
@@ -2175,8 +2208,8 @@ html,body{
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0%, #4fd6c4 60%, #1d7a6e 100%);
-  box-shadow: 0 0 10px #4fd6c4, 0 0 16px #a8f5ec;
+  background: radial-gradient(circle, #ffffff 0%, #ff1744 60%, #8b0000 100%);
+  box-shadow: 0 0 10px #ff1744, 0 0 16px #ff6b81;
   animation: sparkBurst 0.6s cubic-bezier(0.12, 0.85, 0.35, 1) forwards;
 }
 
@@ -2191,17 +2224,23 @@ html,body{
   }
 }
 
-/* ---------- Mini 3D Crystal for HUD ---------- */
+/* ---------- Mini 3D Red Crystal for HUD Modals ---------- */
 .hud-gem-icon {
   display: inline-block;
   width: 13px;
   height: 16px;
   vertical-align: -2px;
   margin-left: 2px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 38'%3E%3Cpolygon points='16,2 29,12 16,16 3,12' fill='%23a8f5ec'/%3E%3Cpolygon points='3,12 16,16 16,36' fill='%231d7a6e'/%3E%3Cpolygon points='29,12 16,16 16,36' fill='%234fd6c4'/%3E%3Cpolygon points='16,2 20,8 16,16 12,8' fill='rgba(255,255,255,0.85)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 38'%3E%3Cpolygon points='16,2 29,12 16,16 3,12' fill='%23ff6b81'/%3E%3Cpolygon points='3,12 16,16 16,36' fill='%238b0000'/%3E%3Cpolygon points='29,12 16,16 16,36' fill='%23ff1744'/%3E%3Cpolygon points='16,2 20,8 16,16 12,8' fill='rgba(255,255,255,0.85)'/%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
-  filter: drop-shadow(0 0 4px rgba(79, 214, 196, 0.8));
+  filter: drop-shadow(0 0 4px rgba(255, 23, 68, 0.9));
+}
+
+/* ---------- Red Color Code Diamond for the Sub-Stat HUD Bar ---------- */
+#stat-diamonds {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(255, 0, 43, 0.7);
 }
 
 /* ================= PHASE 2: 3D PLOTS & ORBITAL EXTRACTOR ================= */
@@ -2582,7 +2621,7 @@ html,body{
   width: 22px;
   height: 26px;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(0 0 12px rgba(79, 214, 196, 0.9));
+  filter: drop-shadow(0 0 8px rgba(255, 0, 40, 0.85));
   transition: transform 0.75s cubic-bezier(0.16, 0.85, 0.35, 1), opacity 0.75s ease-in;
 }
 
@@ -2719,7 +2758,7 @@ html,body{
   letter-spacing: 0.3px;
   white-space: nowrap !important;
   text-align: center;
-  box-shadow: 0 8px 20px rgba(79, 214, 196, 0.4) !important;
+  box-shadow: 0 8px 22px rgba(255, 0, 40, 0.55), 0 0 10px rgba(255, 23, 68, 0.35) !important;
 }
 .btn-buy-land:active { transform: scale(0.94); }
 
@@ -2917,8 +2956,21 @@ html,body{
   font-weight: 800;
   font-size: 20px;
   color: var(--gold-hi);
-  text-shadow: 0 0 12px rgba(240, 211, 138, 0.9), 0 0 20px rgba(0, 0, 0, 0.9);
+  filter: drop-shadow(0 0 8px rgba(255, 0, 40, 0.85));
   transition: transform 0.7s cubic-bezier(0.16, 0.85, 0.35, 1), opacity 0.7s ease-in;
+}
+
+#citadel-spoils-eb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+#citadel-spoils-eb .eb-coin-icon {
+  width: 22px;
+  height: 22px;
+  vertical-align: middle;
 }
 
 /* ================= FLYING EB COIN CASCADE ================= */
@@ -2928,27 +2980,35 @@ html,body{
   pointer-events: none;
   width: 28px;
   height: 28px;
+  background: transparent !important;
+  border: none !important;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff5566, #ff2b43);
-  border: 1.5px solid #ffffff;
-  color: #1a1204;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 12px rgba(240, 211, 138, 0.95), 0 2px 8px rgba(0, 0, 0, 0.6);
+  filter: drop-shadow(0 0 8px rgba(240, 211, 138, 0.95)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
   transition: transform 0.75s cubic-bezier(0.16, 0.85, 0.35, 1), opacity 0.75s ease-in;
 }
 
+.flying-coin-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
 .flying-eb-coin.jackpot-spark {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
+  filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1)) drop-shadow(0 0 8px #ff4757);
+}
+
+.jackpot-lightning {
+  position: absolute;
+  top: -6px;
+  right: -6px;
   font-size: 14px;
-  background: linear-gradient(135deg, #ffffff, #ff5566, #ff2b43);
-  border-color: #4fd6c4;
-  box-shadow: 0 0 18px rgba(240, 211, 138, 1), 0 0 10px rgba(79, 214, 196, 0.8);
+  filter: drop-shadow(0 0 6px #ffd700);
 }
 
 /* ================= EXTRACTOR HUD BUTTON ================= */

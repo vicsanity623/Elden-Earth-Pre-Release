@@ -191,8 +191,12 @@
     const currentEB = Math.floor(Number(state.eb) || 0);
     if (currentEB !== lastEBVal) {
       lastEBVal = currentEB;
-      if (el("stat-eb")) el("stat-eb").textContent = currentEB + " EB";
-      if (el("wheel-eb-display")) el("wheel-eb-display").textContent = currentEB + " EB";
+      if (el("stat-eb")) {
+        el("stat-eb").innerHTML = `${currentEB} <span class="eb-coin-icon"></span>`;
+      }
+      if (el("wheel-eb-display")) {
+        el("wheel-eb-display").innerHTML = `${currentEB} <span class="eb-coin-icon"></span>`;
+      }
     }
 
     const currentDiamonds = Number(state.diamonds) || 0;
@@ -1360,11 +1364,11 @@
           gem.style.left = `${startX + spreadX}px`;
           gem.style.top = `${startY + spreadY}px`;
           gem.innerHTML = `
-            <svg viewBox="0 0 32 38">
-              <polygon points="16,2 29,12 16,16 3,12" fill="#a8f5ec"/>
-              <polygon points="3,12 16,16 16,36" fill="#1d7a6e"/>
-              <polygon points="29,12 16,16 16,36" fill="#4fd6c4"/>
-              <polygon points="16,2 20,8 16,16 12,8" fill="#ffffff"/>
+            <svg viewBox="0 0 32 38" style="filter: drop-shadow(0 0 6px rgba(255, 0, 40, 0.8));">
+              <polygon points="16,2 29,12 16,16 3,12" fill="#ff6b81"/>
+              <polygon points="3,12 16,16 16,36" fill="#8b0000"/>
+              <polygon points="29,12 16,16 16,36" fill="#ff1744"/>
+              <polygon points="16,2 20,8 16,16 12,8" fill="rgba(255,255,255,0.85)"/>
             </svg>
           `;
           document.body.appendChild(gem);
@@ -1410,7 +1414,9 @@
           const spreadY = (Math.random() - 0.5) * (isJackpot ? 120 : 60);
           eb.style.left = `${startX + spreadX}px`;
           eb.style.top = `${startY + spreadY}px`;
-          eb.innerHTML = isJackpot ? `<span>⚡</span>` : `<span>EB</span>`;
+          eb.innerHTML = isJackpot
+            ? `<img src="assets/eb-coin.png" class="flying-coin-img"><span class="jackpot-lightning">⚡</span>`
+            : `<img src="assets/eb-coin.png" class="flying-coin-img">`;
           document.body.appendChild(eb);
 
           requestAnimationFrame(() => {

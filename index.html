@@ -533,7 +533,7 @@ Modern Extraction Model:
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.61b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.67b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -543,26 +543,26 @@ Modern Extraction Model:
     </div>
 
     <!-- Secondary Stats Arranged Beneath (EB, Diamonds, Income, Menu) -->
-    <div class="substats-row">
-      <div class="player-chip" id="player-chip-wrap">
+    <div class="substats-row" style="position: relative; z-index: 1000; pointer-events: auto;">
+      <div class="player-chip" id="player-chip-wrap" style="pointer-events: auto; cursor: pointer;">
         <span id="player-avatar">X</span>
         <span id="friend-request-dot" class="friend-request-dot hidden"></span>
         <span id="player-name">Loading...</span>
       </div>
 
       <div class="sub-stat">
-        <span class="stat-label">Elden Bucks</span>
-        <span class="stat-value" id="stat-eb">-- EB</span>
+  <span class="stat-label"></span>
+  <span class="stat-value" id="stat-eb">-- <span class="eb-coin-icon"></span></span>
+</div>
+
+      <div class="sub-stat">
+        <span class="stat-label"></span>
+        <span class="stat-value" id="stat-diamonds">-- <span style="color:#ff1744; text-shadow: 0 0 6px #ff002b;">◆</span></span>
       </div>
 
       <div class="sub-stat">
-        <span class="stat-label">Diamonds</span>
-        <span class="stat-value" id="stat-diamonds">0 ◆</span>
-      </div>
-
-      <div class="sub-stat">
-        <span class="stat-label">Income</span>
-        <span class="stat-value" id="stat-rate">$-.-----------/s</span>
+        <span class="stat-label"></span>
+        <span class="stat-value" id="stat-rate">$-.--------/s</span>
       </div>
 
       <button id="menu-btn" class="icon-btn menu-btn-wrap" aria-label="Menu">
@@ -592,7 +592,7 @@ Modern Extraction Model:
   <!-- Floating +2 EB Boost Button -->
   <button id="boost-btn" class="boost-btn hidden">
     <span class="boost-icon">⚡</span>
-    <span class="boost-text">+2 EB</span>
+    <span class="boost-text">+2 <span class="eb-coin-icon"></span></span>
   </button>
 
   <!-- Permanent 30X/50X Multiplier Button -->
@@ -608,9 +608,9 @@ Modern Extraction Model:
       <div id="extractor-unread-dot" class="calendar-red-dot hidden"></div>
       <div class="side-hud-card extractor-hud-card">
         <svg viewBox="0 0 32 38" class="extractor-hud-svg">
-          <polygon points="16,2 29,12 16,16 3,12" fill="#d4fbf6"/>
-          <polygon points="3,12 16,16 16,36" fill="#1d7a6e"/>
-          <polygon points="29,12 16,16 16,36" fill="#4fd6c4"/>
+          <polygon points="16,2 29,12 16,16 3,12" fill="#ff6b81"/>
+          <polygon points="3,12 16,16 16,36" fill="#8b0000"/>
+          <polygon points="29,12 16,16 16,36" fill="#ff1744"/>
           <polygon points="16,2 20,8 16,16 12,8" fill="#ffffff"/>
         </svg>
       </div>
@@ -652,7 +652,7 @@ Modern Extraction Model:
 
   <!-- Floating Done Pill (Appears centered right above BUY LAND & EARN buttons) -->
   <div id="buy-mode-banner" class="buy-mode-banner hidden">
-    <span class="buy-mode-instruction">Tap tile to claim (100 EB)</span>
+    <span class="buy-mode-instruction">Tap tile to claim (100 <span class="eb-coin-icon"></span>)</span>
     <button id="exit-buy-mode-btn" class="btn btn-exit-buy">Done ✓</button>
   </div>
 
@@ -689,7 +689,7 @@ Modern Extraction Model:
     <div class="wheel-balance-bar">
       <div class="wheel-chip eb-chip">
         <span class="wheel-chip-label">Elden Bucks</span>
-        <strong id="wheel-eb-display" class="wheel-chip-val">0 EB</strong>
+        <strong id="wheel-eb-display" class="wheel-chip-val">0 <span class="eb-coin-icon"></span></strong>
       </div>
       <div class="wheel-chip diamond-chip">
         <span class="wheel-chip-label">Diamonds</span>
@@ -894,11 +894,11 @@ Modern Extraction Model:
   <div class="modal-card extractor-card">
     <button class="close-btn" data-close="extractor-modal">✕</button>
     <div class="extractor-glow-icon">
-      <svg viewBox="0 0 32 38" style="width:38px;height:46px;display:inline-block;filter:drop-shadow(0 0 10px #4fd6c4);">
-        <polygon points="16,2 29,12 16,16 3,12" fill="#d4fbf6"/>
-        <polygon points="3,12 16,16 16,36" fill="#1d7a6e"/>
-        <polygon points="29,12 16,16 16,36" fill="#4fd6c4"/>
-        <polygon points="16,2 20,8 16,16 12,8" fill="#ffffff"/>
+      <svg viewBox="0 0 32 38" style="width:38px;height:46px;display:inline-block;filter:drop-shadow(0 0 12px rgba(255, 0, 40, 0.85));">
+        <polygon points="16,2 29,12 16,16 3,12" fill="#ff6b81"/>
+        <polygon points="3,12 16,16 16,36" fill="#8b0000"/>
+        <polygon points="29,12 16,16 16,36" fill="#ff1744"/>
+        <polygon points="16,2 20,8 16,16 12,8" fill="rgba(255,255,255,0.85)"/>
       </svg>
     </div>
     <h2>Diamond Extractor</h2>
@@ -1433,7 +1433,7 @@ Modern Extraction Model:
         </div>
         <div class="citadel-balance-divider"></div>
         <div class="citadel-balance-item">
-          <span class="citadel-balance-val" id="citadel-spoils-eb">0 EB</span>
+          <span class="citadel-balance-val" id="citadel-spoils-eb">0 <span class="eb-coin-icon large"></span></span>
           <span class="citadel-balance-label">Banked</span>
         </div>
       </div>
@@ -1476,7 +1476,7 @@ Modern Extraction Model:
       <div class="forge-tier-col">
         <span class="forge-col-sub">Next Tier</span>
         <strong id="forge-next-tier" class="forge-tier-badge">Rare Hold</strong>
-        <span id="forge-next-perk" class="forge-perk-text">1 ◆ / 2 hrs & +1 EB/hr</span>
+        <span id="forge-next-perk" class="forge-perk-text">1 <span class="hud-gem-icon"></span> / 2 hrs & +1 EB/hr</span>
       </div>
     </div>
 
@@ -1592,20 +1592,39 @@ Modern Extraction Model:
 <!-- Service Worker Registration with Instant Auto-Update -->
 <script>
 if ('serviceWorker' in navigator) {
-  // Auto-reload when a new service worker takes control so stale open tabs
-  // can never keep running old game code after a deploy.
-  let swReloaded = false;
+  let refreshing = false;
+
+  // 1. Reload the page as soon as the active service worker changes
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!swReloaded) { swReloaded = true; window.location.reload(); }
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
   });
+
+  // 2. Listen for the direct update broadcast from the SW
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SW_UPDATED') {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    }
+  });
+
+  // 3. Register and check for updates whenever the tab is reopened/focused
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then((reg) => {
-        // Check for updates every time page is opened
-        reg.update();
-        console.log('[SW] Registered & Checked for updates.');
-      })
-      .catch(err => console.warn('[SW] Registration error:', err));
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      // Check for updates on page load
+      reg.update();
+
+      // Check for updates when user tabs back into the game
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          reg.update();
+        }
+      });
+    }).catch(err => console.warn('[SW] Registration error:', err));
   });
 }
 </script>

@@ -140,8 +140,8 @@ const Leaderboard = (() => {
     // immune to stale/inflated stored values. Players without plots fall
     // back to their stored lifetime rent (e.g. all plots bagged).
     const stored = Number(playerDoc.lifetimeRent || playerDoc.cash || 0);
-    if (Object.keys(playerPlots).length > 0) return totalRent;
-    return stored;
+    const storedCash = Number(playerDoc.lifetimeRent || playerDoc.cash || 0);
+  return Math.max(totalRent, storedCash);
   }
 
   function invalidateCache() {
@@ -351,8 +351,9 @@ const Leaderboard = (() => {
           let finalLifetime = calculatePreciseLifetimeRent(doc.id, d, allPlots);
 
           if (target) {
-            target.cash = d.cash || 0;
-            target.lifetimeRent = finalLifetime;
+            target.cash = Number(d.cash) || 0;
+            target.lifetimeRent = Math.max(Number(d.cash) || 0, finalLifetime);
+            target.totalDividends = Number(d.totalDividends) || 0;
             target.plots = d.plots || {};
           } else if (d.player) {
             playerArray.push({
@@ -360,8 +361,9 @@ const Leaderboard = (() => {
               name: d.player.name || "Traveler",
               avatar: d.player.avatar || "🙂",
               plotsCount: Object.keys(d.plots || {}).length,
-              cash: d.cash || 0,
-              lifetimeRent: finalLifetime,
+              cash: Number(d.cash) || 0,
+              lifetimeRent: Math.max(Number(d.cash) || 0, finalLifetime),
+              totalDividends: Number(d.totalDividends) || 0,
               plots: d.plots || {},
               cities: {}, states: {}, countries: {},
               citiesClean: {}, statesClean: {}, countriesClean: {}
@@ -501,7 +503,7 @@ const Leaderboard = (() => {
         <div class="lb-metric ${currentTab === "rent" ? "gold" : ""}">${metricVal}</div>
       `;
 
-      // Make rows clickable — opens player profile modal
+      // Make rows clickable — opens player profile modal with accurate stats
       if (!isSelf) {
         row.style.cursor = "pointer";
         row.addEventListener("click", () => {
@@ -513,7 +515,12 @@ const Leaderboard = (() => {
             window.updatePlayerInfoModal({
               ownerId: p.id,
               ownerName: p.name,
-              avatar: p.avatar
+              avatar: p.avatar,
+              cash: p.lifetimeRent || p.cash || 0,
+              lifetimeRent: p.lifetimeRent || p.cash || 0,
+              dividends: p.totalDividends || 0,
+              totalDividends: p.totalDividends || 0,
+              plotsCount: p.plotsCount || 0
             });
             window.openModal("player-info-modal");
           }

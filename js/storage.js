@@ -902,20 +902,47 @@ let lastConflictCheck = {};
   function applyOfflineProgress() {
     const now = Date.now();
     const lastTick = state.lastTick || state.createdAt || now;
-    const MAX_OFFLINE_SEC = 24 * 60 * 60; // 24 hours max offline accumulation
+    const MAX_OFFLINE_SEC = 24 * 60 * 60; // 24 hours max offline
     const elapsedSec = Math.min(MAX_OFFLINE_SEC, Math.max(0, (now - lastTick) / 1000));
-    
-    const earned = elapsedSec * totalRate();
-    
+
+    if (elapsedSec <= 0) return 0;
+
+    // 1. Calculate unboosted base rate
+    let baseRate = 0;
+    if (state && state.plots) {
+      for (const id in state.plots) {
+        const p = state.plots[id];
+        const rKey = p.rarity?.key || p.rarity || "common";
+        const conf = CONFIG.PLOT_RARITIES.find(r => r.key === rKey);
+        baseRate += conf ? conf.rate : CONFIG.PLOT_RARITIES[0].rate;
+      }
+    }
+
+    if (baseRate <= 0) return 0;
+
+    // 2. Separate boosted seconds from normal seconds
+    const boostExpiry = state.boostExpiry || 0;
+    let boostedSec = 0;
+    let normalSec = elapsedSec;
+
+    if (boostExpiry > lastTick) {
+      // The boost was active for part (or all) of the offline window
+      const boostEnd = Math.min(now, boostExpiry);
+      boostedSec = Math.max(0, (boostEnd - lastTick) / 1000);
+      boostedSec = Math.min(elapsedSec, boostedSec);
+      normalSec = Math.max(0, elapsedSec - boostedSec);
+    }
+
+    const mult = (typeof Multiplier !== "undefined") ? (state.boostMultiplier || Multiplier.getActiveMultiplier()) : 30;
+
+    // 3. Earned = (boosted time * boosted rate) + (normal time * normal rate)
+    const earned = (boostedSec * baseRate * mult) + (normalSec * baseRate);
+
     if (state.cash === undefined) state.cash = 0;
     if (state.lifetimeRent === undefined) state.lifetimeRent = state.cash;
 
     state.cash += earned;
     state.lifetimeRent += earned;
-
-    // NOTE: Extractor tick is now server-authoritative only.
-    // Client-side stored accumulation removed to prevent multi-tab farming.
-    // The server recomputes from lastHarvest in collectExtractor.
 
     state.lastTick = now;
     save(false);

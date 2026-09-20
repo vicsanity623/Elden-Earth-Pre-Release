@@ -4,12 +4,12 @@
 // ============================================================
 const CONFIG = {
   // --- Game Version (bump on every patch to auto-wipe stale localStorage) ---
-  GAME_VERSION: "0.1.9.77",
+  GAME_VERSION: "0.1.9.93",
 
   // --- Realm Server Epoch ---
   // Bump this timestamp whenever you intentionally wipe the Firestore database.
   // Any local or cloud save created before git statusthis epoch is treated as stale.
-  REALM_SERVER_EPOCH: 1789578877000, // milliseconds — must match functions/index.js
+  REALM_SERVER_EPOCH: 1735689600000, // milliseconds — must match functions/index.js
 
   // --- Map Tile Engine & Rate Limit Fallback ---
   // Set to true to bypass Mapbox completely and use unlimited 100% free OpenFreeMap
@@ -58,7 +58,7 @@ const CONFIG = {
   // --- 50X Super Boost Event Engine ---
   BOOST_DURATION_MS: 3600 * 1000,
   BOOST_MAX_BANK_MS: 6 * 3600 * 1000,
-  EVENT_50X_ANCHOR_MS: 1788912000000,          // Anchored to start RIGHT NOW!
+  EVENT_50X_ANCHOR_MS: 1735689600000,          // Anchored to start RIGHT NOW!
   EVENT_50X_DURATION_MS: 24 * 3600 * 1000,     // 24 Hours of 50X Active
   EVENT_50X_COOLDOWN_MS: 3 * 24 * 3600 * 1000, // 3 Days (72 Hours) 30X Cooldown
 

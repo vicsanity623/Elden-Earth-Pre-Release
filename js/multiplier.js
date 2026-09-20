@@ -8,7 +8,7 @@ const Multiplier = (() => {
   const BOOST_DURATION_MS = 3600 * 1000;          // 1 Hour per activation
   const BOOST_MAX_BANK_MS = 6 * 3600 * 1000;     // Max 6 Hours banked
   const BOOST_COOLDOWN_MS = 20 * 60 * 1000;      // 20 Minutes for +2EB
-  const EVENT_50X_ANCHOR_MS = 1788912000000;      // Anchored to start RIGHT NOW!
+  const EVENT_50X_ANCHOR_MS = 1704067200000;
   const EVENT_50X_DURATION_MS = 24 * 3600 * 1000; // 24 Hours of 50X Active
   const EVENT_50X_COOLDOWN_MS = 3 * 24 * 3600 * 1000; // 3 Days (72 Hours)
 

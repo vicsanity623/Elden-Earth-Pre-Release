@@ -428,7 +428,7 @@ const Citadels = (() => {
     const spoilDiamonds = document.getElementById("citadel-spoils-diamonds");
     const spoilEb = document.getElementById("citadel-spoils-eb");
     if (spoilDiamonds) spoilDiamonds.textContent = spoils.diamonds;
-    if (spoilEb) spoilEb.textContent = `${spoils.eb} EB`;
+    if (spoilEb) spoilEb.innerHTML = `${spoils.eb} <span class="eb-coin-icon"></span>`;
 
     const actionsWrap = document.getElementById("citadel-actions-wrap");
     actionsWrap.innerHTML = "";
@@ -447,7 +447,7 @@ const Citadels = (() => {
     if (def && def.id === myId) {
       const recallBtn = document.createElement("button");
       recallBtn.className = "btn btn-primary";
-      recallBtn.innerHTML = `Recall Defender & Collect Loot (+${spoils.diamonds} ◆ & +${spoils.eb} EB)`;
+      recallBtn.innerHTML = `Recall Defender & Collect Loot (+${spoils.diamonds} <span class="hud-gem-icon"></span> & +${spoils.eb} <span class="eb-coin-icon"></span>)`;
       recallBtn.addEventListener("click", () => recallDefender(cid));
       actionsWrap.appendChild(recallBtn);
 
@@ -978,7 +978,7 @@ const Citadels = (() => {
           const dEl = document.getElementById("citadel-spoils-diamonds");
           const eEl = document.getElementById("citadel-spoils-eb");
           if (dEl) dEl.textContent = spoils.diamonds;
-          if (eEl) eEl.textContent = `${spoils.eb} EB`;
+          if (eEl) eEl.innerHTML = `${spoils.eb} <span class="eb-coin-icon"></span>`;
         }
       }
     }, 1000);

@@ -7,6 +7,17 @@ const Wheel = (() => {
   let canvas, ctx;
   let rotation = 0; // current resting rotation, degrees
 
+  // 1. Create and preload the coin image
+  const ebCoinImg = new Image();
+  ebCoinImg.src = "assets/eb-coin.png"; // <-- double check if your filename is 'eb--coin.png' or 'eb-coin.png'
+  
+  // 2. Redraw the wheel automatically as soon as the image finishes downloading
+  ebCoinImg.onload = () => {
+    if (canvas && ctx) {
+      draw();
+    }
+  };
+
   function draw() {
     const slices = CONFIG.WHEEL_SLICES;
     const n = slices.length;
@@ -16,48 +27,55 @@ const Wheel = (() => {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Helper to render mini 3D faceted crystal onto canvas
+    // Helper to render mini 3D faceted crystal onto canvas (Crimson Ruby)
     function renderCanvas3DGem(x, y, size) {
       ctx.save();
       ctx.translate(x, y);
       const w = size / 2, h = size;
 
-      // Top facet
+      // Subtle crimson aura
+      ctx.shadowColor = "rgba(255, 0, 40, 0.75)";
+      ctx.shadowBlur = 6;
+
+      // Top facet (Brighter red highlight)
       ctx.beginPath();
       ctx.moveTo(0, -h * 0.45);
       ctx.lineTo(w, -h * 0.15);
       ctx.lineTo(0, 0);
       ctx.lineTo(-w, -h * 0.15);
       ctx.closePath();
-      ctx.fillStyle = "#a8f5ec";
+      ctx.fillStyle = "#ff6b81";
       ctx.fill();
 
-      // Left shadow facet
+      // Left shadow facet (Deep ruby dark tone)
       ctx.beginPath();
       ctx.moveTo(-w, -h * 0.15);
       ctx.lineTo(0, 0);
       ctx.lineTo(0, h * 0.5);
       ctx.closePath();
-      ctx.fillStyle = "#1d7a6e";
+      ctx.fillStyle = "#8b0000";
       ctx.fill();
 
-      // Right bright facet
+      // Right bright facet (Vibrant crimson)
       ctx.beginPath();
       ctx.moveTo(w, -h * 0.15);
       ctx.lineTo(0, 0);
       ctx.lineTo(0, h * 0.5);
       ctx.closePath();
-      ctx.fillStyle = "#4fd6c4";
+      ctx.fillStyle = "#ff1744";
       ctx.fill();
 
-      // Specular glint
+      // Turn off shadow for the specular glint
+      ctx.shadowBlur = 0;
+
+      // Specular glint (White crystal shine)
       ctx.beginPath();
       ctx.moveTo(0, -h * 0.45);
       ctx.lineTo(w * 0.35, -h * 0.25);
       ctx.lineTo(0, 0);
       ctx.lineTo(-w * 0.35, -h * 0.25);
       ctx.closePath();
-      ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
       ctx.fill();
 
       ctx.restore();
@@ -84,13 +102,22 @@ const Wheel = (() => {
       ctx.fillStyle = "#0d1420";
       ctx.font = "bold 15px Manrope, sans-serif";
 
-      if (slices[i].type === "diamond") {
+      if (slices[i].type === "diamond" || slices[i].type === "diamond_jackpot") {
         ctx.textAlign = "right";
-        ctx.fillText("+1", radius - 26, 5);
+        ctx.fillText("+" + slices[i].amount, radius - 26, 5);
         renderCanvas3DGem(radius - 14, 0, 18);
       } else {
         ctx.textAlign = "right";
-        ctx.fillText(slices[i].label, radius - 14, 5);
+        
+        // Draw the coin if loaded, otherwise draw label as fallback
+        if (ebCoinImg.complete && ebCoinImg.naturalWidth > 0) {
+          // Draw the amount (e.g., "1", "2", "5", "50")
+          ctx.fillText(slices[i].amount, radius - 28, 5);
+          // Draw the coin image next to it
+          ctx.drawImage(ebCoinImg, radius - 24, -9, 18, 18);
+        } else {
+          ctx.fillText(slices[i].label, radius - 14, 5);
+        }
       }
       ctx.restore();
     }
