@@ -146,39 +146,50 @@ html,body{
 }
 
 /* Big Hero Balance Bar */
-.hero-balance-card{
-  width:100%;
-  background:linear-gradient(180deg, rgba(22,32,47,0.95) 0%, rgba(13,20,32,0.98) 100%);
-  border:1px solid rgba(212,175,97,0.5);
-  box-shadow:0 0 16px rgba(212,175,97,0.15), 0 4px 16px rgba(0,0,0,0.6);
-  border-radius:14px;
-  padding:8px 14px;
-  text-align:center;
-  pointer-events:auto;
-  backdrop-filter:blur(8px);
+.hero-balance-card {
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
+  
+  /* 1. Remove old default borders */
+  border: none !important;
+  border-radius: 0 !important;
+  
+  /* 2. Apply your custom frame */
+  background: url('../assets/topbar-frame.png') no-repeat center center / 100% 100%;
+  
+  /* 3. Padding to keep the text inside the red lines */
+  padding: 10px 24px 12px 24px;
+  text-align: center;
+  pointer-events: auto;
+  
+  /* 4. Crimson ambient glow */
+  filter: drop-shadow(0 0 12px rgba(255, 0, 40, 0.45));
 }
-/* Artistic Elden Earth Title & Version Tag */
+/* Elden Earth Brand Title */
 .hero-brand-title {
-  font-family: var(--font-display);
+  font-family: var(--font-display, 'Cinzel', serif);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.5px;
-  color: var(--gold-hi);
+  color: #ff3344;
   display: flex;
   align-items: center;
   gap: 5px;
 }
+
 .hero-brand-gem {
-  color: var(--teal);
-  font-size: 9px;
-  filter: drop-shadow(0 0 4px var(--teal));
+  color: #ff002b;
+  font-size: 10px;
+  filter: drop-shadow(0 0 6px #ff002b);
 }
+
 .hero-version-tag {
   font-family: var(--font-body);
   font-size: 8px;
   font-weight: 700;
-  color: var(--text-dim);
-  opacity: 0.75;
+  color: #a0a5b5;
+  opacity: 0.8;
   letter-spacing: 0.5px;
 }
 
@@ -187,47 +198,91 @@ html,body{
   display: flex;
   align-items: baseline;
   justify-content: center;
-  font-family: var(--font-display);
-  color: var(--gold-hi);
-  text-shadow: 0 0 12px rgba(212, 175, 97, 0.35);
+  font-family: var(--font-display, 'Cinzel', serif);
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 0, 40, 0.7), 0 2px 4px #000;
   line-height: 1;
   margin-top: 4px;
 }
+
 .cash-dollar {
   font-size: 16px;
   font-weight: 700;
+  color: #ff2b43;
   margin-right: 1px;
 }
+
 .cash-whole {
-  font-size: 26px; /* Twice as tall as decimals */
+  font-size: 26px;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.5px;
 }
+
 .cash-point {
   font-size: 16px;
   font-weight: 700;
+  color: #ff2b43;
 }
+
 .cash-decimal {
   font-size: 13.5px;
   font-weight: 700;
+  color: #e5e7eb;
   letter-spacing: 0.3px;
 }
 
 /* Secondary Substats Row */
-.substats-row{
-  display:flex; align-items:center; gap:8px;
-  pointer-events:auto;
+.substats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  width: 100%;
+  margin-top: 6px;
+  box-sizing: border-box;
 }
-.player-chip{
-  display:flex; align-items:center; gap:6px;
-  background:rgba(22,32,47,0.85);
-  border:1px solid var(--line);
-  padding:4px 10px 4px 6px;
-  border-radius:999px;
+.sub-stat{
+  flex:1;
+  background: url('../assets/substat-chip.png') no-repeat center center / 100% 100%;
+  border:none;
+  border-radius:0;
+  padding:4px 6px;
+  text-align:center;
+}
+.sub-stat .stat-label{
+  display:block;
+  font-size:9px; letter-spacing:0.3px;
+  color:var(--text-dim);
+}
+.sub-stat .stat-value{
+  display:block;
+  font-family:var(--font-display);
   font-weight:700;
-  font-size:12px;
-  color:var(--parchment);
+  font-size:11px;
+  color:var(--gold-hi);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* 2. Player Chip (Avatar + Name on the left) */
+.player-chip {
+  background: url('../assets/substat-player-avatar.png') no-repeat center center / 100% 100%;
+  border: none !important;
+  border-radius: 0 !important;
+  height: 38px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  filter: drop-shadow(0 0 6px rgba(255, 0, 40, 0.3));
+}
+
+.player-chip span {
+  font-family: var(--font-display, 'Cinzel', serif);
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
 }
 #player-avatar{
   width:22px; height:22px; border-radius:50%;
@@ -290,27 +345,7 @@ html,body{
 .friendship-quest-box, .friendship-reward-box { background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-top:10px; }
 .friendship-quest-label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
 .friendship-reward-box { display:flex; align-items:center; justify-content:space-between; }
-.sub-stat{
-  flex:1;
-  background:rgba(22,32,47,0.85);
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:4px 6px;
-  text-align:center;
-}
-.sub-stat .stat-label{
-  display:block;
-  font-size:9px; letter-spacing:0.3px;
-  color:var(--text-dim);
-}
-.sub-stat .stat-value{
-  display:block;
-  font-family:var(--font-display);
-  font-weight:700;
-  font-size:11px;
-  color:var(--gold-hi);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
+
 .icon-btn{
   width:32px; height:32px; border-radius:8px;
   background:rgba(22,32,47,0.85);
@@ -410,10 +445,11 @@ html,body{
 .modal-card{
   position:relative;
   width:100%; max-width:440px;
-  background:linear-gradient(180deg, var(--panel) 0%, var(--ink-2) 100%);
-  border:1px solid var(--line);
+  background: url('../assets/modal-frame.png') no-repeat center center / 100% 100%,
+              linear-gradient(180deg, var(--panel) 0%, var(--ink-2) 100%);
+  border:none;
   border-bottom:none;
-  border-radius:22px 22px 0 0;
+  border-radius:0;
   padding:28px 22px max(28px, env(safe-area-inset-bottom));
   text-align:center;
   max-height:88vh; overflow-y:auto;
@@ -658,45 +694,71 @@ html,body{
   margin-bottom: 2px;
 }
 
+/* ===================== ACTIVE BOOST STATUS BADGE (CYBER CRIMSON) ===================== */
 .boost-timer-badge {
-  background: linear-gradient(90deg, #d4af61, #f0d38a);
-  color: #0d1420;
-  font-family: var(--font-display);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  
+  /* 1. Dark Crimson Translucent Glass */
+  background: linear-gradient(135deg, rgba(60, 6, 16, 0.92) 0%, rgba(20, 0, 5, 0.96) 100%);
+  
+  /* 2. Cyber Angled Chamfer Corners */
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  border-radius: 0 !important;
+  border: 1px solid #ff2a40;
+  
+  /* 3. Typography & Spacing */
+  color: #ff4757;
+  font-family: var(--font-display, 'Cinzel', serif);
   font-size: 10px;
   font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 999px;
-  box-shadow: 0 0 10px rgba(240, 211, 138, 0.8);
+  letter-spacing: 0.8px;
+  padding: 3px 12px 3px 10px;
+  
+  /* 4. Ambient Red Pulse */
+  box-shadow: 0 0 12px rgba(255, 0, 40, 0.5), inset 0 0 6px rgba(255, 0, 40, 0.3);
   animation: badgePulse 1.5s infinite alternate ease-in-out;
 }
 
-/* ---------- Electric Gold Glowing Active Boost State ---------- */
+/* The Live Countdown Numbers (Inside the badge) */
+.boost-timer-badge span,
+#boost-countdown {
+  font-family: monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.5px;
+}
+
+/* ===================== BOOST GLOW STATES ===================== */
 .hero-balance-card.boosted {
-  border: 1.5px solid #f0d38a;
-  box-shadow: 0 0 20px rgba(240, 211, 138, 0.6), inset 0 0 14px rgba(212, 175, 97, 0.4);
+  filter: drop-shadow(0 0 18px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 10px rgba(255, 0, 40, 0.6));
   animation: electricGlow 1.8s infinite alternate ease-in-out;
 }
-.hero-balance-card.boosted .hero-balance-value {
-  color: #fff9e6;
-  text-shadow: 0 0 16px rgba(240, 211, 138, 0.9), 0 0 24px rgba(79, 214, 196, 0.5);
+
+.hero-balance-card.super-50x {
+  filter: drop-shadow(0 0 26px rgba(255, 0, 40, 1)) !important;
+  animation: super50xShake 0.22s infinite linear !important;
+}
+
+/* ===================== ANIMATIONS & ACCESSIBILITY ===================== */
+@keyframes badgePulse {
+  0%   { transform: scale(0.97); opacity: 0.92; filter: brightness(0.95); }
+  100% { transform: scale(1.03); opacity: 1; filter: brightness(1.15); }
 }
 
 @keyframes electricGlow {
-  0% { box-shadow: 0 0 14px rgba(212, 175, 97, 0.5), inset 0 0 8px rgba(212, 175, 97, 0.3); }
-  50% { box-shadow: 0 0 26px rgba(240, 211, 138, 0.85), inset 0 0 18px rgba(79, 214, 196, 0.35); }
-  100% { box-shadow: 0 0 18px rgba(212, 175, 97, 0.6), inset 0 0 10px rgba(212, 175, 97, 0.4); }
-}
-
-@keyframes badgePulse {
-  0% { transform: scale(0.96); opacity: 0.9; }
-  100% { transform: scale(1.04); opacity: 1; }
+  0%   { filter: drop-shadow(0 0 10px rgba(255, 0, 40, 0.5)); }
+  50%  { filter: drop-shadow(0 0 22px rgba(255, 0, 40, 0.95)) drop-shadow(0 0 10px rgba(255, 200, 50, 0.5)); }
+  100% { filter: drop-shadow(0 0 10px rgba(255, 0, 40, 0.5)); }
 }
 
 /* ---------- Permanent Multiplier Floating Button ---------- */
 .multiplier-btn {
   position: absolute;
   left: 14px;
-  /* Floats cleanly above the Compass button, below the side stack */
   bottom: calc(122px + env(safe-area-inset-bottom));
   z-index: 22;
   display: flex;
@@ -745,7 +807,6 @@ html,body{
 }
 .booster-info-box strong { color: var(--parchment); }
 .booster-info-box .gold-text { color: var(--gold-hi); }
-
 /* ---------- Sonar Radar Expanding Pulse Waves ---------- */
 .radar-wave {
   transform-origin: center center;
@@ -4655,19 +4716,19 @@ button[aria-label="Close ad"],
   100% { transform: translate(0, 0) rotate(0deg); }
 }
 
-/* Fiery Red/Gold 50X Top Badge with Rapid Tremble */
+/* ===================== 50X SUPER BOOST OVERDRIVE ===================== */
 .boost-timer-badge.super-50x {
-  background: linear-gradient(90deg, #ff4757, #ff6b81, #f0d38a) !important;
-  color: #0d1420 !important;
-  font-weight: 900 !important;
-  box-shadow: 0 0 16px #ff4757, 0 0 24px #f0d38a !important;
+  background: linear-gradient(135deg, rgba(140, 10, 30, 0.95) 0%, rgba(240, 180, 50, 0.85) 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #f0d38a !important;
+  box-shadow: 0 0 18px #ff4757, 0 0 24px rgba(240, 211, 138, 0.8) !important;
   animation: badgePulse 0.9s infinite alternate ease-in-out, super50xShake 0.15s infinite linear !important;
 }
 
-/* Electric Crimson/Gold Glowing Hero Card */
+/* Hero Balance Card 50X State (Uses drop-shadow aura so it preserves your custom frame) */
 .hero-balance-card.super-50x {
-  border: 2px solid #ff4757 !important;
-  box-shadow: 0 0 26px rgba(255, 71, 87, 0.8), inset 0 0 18px rgba(240, 211, 138, 0.6) !important;
+  border: none !important;
+  filter: drop-shadow(0 0 26px rgba(255, 0, 40, 1)) drop-shadow(0 0 12px rgba(240, 211, 138, 0.8)) !important;
   animation: super50xShake 0.22s infinite linear !important;
 }
 
@@ -4676,7 +4737,7 @@ button[aria-label="Close ad"],
   text-shadow: 0 0 18px #ff4757, 0 0 28px #f0d38a !important;
 }
 
-/* Floating HUD 50X Event Button Glowing Red/Gold */
+/* Floating HUD 50X Event Button */
 .multiplier-btn.event-50x {
   border-color: #ff4757 !important;
   box-shadow: 0 0 22px rgba(255, 71, 87, 0.9), 0 0 12px #f0d38a !important;
@@ -4731,8 +4792,7 @@ button[aria-label="Close ad"],
   text-shadow: 0 0 10px rgba(79, 214, 196, 0.4);
 }
 
-/* ---------- 50X Accessibility: Calm Motion (No Shaking) ---------- */
-/* Hardened Calm Mode: Instantly kills all micro-tremble animations & transforms */
+/* Hardened Calm Mode (Accessibility: No Shaking) */
 body.no-shake .hero-balance-card,
 body.no-shake .hero-balance-card.super-50x,
 body.no-shake .boost-timer-badge,
@@ -4741,7 +4801,6 @@ body.no-shake .boost-timer-badge.super-50x {
   transform: none !important;
 }
 
-/* Automatic OS Reduced Motion Accessibility Support */
 @media (prefers-reduced-motion: reduce) {
   .boost-timer-badge.super-50x,
   .hero-balance-card.super-50x {
@@ -4781,7 +4840,7 @@ body.no-shake .boost-timer-badge.super-50x {
   .modal-card {
     max-width: 100% !important;
     padding: 20px 14px max(20px, env(safe-area-inset-bottom)) !important;
-    border-radius: 18px 18px 0 0 !important;
+    border-radius: 0 !important;
     max-height: 85vh !important;
   }
 
