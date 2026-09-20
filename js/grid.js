@@ -357,11 +357,10 @@ const Grid = (() => {
           onBuyAttempt(false, null);
           return;
         }
-        // Server approved — use server-computed plotData (server-authoritative rarity + territory)
+        // Server approved — apply authoritative results FIRST so a later
+        // decoration error can never undo the purchase or misreport failure.
         const serverPlotData = serverResult.plotData;
         const serverTid = serverResult.tid;
-
-        // Server now resolves territory via Nominatim — do NOT overwrite with client data
 
         // Use server-authoritative EB balance and cooldown timestamp
         if (typeof serverResult.nextEb === "number") state.eb = serverResult.nextEb;
@@ -370,37 +369,52 @@ const Grid = (() => {
         globalPlots[serverTid] = serverPlotData;
         Store.save(true);
 
-        // Declared outside the map-only block below — it's also needed for the feed broadcast.
-        const rarityLabel = CONFIG.PLOT_RARITIES.find(r => r.key === serverPlotData.rarity)?.label || serverPlotData.rarity;
-
-        if (typeof map !== "undefined" && map) {
-          const pt = map.project([centerLon, centerLat]);
-          const popup = document.createElement("div");
-          popup.className = "combat-text-popup";
-          popup.style.left = `${pt.x}px`;
-          popup.style.top = `${pt.y}px`;
-          popup.innerHTML = `+1 ${rarityLabel} Plot!`;
-          document.body.appendChild(popup);
-          setTimeout(() => popup.remove(), 1100);
-        }
-
-        if (typeof AntiCheat !== "undefined") AntiCheat.recordPurchase("land", serverTid);
-        if (typeof window.completeDailyQuest === "function") window.completeDailyQuest("survey");
         const rarityObj = CONFIG.PLOT_RARITIES.find(r => r.key === serverPlotData.rarity) || CONFIG.PLOT_RARITIES[0];
         onBuyAttempt(true, rarityObj);
         render();
 
-        if (typeof Leaderboard !== "undefined" && Leaderboard.invalidateCache) Leaderboard.invalidateCache();
-        if (typeof Leaderboard !== "undefined" && Leaderboard.awardTerritoryDividends) {
-          Leaderboard.awardTerritoryDividends(territory, state.player.id, CONFIG.PLOT_COST_EB);
+        // Feed post is its own isolated step — never skippable by other extras
+        try {
+          if (typeof Feed !== "undefined" && Feed.broadcast) {
+            Feed.broadcast("land", {
+              rarity: rarityObj.label || serverPlotData.rarity,
+              location: territory.city,
+              tileId: serverTid,
+            });
+          }
+        } catch (feedErr) {
+          console.warn("[Grid] Feed broadcast notice:", feedErr && feedErr.message);
         }
-        if (typeof Feed !== "undefined") {
-          Feed.broadcast("land", { rarity: rarityLabel, location: territory.city, tileId: serverTid });
+
+        // Non-critical extras — isolated so they can never fail the purchase
+        try {
+          const rarityLabel = rarityObj.label || serverPlotData.rarity;
+
+          if (typeof map !== "undefined" && map) {
+            const pt = map.project([centerLon, centerLat]);
+            const popup = document.createElement("div");
+            popup.className = "combat-text-popup";
+            popup.style.left = `${pt.x}px`;
+            popup.style.top = `${pt.y}px`;
+            popup.innerHTML = `+1 ${rarityLabel} Plot!`;
+            document.body.appendChild(popup);
+            setTimeout(() => popup.remove(), 1100);
+          }
+
+          if (typeof AntiCheat !== "undefined") AntiCheat.recordPurchase("land", serverTid);
+          if (typeof window.completeDailyQuest === "function") window.completeDailyQuest("survey");
+
+          if (typeof Leaderboard !== "undefined" && Leaderboard.invalidateCache) Leaderboard.invalidateCache();
+          if (typeof Leaderboard !== "undefined" && Leaderboard.awardTerritoryDividends) {
+            Leaderboard.awardTerritoryDividends(territory, state.player.id, CONFIG.PLOT_COST_EB);
+          }
+        } catch (extraErr) {
+          console.warn("[Grid] Post-purchase extras notice:", extraErr && extraErr.message);
         }
 
         return;
       } catch (e) {
-        console.warn("[Grid] Server validation failed:", e.message);
+        console.warn("[Grid] Server validation failed:", e && e.stack || e);
         if (typeof showToast === "function") showToast("⚠️ Land claim could not be verified. Try again.", 3500);
         onBuyAttempt(false, null);
         return;
