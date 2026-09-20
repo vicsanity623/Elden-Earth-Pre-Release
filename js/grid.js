@@ -329,6 +329,19 @@ const Grid = (() => {
     // 🛡️ SERVER-SIDE PURCHASE VALIDATION — authoritative check before any client write
     if (typeof ServerAntiCheat !== "undefined" && ServerAntiCheat.isReady() && playerCoords) {
       try {
+        // Force a fresh position ping so stationary players never hit
+        // "waiting for GPS lock" — the purchase itself re-verifies server-side.
+        if (ServerAntiCheat.sendPosition) {
+          await ServerAntiCheat.sendPosition({
+            latitude: playerCoords.lat,
+            longitude: playerCoords.lon,
+            accuracy: 10,
+            altitude: null,
+            speed: null,
+            altitudeAccuracy: null,
+            timestamp: Date.now(),
+          }, true);
+        }
         const serverResult = await ServerAntiCheat.validatePurchase(
           playerCoords.lat, playerCoords.lon, tx, ty, territory
         );
@@ -373,19 +386,8 @@ const Grid = (() => {
         onBuyAttempt(true, rarityObj);
         render();
 
-        // Feed post is its own isolated step — never skippable by other extras
-        try {
-          if (typeof Feed !== "undefined" && Feed.broadcast) {
-            Feed.broadcast("land", {
-              rarity: rarityObj.label || serverPlotData.rarity,
-              location: territory.city,
-              tileId: serverTid,
-            });
-          }
-        } catch (feedErr) {
-          console.warn("[Grid] Feed broadcast notice:", feedErr && feedErr.message);
-        }
-
+        // Feed broadcast + territory dividends are now server-authoritative
+        // (validatePurchase posts them), so the client no longer duplicates them.
         // Non-critical extras — isolated so they can never fail the purchase
         try {
           const rarityLabel = rarityObj.label || serverPlotData.rarity;
@@ -405,9 +407,6 @@ const Grid = (() => {
           if (typeof window.completeDailyQuest === "function") window.completeDailyQuest("survey");
 
           if (typeof Leaderboard !== "undefined" && Leaderboard.invalidateCache) Leaderboard.invalidateCache();
-          if (typeof Leaderboard !== "undefined" && Leaderboard.awardTerritoryDividends) {
-            Leaderboard.awardTerritoryDividends(territory, state.player.id, CONFIG.PLOT_COST_EB);
-          }
         } catch (extraErr) {
           console.warn("[Grid] Post-purchase extras notice:", extraErr && extraErr.message);
         }

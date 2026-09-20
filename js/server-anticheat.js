@@ -24,11 +24,11 @@ const ServerAntiCheat = (() => {
    * Send current GPS position to server for velocity validation.
    * Returns { valid, speed, reason, strikes } or null on failure.
    */
-  async function sendPosition(coords) {
+  async function sendPosition(coords, force = false) {
     if (!functions) return null;
 
     const now = Date.now();
-    if (now - lastServerSync < MIN_SYNC_INTERVAL_MS) return null;
+    if (!force && now - lastServerSync < MIN_SYNC_INTERVAL_MS) return null;
 
     lastServerSync = now;
 

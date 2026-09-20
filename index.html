@@ -533,7 +533,7 @@ Modern Extraction Model:
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.60b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.61b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -1592,6 +1592,12 @@ Modern Extraction Model:
 <!-- Service Worker Registration with Instant Auto-Update -->
 <script>
 if ('serviceWorker' in navigator) {
+  // Auto-reload when a new service worker takes control so stale open tabs
+  // can never keep running old game code after a deploy.
+  let swReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!swReloaded) { swReloaded = true; window.location.reload(); }
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then((reg) => {
