@@ -494,33 +494,164 @@ html,body{
   color:var(--parchment); font-size:14px; cursor:pointer;
 }
 
-/* ---------- Wheel ---------- */
-.wheel-wrap{
-  position:relative; width:320px; max-width:100%; margin:0 auto 20px;
-  display:flex; align-items:center; justify-content:center;
+/* ===================== DIAMOND WHEEL MODAL ===================== */
+.modal-card.wheel-card {
+  max-height: 88vh !important;
+  width: 95vw !important;
+  max-width: 420px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  padding: 20px 16px 28px 16px !important;
+  
+  /* CRITICAL FOR INTERNAL SCROLLING */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
 }
-.wheel-pointer{
-  position:absolute; top:-6px; left:50%; transform:translateX(-50%);
-  color:var(--gold-hi); font-size:22px; z-index:2;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+
+/* Header & Subtitle */
+.wheel-card h2 {
+  margin: 0 auto 2px auto;
+  text-align: center;
+  flex-shrink: 0;
 }
-#wheel-canvas{ max-width:100%; height:auto; }
-.wheel-balance{
-  position:absolute; top:10px; left:10px; z-index:10; display:flex; gap:6px; align-items:center;
-  font-family:var(--font-display); color:var(--gold-hi);
+
+.wheel-card .modal-sub {
+  margin: 0 auto 10px auto;
+  text-align: center;
+  flex-shrink: 0;
 }
-.wheel-balance .wheel-diamonds{
-  display:flex; align-items:center; gap:2px;
+
+/* Live Balances in Wheel */
+.wheel-balance-bar {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 12px !important;
+  max-width: 270px !important;
+  flex-shrink: 0;
 }
-.wheel-balance .wheel-eb{
-  display:flex; align-items:center; gap:2px;
+
+.wheel-chip {
+  flex: 1;
+  background: var(--panel-2);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 6px 10px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
-.wheel-result{
-  min-height:20px; 
-  font-weight:700; 
+
+.wheel-chip.eb-chip {
+  border-color: rgba(255, 43, 67, 0.4);
+}
+
+.wheel-chip.diamond-chip {
+  border-color: rgba(255, 23, 68, 0.5);
+}
+
+.wheel-chip-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wheel-chip-val {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.wheel-chip.eb-chip .wheel-chip-val {
+  color: var(--gold-hi);
+}
+
+.wheel-chip.diamond-chip .wheel-chip-val {
+  color: #ff1744;
+  text-shadow: 0 0 8px rgba(255, 23, 68, 0.6);
+}
+
+/* Wheel Canvas Scaling (Portrait Default) */
+.wheel-wrap {
+  position: relative;
+  width: 240px !important;
+  max-width: 75vw !important;
+  margin: 0 auto 12px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--gold-hi);
+  font-size: 22px;
+  z-index: 2;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+#wheel-canvas {
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+/* Spin Button & Result */
+#spin-btn {
+  flex-shrink: 0;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.wheel-result {
+  min-height: 20px;
+  font-weight: 700;
   color: #ff3344;
-  font-size:15px;
+  font-size: 14px;
   text-shadow: 0 0 8px rgba(255, 0, 40, 0.4);
+  margin-top: 8px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+/* Landscape & Short Screens Responsiveness */
+@media (max-height: 540px) {
+  .wheel-wrap {
+    width: 160px !important;            /* Scales down nicely in landscape */
+    margin: 4px auto !important;
+  }
+  .wheel-balance-bar {
+    margin: 0 auto 6px !important;
+    transform: scale(0.85);
+  }
+  #spin-btn {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* Red Cyberpunk Scrollbar */
+.modal-card.wheel-card::-webkit-scrollbar {
+  width: 4px;
+}
+.modal-card.wheel-card::-webkit-scrollbar-track {
+  background: rgba(13, 20, 32, 0.6);
+}
+.modal-card.wheel-card::-webkit-scrollbar-thumb {
+  background: #ff1744;
+  border-radius: 4px;
+  box-shadow: 0 0 6px #ff002b;
 }
 
 /* ---------- Live Balances in Diamond Wheel Modal ---------- */
@@ -4096,7 +4227,51 @@ button[aria-label="Close ad"],
 @keyframes coreFloat { 0% { transform: translate(-50%, 0px); } 100% { transform: translate(-50%, -4px); } }
 
 /* ---------- Citadel Holographic Chamber Modal (Restored True 3D Sphere) ---------- */
-.citadel-chamber-card { max-width: 420px; }
+.citadel-chamber-card {
+  max-height: 88vh !important;       /* Fits cleanly inside mobile viewports */
+  display: flex !important;
+  flex-direction: column !important; /* Stacks header, content, and buttons */
+  overflow: hidden !important;       /* Prevents the card from expanding outside */
+  box-sizing: border-box !important;
+  padding-bottom: 12px !important;
+}
+
+/* 2. Make the middle content area scrollable */
+.citadel-chamber-card .citadel-stats-box,
+.citadel-chamber-card .citadel-hold-balance,
+.citadel-chamber-card .citadel-guide-box,
+.citadel-chamber-card .dyson-stage,
+.citadel-chamber-card .citadel-dyson-stage {
+  flex-shrink: 0;
+}
+
+.citadel-chamber-card {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 4. Ensure the action buttons don't get squished and have padding at the bottom */
+.citadel-chamber-card .modal-actions {
+  flex-shrink: 0;
+  margin-top: 14px;
+  padding-bottom: 20px;              /* Extra room above the bottom red border */
+}
+
+/* 5. Sleek Red Scrollbar for Citadel Modal */
+.citadel-chamber-card::-webkit-scrollbar {
+  width: 5px;
+}
+
+.citadel-chamber-card::-webkit-scrollbar-track {
+  background: rgba(13, 20, 32, 0.6);
+  border-radius: 4px;
+}
+
+.citadel-chamber-card::-webkit-scrollbar-thumb {
+  background: #ff1744;
+  border-radius: 4px;
+}
+
 .citadel-badge-pill {
   font-size: 10px;
   font-weight: 800;
@@ -5018,42 +5193,6 @@ body.no-shake .boost-timer-badge.super-50x {
 
   .rarity-badge .badge-num {
     font-size: 14px !important;
-  }
-
-  /* Spin Wheel Responsive Scaling */
-  .wheel-card {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-  }
-
-  .wheel-wrap {
-    width: min(250px, 72vw) !important;
-    max-width: 100% !important;
-    margin: 0 auto 14px !important;
-  }
-
-  #wheel-canvas {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-  }
-
-  .wheel-balance-bar {
-    max-width: 250px !important;
-    gap: 8px !important;
-    margin: -4px auto 12px !important;
-  }
-
-  .wheel-chip {
-    padding: 4px 8px !important;
-  }
-
-  .wheel-chip-label {
-    font-size: 9px !important;
-  }
-
-  .wheel-chip-val {
-    font-size: 12px !important;
   }
 
   /* Land Modal / Stats Responsiveness */

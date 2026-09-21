@@ -84,7 +84,15 @@ const WeeklyPool = (() => {
       }
     });
 
-    const weeklyPool = totalGlobalRent * 0.01; // 1% of this period's rent!
+    let weeklyPool = totalGlobalRent * 0.01;
+
+    // 🛡️ GUARANTEED TREASURY SEED:
+    // Ensure the pool never drops below a minimum threshold ($0.05)
+    // so top landlords always receive a tangible cash reward!
+    const MINIMUM_WEEKLY_TREASURY = 0.05;
+    if (weeklyPool < MINIMUM_WEEKLY_TREASURY) {
+      weeklyPool = MINIMUM_WEEKLY_TREASURY;
+    }
 
     // Top 10 sorted by plots + lifetimeRent
     const sortedTop10 = [...players].sort((a, b) => {
@@ -123,16 +131,24 @@ const WeeklyPool = (() => {
       else if (myRank === 2) sharePct = 0.15; // 2nd gets 15%
       else if (myRank === 3) sharePct = 0.10; // 3rd gets 10%
 
+      // Calculate share from weekly pool
       pendingRewardAmount = weeklyPool * sharePct;
 
-      // Show Celebration Modal
+      // Minimum floor check
+      if (pendingRewardAmount < 0.001) {
+        pendingRewardAmount = Math.max(0.005, 0.05 * sharePct);
+      }
+
+      // Grab the modal DOM elements
       const rankBadgeEl = document.getElementById("reward-user-rank");
       const cashValEl = document.getElementById("reward-user-cash");
       const modalEl = document.getElementById("weekly-reward-modal");
 
       const rankIcon = myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : "🏅";
       if (rankBadgeEl) rankBadgeEl.textContent = `${rankIcon} Rank #${myRank} Global Landlord`;
-      if (cashValEl) cashValEl.textContent = `+$${pendingRewardAmount.toFixed(6)}`;
+      if (cashValEl) {
+        cashValEl.textContent = `+$${pendingRewardAmount >= 0.01 ? pendingRewardAmount.toFixed(4) : pendingRewardAmount.toFixed(6)}`;
+      }
 
       if (modalEl) modalEl.classList.remove("hidden");
     }
