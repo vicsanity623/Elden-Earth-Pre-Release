@@ -5915,82 +5915,59 @@ body.no-shake .boost-timer-badge.super-50x {
 .elden-stop-marker.far .elden-core-coin { width: 16px; height: 16px; }
 .elden-stop-marker.far .elden-disc-core { inset: 7px; }
 
-/* ---------- Disc Spinner Overlay (transparent — 3D map stays visible) ---------- */
+/* ---------- Disc Spinner Overlay (bottom-center modal matching game UI) ---------- */
 .elden-overlay {
   position: fixed;
   inset: 0;
   z-index: 25; /* Below .modal (z-30) so the Lucky Plot jackpot renders above the disc */
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   pointer-events: none; /* transparent cinematic — taps pass through to map */
-  background: radial-gradient(ellipse at 50% 50%, rgba(13, 20, 32, 0.3) 0%, transparent 70%);
+  background: rgba(6, 10, 16, 0.4);
   touch-action: none; /* Block double-tap zoom during cinematic */
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
 }
 
-.elden-overlay-top {
+.elden-stop-modal {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: url('../assets/modal-frame.png') no-repeat center center / 100% 100%,
+              linear-gradient(180deg, var(--panel) 0%, var(--ink-2) 100%);
+  border: none;
+  border-radius: 0;
+  padding: 28px 22px max(28px, env(safe-area-inset-bottom));
+  text-align: center;
+  pointer-events: auto;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.elden-stop-modal .close-btn {
   position: absolute;
-  top: 80px; /* Below the top bar */
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  pointer-events: none;
-  z-index: 26;
-}
-.elden-stop-nameplate {
-  pointer-events: auto;
-  background: linear-gradient(180deg, rgba(13, 20, 32, 0.95), rgba(13, 20, 32, 0.85));
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 10px 14px;
-  max-width: 70vw;
-  box-shadow: 0 0 18px rgba(255, 23, 68, 0.25);
-}
-.elden-stop-nameplate h3 {
-  margin: 0 0 4px;
-  font-family: var(--font-display);
-  font-size: 14px;
-  color: #ffd7de;
-  letter-spacing: 0.5px;
-}
-.elden-stop-nameplate p {
-  margin: 0;
-  font-size: 10px;
-  color: var(--text-dim);
-}
-.elden-beacon-badge {
-  background: rgba(255, 23, 68, 0.15) !important;
-  border-color: #ff1744 !important;
-  color: #ff8a9a !important;
-}
-.elden-overlay-top .close-btn {
-  pointer-events: auto;
+  top: 16px;
+  right: 16px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(13, 20, 32, 0.9);
+  background: var(--panel-2);
   border: 1px solid var(--line);
-  color: #fff;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--parchment);
+  font-size: 14px;
   cursor: pointer;
-  flex-shrink: 0;
+  z-index: 10;
 }
 
 .elden-disc-stage {
   position: relative;
-  perspective: 800px; /* 3D tilt lives ONLY in this fixed-DOM stage (like .citadel-dyson-stage), never in map markers */
+  perspective: 800px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 20px;
+  padding: 20px 0;
+  min-height: 200px;
 }
 
 /* Large spinnable disc */
@@ -6055,6 +6032,30 @@ body.no-shake .boost-timer-badge.super-50x {
   font-weight: 700;
   text-shadow: 0 0 6px #a855f7;
   box-shadow: 0 0 16px rgba(138, 43, 226, 0.45);
+}
+
+/* Nameplate at the bottom of the modal */
+.elden-stop-nameplate {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.elden-stop-nameplate h3 {
+  margin: 8px 0 4px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--gold-hi);
+  letter-spacing: 0.5px;
+}
+.elden-stop-nameplate p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.elden-beacon-badge {
+  background: rgba(255, 23, 68, 0.15) !important;
+  border-color: #ff1744 !important;
+  color: #ff8a9a !important;
 }
 
 /* ---------- Lucky Land Plot Jackpot Modal ---------- */
