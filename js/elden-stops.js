@@ -276,7 +276,8 @@ const EldenStops = (() => {
     const subEl = document.getElementById("elden-stop-sub");
     if (titleEl) titleEl.textContent = stop.poiName || "Elden Stop";
     if (subEl) {
-      const kind = String(stop.poiKind || "").split("=")[1] || "landmark";
+      const isEstate = String(stop.poiKind || "") === "legendary_estate";
+      const kind = isEstate ? "legendary estate 👑" : (String(stop.poiKind || "").split("=")[1] || "landmark");
       const by = stop.creatorName ? ` · planted by ${stop.creatorName}` : "";
       subEl.textContent = `⚓ ${kind.replace(/_/g, " ")}${by}`;
     }
