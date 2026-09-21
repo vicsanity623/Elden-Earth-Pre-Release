@@ -4,7 +4,7 @@
 // ============================================================
 const CONFIG = {
   // --- Game Version (bump on every patch to auto-wipe stale localStorage) ---
-  GAME_VERSION: "0.1.10.00",
+  GAME_VERSION: "0.1.10.01",
 
   // --- Realm Server Epoch ---
   // Bump this timestamp whenever you intentionally wipe the Firestore database.
@@ -114,6 +114,7 @@ const CONFIG = {
   ],
   
   // --- Elden Stops (Dyson Disc Beacons) ---
+  ELDEN_STOP_GROWTH_MS: 30 * 60 * 1000,         // 30-minute construction phase before spin-ready
   ELDEN_STOP_COOLDOWN_MS: 15 * 60 * 1000,        // 15-minute PokéStop-style recharge
   ELDEN_STOP_SPIN_RADIUS_METERS: 75,             // Must walk within 75m to spin
   ELDEN_STOP_VISIBILITY_METERS: 1500,            // Beacon culling range on the map

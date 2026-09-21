@@ -17,9 +17,26 @@ const EldenStops = (() => {
   let spinTimeout = null;
   let lastRenderPos = null;
   let lastPosUpdate = 0;
+  let announcedBuilds = {};
+  const justActivated = new Set();
 
   const COOLDOWN_MS = () => CONFIG.ELDEN_STOP_COOLDOWN_MS || 15 * 60 * 1000;
   const SPIN_RADIUS = () => CONFIG.ELDEN_STOP_SPIN_RADIUS_METERS || 75;
+
+  // ---------------- CONSTRUCTION PHASE (Citadel-style growth timer) ----------------
+  function buildFinish(stop) {
+    return Number(stop && stop.constructionFinish) || 0;
+  }
+
+  function isConstructing(stop) {
+    const f = buildFinish(stop);
+    return f > Date.now();
+  }
+
+  function formatCountdown(ms) {
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }
 
   // ---------------- COOLDOWN CACHE (UI mirror; server is authoritative) ----------------
   function getReadyAt(stopId) {
@@ -58,22 +75,44 @@ const EldenStops = (() => {
   // ---------------- MAP MARKERS ----------------
   function createStopElement(stop, near, cooling) {
     const el = document.createElement("div");
-    el.className = "elden-stop-marker" + (near ? "" : " far") + (cooling ? " cooling" : "");
+    const building = isConstructing(stop);
+    el.className = "elden-stop-marker" + (near ? "" : " far") + (cooling ? " cooling" : "") + (building ? " building" : "");
+    el.dataset.stage = building ? "build" : "ready";
 
-    const ruby = (cls, ch) => `<span class="elden-ruby ${cls}">${ch}</span>`;
-    el.innerHTML = `
-      <div class="elden-beam"></div>
-      <div class="elden-stop-disc" data-stop="${stop.id}">
-        <div class="elden-ring elden-ring-a"></div>
-        <div class="elden-ring elden-ring-b"></div>
-        <div class="elden-disc-core">
-          <img src="assets/eb-coin.png" alt="" class="elden-core-coin">
-          ${ruby("r1", "◆")}${ruby("r2", "◆")}${ruby("r3", "◆")}${ruby("r4", "◆")}
+    if (building) {
+      // 🏗️ CONSTRUCTION VIEW — holographic billboard + live growth countdown
+      el.innerHTML = `
+        <div class="elden-construct-anchor">
+          <div class="elden-construct-pulse"></div>
+          <div class="elden-construct-beam"></div>
+          <div class="elden-construct-billboard">
+            <div class="elden-construct-name">${stop.poiName || "Elden Stop"}</div>
+            <div class="elden-construct-timer">⏳ <span class="elden-construct-countdown" data-finish="${buildFinish(stop)}">${formatCountdown(buildFinish(stop) - Date.now())}</span></div>
+            <span class="elden-construct-label">CONSTRUCTING</span>
+          </div>
         </div>
-        <div class="cooldown-timer-overlay">${cooling ? formatCooldown(stop.id) : ""}</div>
-      </div>
-      <div class="elden-stop-plate">${stop.poiName || "Elden Stop"}</div>
-    `;
+      `;
+    } else {
+      // 🌟 ACTIVE VIEW — crimson Dyson Disc beacon
+      const ruby = (cls, ch) => `<span class="elden-ruby ${cls}">${ch}</span>`;
+      if (justActivated.has(stop.id)) {
+        el.classList.add("just-built");
+        setTimeout(() => justActivated.delete(stop.id), 4000);
+      }
+      el.innerHTML = `
+        <div class="elden-beam"></div>
+        <div class="elden-stop-disc" data-stop="${stop.id}">
+          <div class="elden-ring elden-ring-a"></div>
+          <div class="elden-ring elden-ring-b"></div>
+          <div class="elden-disc-core">
+            <img src="assets/eb-coin.png" alt="" class="elden-core-coin">
+            ${ruby("r1", "◆")}${ruby("r2", "◆")}${ruby("r3", "◆")}${ruby("r4", "◆")}
+          </div>
+          <div class="cooldown-timer-overlay">${cooling ? formatCooldown(stop.id) : ""}</div>
+        </div>
+        <div class="elden-stop-plate">${stop.poiName || "Elden Stop"}</div>
+      `;
+    }
 
     el.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -119,9 +158,10 @@ const EldenStops = (() => {
 
       if (markers[sid]) {
         const el = markers[sid].getElement();
+        const stageNow = isConstructing(stop) ? "build" : "ready";
         const wasFar = el ? el.classList.contains("far") : true;
-        // Rebuild DOM when the LOD tier flips so animation load toggles cleanly
-        if (wasFar === near) {
+        // Rebuild DOM when the LOD tier or construction stage flips
+        if (el && (el.dataset.stage !== stageNow || wasFar === near)) {
           markers[sid].remove();
           delete markers[sid];
         }
@@ -214,6 +254,11 @@ const EldenStops = (() => {
   function openStopSession(stopId) {
     const stop = globalStops[stopId];
     if (!stop || !map) return;
+
+    if (isConstructing(stop)) {
+      if (typeof showToast === "function") showToast(`🏗️ Under construction — this beacon comes online in ${formatCountdown(buildFinish(stop) - Date.now())}!`, 3500);
+      return;
+    }
 
     if (!playerPos || Geo.haversine(playerPos.lat, playerPos.lon, Number(stop.lat), Number(stop.lon)) > SPIN_RADIUS()) {
       if (typeof showToast === "function") showToast("🚶 Walk closer to commune with that Elden Stop!", 3000);
@@ -377,6 +422,11 @@ const EldenStops = (() => {
         if (result && result.reason === "cooldown") {
           if (result.readyAt) setReadyAt(stopId, result.readyAt);
           if (typeof showToast === "function") showToast(result.message || "⏳ This Elden Stop is recharging.", 3500);
+        } else if (result && result.reason === "under_construction") {
+          const stop = globalStops[stopId];
+          if (stop && result.waitMs) stop.constructionFinish = Date.now() + Number(result.waitMs);
+          if (typeof showToast === "function") showToast(result.message || "🏗️ This Elden Stop is still under construction.", 3500);
+          renderAll();
         } else if (result && result.reason === "too_far") {
           if (typeof showToast === "function") showToast("🚶 Too far away — stand beside the beacon to spin.", 3000);
         } else if (result && result.reason === "no_position") {
@@ -631,7 +681,7 @@ const EldenStops = (() => {
     if (typeof Feed !== "undefined") {
       Feed.broadcast("elden_stop_planted", { name: (result.stop && result.stop.poiName) || "a landmark" });
     }
-    toast("🗼 Elden Stop planted! A new Dyson Beacon rises over the realm.", 4000);
+    toast("🏗️ Beacon seed took root — construction begins! Your Dyson Disc comes online in 30 minutes.", 4500);
     renderAll();
     return true;
   }
@@ -649,14 +699,33 @@ const EldenStops = (() => {
     document.getElementById("claim-lucky-plot-btn")?.addEventListener("click", closeLuckyPlotModal);
     document.getElementById("lucky-plot-close")?.addEventListener("click", closeLuckyPlotModal);
 
-    // 1-second recharge ticker: purple → crimson transitions & countdown text
+    // 1-second ticker: recharge countdowns (purple → crimson) + construction growth
     setInterval(() => {
       if (document.hidden) return;
       const now = Date.now();
+      let needsRender = false;
+
       for (const sid in markers) {
+        const stop = globalStops[sid];
+        if (stop && buildFinish(stop) > now) {
+          // Tick the construction billboard countdown
+          const cd = markers[sid].getElement() && markers[sid].getElement().querySelector(".elden-construct-countdown");
+          if (cd) cd.textContent = formatCountdown(buildFinish(stop) - now);
+        } else if (stop && buildFinish(stop) > 0 && !announcedBuilds[sid]) {
+          // 🏗️ → 🗼 Growth complete: promote to a live Dyson Disc beacon!
+          announcedBuilds[sid] = true;
+          justActivated.add(sid);
+          needsRender = true;
+          if (playerPos && Geo.haversine(playerPos.lat, playerPos.lon, Number(stop.lat), Number(stop.lon)) <= 150) {
+            if (typeof showToast === "function") showToast(`🗼 ${stop.poiName || "Elden Stop"} is ONLINE — spin the Dyson Disc!`, 4500);
+          }
+        }
+
         const readyAt = getReadyAt(sid);
         if (readyAt > 0 && readyAt < now + COOLDOWN_MS()) refreshStopVisual(sid);
       }
+
+      if (needsRender) renderAll();
       syncOverlayCooldown();
     }, 1000);
   }

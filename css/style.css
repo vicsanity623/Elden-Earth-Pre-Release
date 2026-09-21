@@ -6031,3 +6031,110 @@ body.no-shake .boost-timer-badge.super-50x {
   border-color: var(--legendary) !important;
   box-shadow: 0 0 52px rgba(224, 168, 79, 0.65), 0 0 140px rgba(224, 168, 79, 0.3) !important;
 }
+
+/* ---------- Construction Phase (Citadel-style growth billboard) ---------- */
+.elden-stop-marker.building { width: 96px; height: 120px; }
+.elden-construct-anchor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Pulsing scaffold ring on the ground tile */
+.elden-construct-pulse {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 44px;
+  height: 16px;
+  margin-left: -22px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 23, 68, 0.75);
+  box-shadow: 0 0 12px rgba(255, 23, 68, 0.5);
+  animation: eldenScaffoldPulse 1.8s ease-in-out infinite;
+}
+@keyframes eldenScaffoldPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.35); opacity: 1; }
+}
+
+/* Amber construction laser lifting the beacon into existence */
+.elden-construct-beam {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  width: 4px;
+  height: 58px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(255, 23, 68, 0) 0%, rgba(255, 138, 154, 0.9) 60%, #ffd7de 100%);
+  filter: blur(0.5px);
+  animation: eldenWeldFlicker 0.9s steps(2, end) infinite;
+}
+@keyframes eldenWeldFlicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* Floating holographic billboard card */
+.elden-construct-billboard {
+  position: absolute;
+  bottom: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 104px;
+  max-width: 150px;
+  padding: 6px 10px;
+  text-align: center;
+  background: rgba(13, 20, 32, 0.93);
+  border: 1.5px solid #ff1744;
+  border-radius: 9px;
+  box-shadow: 0 0 16px rgba(255, 0, 40, 0.65), 0 4px 10px rgba(0, 0, 0, 0.8);
+  animation: eldenBillboardHover 2.4s ease-in-out infinite;
+}
+@keyframes eldenBillboardHover {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
+}
+.elden-construct-name {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.elden-construct-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 2px 8px;
+  border: 1px solid #ff1744;
+  border-radius: 20px;
+  background: rgba(255, 23, 68, 0.18);
+  color: #fca5a5;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.elden-construct-label {
+  display: block;
+  margin-top: 3px;
+  font-size: 8px;
+  letter-spacing: 1.4px;
+  color: var(--text-dim);
+}
+.elden-stop-marker.building.far { width: 64px; height: 84px; }
+.elden-stop-marker.building.far .elden-construct-billboard { transform: translateX(-50%) scale(0.78); transform-origin: bottom center; }
+
+/* Golden activation burst when the beacon goes ONLINE */
+.elden-stop-marker.just-built .elden-stop-disc {
+  animation: eldenBuiltBurst 1.6s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes eldenBuiltBurst {
+  0% { transform: scale(0.4); filter: drop-shadow(0 0 30px #ffd700) brightness(2.4); }
+  55% { transform: scale(1.25); filter: drop-shadow(0 0 22px rgba(255, 23, 68, 0.95)) brightness(1.4); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 16px rgba(255, 0, 40, 0.85)); }
+}
