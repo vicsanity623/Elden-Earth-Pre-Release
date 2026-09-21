@@ -96,13 +96,14 @@ const Referrals = (() => {
     state.player.referredBy = referrerId;
     state.player.referredByName = referrerData.name || "Unknown";
     Store.save(true);
+    // Push through the authoritative syncSafeState callable immediately —
+    // direct client writes to `saves` are blocked by Firestore rules, and the
+    // debounced background sync can lag far behind the player's first purchase,
+    // silently losing the +1 EB-per-plot royalty link.
     try {
-      await d.collection("saves").doc(id).set({
-        player: { referredBy: referrerId, referredByName: referrerData.name || "Unknown" },
-        referredBy: referrerId
-      }, { merge: true });
+      if (typeof Store.syncSafeStateToCloud === "function") await Store.syncSafeStateToCloud();
     } catch (e) {
-      console.warn("[Referrals] Cloud save error:", e);
+      console.warn("[Referrals] Cloud sync error:", e);
     }
 
     const input = document.getElementById("referral-code-input");

@@ -219,7 +219,7 @@ const ServerAntiCheat = (() => {
     if (!functions) return { claimed: false, reason: "not_ready" };
     try {
       const fn = functions.httpsCallable("claimReferralBonuses");
-      return await fn();
+      return (await fn()).data;
     } catch (e) {
       console.warn("[AntiCheat] claimReferralBonuses error:", e);
       return { claimed: false, reason: e.message };
@@ -230,7 +230,7 @@ const ServerAntiCheat = (() => {
     if (!functions) return { totalRoyalty: 0, referralCount: 0 };
     try {
       const fn = functions.httpsCallable("claimReferralRoyalties");
-      return await fn();
+      return (await fn()).data;
     } catch (e) {
       console.warn("[AntiCheat] claimReferralRoyalties error:", e);
       return { totalRoyalty: 0, referralCount: 0 };
