@@ -2186,9 +2186,9 @@ html,body{
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: radial-gradient(circle, #4fd6c4 0%, #0d1420 80%);
-  border: 2px solid #4fd6c4;
-  box-shadow: 0 0 16px rgba(79, 214, 196, 0.8), 0 0 6px rgba(255, 255, 255, 0.6);
+  background: radial-gradient(circle, #ff2b43 0%, #0d1420 80%);
+  border: 2px solid #ff5566;
+  box-shadow: 0 0 16px rgba(255, 43, 67, 0.5), 0 0 6px rgba(255, 255, 255, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2198,8 +2198,8 @@ html,body{
 }
 
 @keyframes extractorPulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 12px rgba(79, 214, 196, 0.6); }
-  100% { transform: scale(1.1); box-shadow: 0 0 24px rgba(79, 214, 196, 1); }
+  0% { transform: scale(0.95); box-shadow: 0 0 12px rgba(255, 43, 67, 0.6); }
+  100% { transform: scale(1.1); box-shadow: 0 0 24px rgba(255, 43, 67, 1); }
 }
 
 /* ---------- Extractor Modal ---------- */
@@ -2533,8 +2533,8 @@ html,body{
   width: 24px;
   height: 10px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(79, 214, 196, 0.8) 0%, transparent 75%);
-  box-shadow: 0 0 12px rgba(79, 214, 196, 0.9);
+  background: radial-gradient(ellipse, rgba(255, 23, 68, 0.9) 0%, transparent 75%);
+  box-shadow: 0 0 12px rgba(255, 23, 68, 0.9);
   animation: groundRunePulse 2s infinite alternate ease-in-out;
 }
 
@@ -2545,7 +2545,7 @@ html,body{
   height: 28px;
   z-index: 2;
   animation: beaconGemFloat 2.2s infinite alternate ease-in-out;
-  filter: drop-shadow(0 0 8px rgba(79, 214, 196, 0.9));
+  filter: drop-shadow(0 0 4px rgba(255, 23, 68, 0.9));
 }
 .beacon-svg {
   width: 100%;
@@ -2561,22 +2561,22 @@ html,body{
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1.5px solid rgba(79, 214, 196, 0.85);
-  box-shadow: 0 0 8px rgba(79, 214, 196, 0.6);
+  border: 1.5px solid rgba(255, 23, 68, 0.9);
+  box-shadow: 0 0 4px rgba(255, 23, 68, 0.9);
   pointer-events: none;
 }
 
 .orbit-ring.ring-1 {
   transform: rotateX(65deg) rotateZ(0deg);
   animation: orbitSpin1 3.5s linear infinite;
-  border-color: #4fd6c4;
+  border-color: #ff5566;
 }
 
 .orbit-ring.ring-2 {
   transform: rotateX(65deg) rotateY(40deg) rotateZ(0deg);
   animation: orbitSpin2 4.5s linear infinite reverse;
   border-color: #ff5566;
-  box-shadow: 0 0 8px rgba(240, 211, 138, 0.7);
+  box-shadow: 0 0 4px rgba(255, 23, 68, 0.9);
   width: 28px;
   height: 28px;
   left: 8px;
@@ -2864,9 +2864,9 @@ html,body{
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 1.5px dashed #4fd6c4;
+  border: 1.5px dashed #e85f6a;
   background: radial-gradient(circle, rgba(79, 214, 196, 0.04) 0%, rgba(79, 214, 196, 0.01) 80%, transparent 100%);
-  box-shadow: 0 0 10px rgba(79, 214, 196, 0.2);
+  box-shadow: 0 0 10px rgba(232, 95, 106, 0.2);
 }
 
 /* Continuous Expanding Shockwaves */
@@ -2875,8 +2875,8 @@ html,body{
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 2px solid #4fd6c4;
-  background: radial-gradient(circle, rgba(79, 214, 196, 0.25) 0%, transparent 70%);
+  border: 2px solid #e85f6a;
+  background: radial-gradient(circle, rgba(232, 95, 106, 0.25) 0%, transparent 70%);
   animation: sonarPulse3D 3s cubic-bezier(0.2, 0.65, 0.35, 1) infinite;
 }
 
@@ -3097,7 +3097,7 @@ html,body{
 .cal-status-claimed {
   font-size: 12px;
   font-weight: 700;
-  color: #4fd6c4;
+  color: #e85f6a;
 }
 
 .cal-status-locked {
@@ -3507,7 +3507,7 @@ html,body{
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 2px solid #4fd6c4;
+  border: 2px solid #e85f6a;
   background: radial-gradient(circle, rgba(79, 214, 196, 0.2) 0%, transparent 70%);
   animation: gpuSonarRipple 3.2s cubic-bezier(0.18, 0.7, 0.35, 1) infinite;
   will-change: transform, opacity;
@@ -4079,8 +4079,8 @@ button[aria-label="Close ad"],
   width: 26px;
   height: 10px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, var(--r-color, #4fd6c4) 0%, transparent 75%);
-  box-shadow: 0 0 12px var(--r-color, #4fd6c4);
+  background: radial-gradient(ellipse, var(--r-color, #e85f6a) 0%, transparent 75%);
+  box-shadow: 0 0 12px var(--r-color, #e85f6a);
   animation: groundRunePulse 2s infinite alternate ease-in-out;
 }
 
@@ -4092,9 +4092,9 @@ button[aria-label="Close ad"],
   transform: translateX(-50%);
   width: 2.5px;
   height: 28px;
-  background: linear-gradient(to top, var(--r-color, #4fd6c4), rgba(240, 211, 138, 0.95));
+  background: linear-gradient(to top, var(--r-color, #e85f6a), rgba(240, 211, 138, 0.95));
   border-radius: 1.5px;
-  box-shadow: 0 0 8px var(--r-color, #4fd6c4);
+  box-shadow: 0 0 8px var(--r-color, #e85f6a);
 }
 
 /* Seed Core elevated to +36px */
@@ -4104,7 +4104,7 @@ button[aria-label="Close ad"],
   left: 50%;
   transform: translateX(-50%);
   font-size: 22px;
-  filter: drop-shadow(0 0 12px var(--r-color, #4fd6c4));
+  filter: drop-shadow(0 0 12px var(--r-color, #e85f6a));
   animation: coreFloat 2s infinite alternate ease-in-out;
   line-height: 1;
 }
@@ -4116,14 +4116,14 @@ button[aria-label="Close ad"],
   left: 50%;
   transform: translateX(-50%);
   background: rgba(13, 20, 32, 0.95);
-  border: 1px solid var(--r-color, #4fd6c4);
+  border: 1px solid var(--r-color, #e85f6a);
   color: var(--gold-hi);
   font-size: 9.5px;
   font-weight: 800;
   padding: 2.5px 8px;
   border-radius: 999px;
   white-space: nowrap;
-  box-shadow: 0 0 12px var(--r-color, #4fd6c4);
+  box-shadow: 0 0 12px var(--r-color, #e85f6a);
   letter-spacing: 0.3px;
   animation: boostPulse 2s infinite ease-in-out;
 }
@@ -4144,16 +4144,16 @@ button[aria-label="Close ad"],
   width: 44px;
   height: 12px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(0,0,0,0.9) 0%, transparent 75%);
-  box-shadow: 0 0 10px var(--core-color, #4fd6c4);
+  background: radial-gradient(ellipse at center, rgba(255, 0, 40, 0.7) 0%, transparent 75%) !important;
+  box-shadow: 0 0 18px rgba(255, 0, 40, 0.8) !important;
 }
 
 /* Kinetic Rotating Rings base (Hardware-accelerated) */
 .dyson-ring {
   position: absolute;
   border-radius: 50%;
-  border: 1.5px solid var(--core-color, #4fd6c4);
-  box-shadow: 0 0 8px var(--core-color, #4fd6c4);
+  border: 1.5px solid var(--core-color, #e85f6a);
+  box-shadow: 0 0 8px var(--core-color, #e85f6a);
   left: 50%;
   transform-origin: center center;
 }
@@ -4163,6 +4163,8 @@ button[aria-label="Close ad"],
   height: 64px;
   bottom: 18px;
   margin-left: -32px;
+  border-color: #ff1744 !important;
+  box-shadow: 0 0 12px rgba(255, 23, 68, 0.95) !important;
   transform: rotateX(65deg);
 }
 
@@ -4171,7 +4173,8 @@ button[aria-label="Close ad"],
   height: 50px;
   bottom: 25px;
   margin-left: -25px;
-  border-color: #ff5566;
+  border-color: #ff1744 !important;
+  box-shadow: 0 0 12px rgba(255, 23, 68, 0.95) !important;
   transform: rotateY(65deg);
 }
 
@@ -4180,6 +4183,8 @@ button[aria-label="Close ad"],
   height: 36px;
   bottom: 32px;
   margin-left: -18px;
+  border-color: #ff1744 !important;
+  box-shadow: 0 0 12px rgba(255, 23, 68, 0.95) !important;
   transform: rotateX(35deg) rotateY(45deg);
 }
 
@@ -4202,13 +4207,13 @@ button[aria-label="Close ad"],
   height: 34px;
   border-radius: 50%;
   background: #0d1420;
-  border: 1.5px solid var(--core-color, #4fd6c4);
+  border: 1.5px solid var(--core-color, #e85f6a);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   z-index: 5;
-  box-shadow: 0 0 12px var(--core-color, #4fd6c4), 0 0 4px #fff;
+  box-shadow: 0 0 12px var(--core-color, #e85f6a), 0 0 4px #fff;
   animation: coreFloat 2.5s infinite alternate ease-in-out;
   overflow: hidden;
 }
@@ -4220,8 +4225,8 @@ button[aria-label="Close ad"],
   left: 50%;
   transform: translateX(-50%);
   font-size: 18px;
-  color: var(--core-color, #4fd6c4);
-  text-shadow: 0 0 8px #fff, 0 0 12px var(--core-color, #4fd6c4);
+  color: #ff1744 !important;
+  text-shadow: 0 0 8px #ff002b !important;
   animation: sparkleTwinkle 2s infinite;
 }
 @keyframes coreFloat { 0% { transform: translate(-50%, 0px); } 100% { transform: translate(-50%, -4px); } }
@@ -4298,8 +4303,8 @@ button[aria-label="Close ad"],
   top: 50%;
   left: 50%;
   border-radius: 50%;
-  border: 2px solid var(--teal);
-  box-shadow: 0 0 16px var(--teal), inset 0 0 8px var(--teal);
+  border: 2px solid var(--ruby);
+  box-shadow: 0 0 16px var(--ruby), inset 0 0 8px var(--ruby);
 }
 
 /* Dedicated Full-Depth Spherical Gyroscope Animations for Modal */
@@ -4315,8 +4320,8 @@ button[aria-label="Close ad"],
   height: 98px;
   margin-top: -49px;
   margin-left: -49px; 
-  border-color: var(--gold); 
-  box-shadow: 0 0 16px rgba(255, 43, 67, 0.9), inset 0 0 6px var(--gold);
+  border-color: var(--ruby); 
+  box-shadow: 0 0 16px rgba(255, 43, 67, 0.9), inset 0 0 6px var(--ruby);
   animation: modalDysonSpin2 6s linear infinite reverse; 
 }
 
@@ -4329,6 +4334,13 @@ button[aria-label="Close ad"],
   100% { transform: rotateY(70deg) rotateX(20deg) rotateZ(360deg); } 
 }
 
+.citadel-ground-aura,
+.citadel-shadow,
+.citadel-ground-glow {
+  background: radial-gradient(ellipse at center, rgba(255, 0, 40, 0.75) 0%, transparent 70%) !important;
+  box-shadow: 0 0 20px rgba(255, 0, 40, 0.8) !important;
+}
+
 .dyson-core-chamber {
   position: absolute;
   top: 50%;
@@ -4339,7 +4351,7 @@ button[aria-label="Close ad"],
   margin-left: -28px;
   border-radius: 50%;
   background: radial-gradient(circle, #1a293d 0%, #080d14 100%);
-  border: 2px solid var(--gold);
+  border: 2px solid var(--ruby);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5670,4 +5682,352 @@ body.no-shake .boost-timer-badge.super-50x {
     flex-direction: row;
     flex-wrap: wrap;
   }
+}
+
+/* ============================================================
+   ELDEN STOPS — Dyson Disc Beacons (PokéStop-style world layer)
+   ============================================================ */
+
+/* ---------- Map Beacon Marker ---------- */
+.elden-stop-marker {
+  position: relative;
+  width: 64px;
+  height: 96px;
+  pointer-events: auto;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  perspective: 600px;
+}
+
+/* Thin crimson particle beam shooting into the sky (visible from afar) */
+.elden-beam {
+  position: absolute;
+  left: 50%;
+  bottom: 46px;
+  width: 5px;
+  height: 130px;
+  margin-left: -2.5px;
+  background: linear-gradient(180deg, rgba(255, 23, 68, 0) 0%, rgba(255, 23, 68, 0.85) 55%, #ff8a9a 100%);
+  filter: blur(1px);
+  border-radius: 3px;
+  opacity: 0.9;
+  animation: eldenBeamPulse 2.2s ease-in-out infinite;
+}
+@keyframes eldenBeamPulse {
+  0%, 100% { transform: scaleY(1); opacity: 0.85; }
+  50% { transform: scaleY(1.12); opacity: 1; }
+}
+
+/* Ready State: Glowing Crimson Red */
+.elden-stop-disc {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  width: 58px;
+  height: 58px;
+  margin-left: -29px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ff1744 20%, #8b0000 80%);
+  box-shadow: 0 0 14px rgba(255, 23, 68, 0.8), inset 0 0 10px rgba(255, 138, 154, 0.6);
+  filter: drop-shadow(0 0 16px rgba(255, 0, 40, 0.85));
+  transition: filter 0.8s, background 0.8s, box-shadow 0.8s;
+  transform-style: preserve-3d;
+}
+
+/* Counter-rotating neon Dyson rings */
+.elden-ring {
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 23, 68, 0.95);
+  box-shadow: 0 0 8px rgba(255, 23, 68, 0.9);
+  pointer-events: none;
+}
+.elden-ring.elden-ring-a { animation: eldenRingSpinA 3.6s linear infinite; }
+.elden-ring.elden-ring-b { inset: -17px; border-color: rgba(255, 138, 154, 0.8); animation: eldenRingSpinB 5.2s linear infinite reverse; }
+@keyframes eldenRingSpinA {
+  0% { transform: rotateX(68deg) rotateZ(0deg); }
+  100% { transform: rotateX(68deg) rotateZ(360deg); }
+}
+@keyframes eldenRingSpinB {
+  0% { transform: rotateY(64deg) rotateZ(0deg); }
+  100% { transform: rotateY(64deg) rotateZ(360deg); }
+}
+
+/* Billboard core: golden EB coin ringed by ruby crystals */
+.elden-disc-core {
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2a060c 0%, #120206 100%);
+  border: 1.5px solid rgba(224, 168, 79, 0.85);
+  box-shadow: 0 0 10px rgba(224, 168, 79, 0.55), inset 0 0 8px rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+.elden-core-coin {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 4px rgba(224, 168, 79, 0.9));
+}
+.elden-ruby {
+  position: absolute;
+  font-size: 8px;
+  line-height: 1;
+  color: #ff4d6d;
+  text-shadow: 0 0 5px #ff1744;
+  animation: eldenRubyTwinkle 1.8s ease-in-out infinite;
+}
+.elden-ruby.r1 { top: -2px; left: 50%; transform: translateX(-50%); }
+.elden-ruby.r2 { bottom: -2px; left: 50%; transform: translateX(-50%); animation-delay: 0.4s; }
+.elden-ruby.r3 { left: -1px; top: 50%; transform: translateY(-50%); animation-delay: 0.8s; }
+.elden-ruby.r4 { right: -1px; top: 50%; transform: translateY(-50%); animation-delay: 1.2s; }
+@keyframes eldenRubyTwinkle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Floating beacon nameplate */
+.elden-stop-plate {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffd7de;
+  text-shadow: 0 0 6px rgba(255, 23, 68, 0.9), 0 1px 2px #000;
+  pointer-events: none;
+}
+
+/* 15-Minute Cooldown State: Dimmed Violet/Purple (PokéStop purple pulse) */
+.elden-stop-disc.cooldown,
+.elden-stop-marker.cooling .elden-stop-disc {
+  background: radial-gradient(circle, #6b21a8 20%, #2e1065 80%) !important;
+  box-shadow: 0 0 8px rgba(147, 51, 234, 0.5), inset 0 0 10px rgba(46, 16, 101, 0.9) !important;
+  filter: drop-shadow(0 0 8px rgba(147, 51, 234, 0.4)) !important;
+  cursor: not-allowed;
+}
+.elden-stop-marker.cooling .elden-beam {
+  background: linear-gradient(180deg, rgba(107, 33, 168, 0) 0%, rgba(139, 92, 246, 0.6) 55%, #c4b5fd 100%);
+  animation-duration: 4s;
+}
+.elden-stop-marker.cooling .elden-ring {
+  border-color: rgba(167, 139, 250, 0.7);
+  box-shadow: 0 0 5px rgba(147, 51, 234, 0.6);
+}
+.elden-stop-marker.cooling .elden-ring.elden-ring-a { animation-duration: 9s; }
+.elden-stop-marker.cooling .elden-ring.elden-ring-b { animation-duration: 13s; }
+.elden-stop-marker.cooling .elden-ruby { color: #a78bfa; text-shadow: 0 0 5px #8a2be2; }
+.elden-stop-marker.cooling .elden-stop-plate { color: #e9d5ff; text-shadow: 0 0 6px rgba(138, 43, 226, 0.9), 0 1px 2px #000; }
+
+.elden-stop-disc .cooldown-timer-overlay {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #e9d5ff;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  text-shadow: 0 0 6px #a855f7;
+  z-index: 6;
+}
+.elden-stop-marker.cooling .elden-stop-disc .cooldown-timer-overlay { display: flex; }
+.elden-stop-marker.cooling .elden-core-coin { opacity: 0.35; }
+
+/* DOM-Level LOD: far beacons are static, animation-free billboards */
+.elden-stop-marker.far { width: 40px; height: 60px; }
+.elden-stop-marker.far .elden-beam { height: 46px; bottom: 36px; width: 3px; margin-left: -1.5px; animation: none; }
+.elden-stop-marker.far .elden-stop-disc { width: 34px; height: 34px; margin-left: -17px; filter: none; }
+.elden-stop-marker.far .elden-ring,
+.elden-stop-marker.far .elden-ruby,
+.elden-stop-marker.far .elden-stop-plate { display: none; }
+.elden-stop-marker.far .elden-core-coin { width: 16px; height: 16px; }
+.elden-stop-marker.far .elden-disc-core { inset: 7px; }
+
+/* ---------- Disc Spinner Overlay (transparent — 3D map stays visible) ---------- */
+.elden-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 25; /* Below .modal (z-30) so the Lucky Plot jackpot renders above the disc */
+  display: flex;
+  flex-direction: column;
+  pointer-events: none; /* transparent cinematic — taps pass through to map */
+  background: radial-gradient(ellipse at 50% 120%, rgba(139, 0, 0, 0.18) 0%, transparent 55%);
+}
+
+.elden-overlay-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px 0;
+  pointer-events: none;
+}
+.elden-stop-nameplate {
+  pointer-events: auto;
+  background: linear-gradient(180deg, rgba(13, 20, 32, 0.92), rgba(13, 20, 32, 0.78));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  max-width: 70vw;
+  box-shadow: 0 0 18px rgba(255, 23, 68, 0.25);
+}
+.elden-stop-nameplate h3 {
+  margin: 6px 0 2px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: #ffd7de;
+  letter-spacing: 0.5px;
+}
+.elden-stop-nameplate p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.elden-beacon-badge {
+  background: rgba(255, 23, 68, 0.15) !important;
+  border-color: #ff1744 !important;
+  color: #ff8a9a !important;
+}
+.elden-overlay-top .close-btn { pointer-events: auto; }
+
+.elden-overlay-spacer { flex: 1; }
+
+.elden-disc-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-bottom: max(48px, env(safe-area-inset-bottom));
+}
+
+/* Large spinnable disc */
+#elden-spin-disc {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  margin-left: 0;
+  width: min(180px, 44vw);
+  height: min(180px, 44vw);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: grab;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+#elden-spin-disc:active { cursor: grabbing; }
+#elden-spin-disc .elden-disc-core { inset: 26px; }
+#elden-spin-disc .elden-core-coin { width: 64px; height: 64px; }
+#elden-spin-disc .elden-ruby { font-size: 14px; }
+#elden-spin-disc.cooldown { cursor: not-allowed; }
+#elden-spin-disc .elden-ring.elden-ring-a { inset: -16px; border-width: 3px; }
+#elden-spin-disc .elden-ring.elden-ring-b { inset: -32px; border-width: 2.5px; }
+#elden-spin-disc .cooldown-timer-overlay { display: none; }
+#elden-spin-disc.cooldown .cooldown-timer-overlay { display: flex; font-size: 26px; }
+
+/* 2.5s PokéStop-style rapid twirl */
+#elden-spin-disc.spinning {
+  animation: eldenDiscTwirl 2.5s cubic-bezier(0.16, 0.84, 0.28, 0.99) both;
+  pointer-events: none;
+}
+@keyframes eldenDiscTwirl {
+  0% { transform: rotateY(0deg) scale(1); }
+  60% { transform: rotateY(1260deg) scale(1.06); }
+  100% { transform: rotateY(1800deg) scale(1); }
+}
+
+.elden-swipe-hint {
+  pointer-events: none;
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  color: #ffd7de;
+  text-shadow: 0 0 10px rgba(255, 23, 68, 0.8);
+  animation: eldenHintPulse 1.6s ease-in-out infinite;
+}
+@keyframes eldenHintPulse {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+.elden-cooldown-banner {
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(46, 16, 101, 0.95), rgba(30, 10, 66, 0.92));
+  border: 1px solid #8a2be2;
+  color: #e9d5ff;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 0 0 6px #a855f7;
+  box-shadow: 0 0 16px rgba(138, 43, 226, 0.45);
+}
+
+/* ---------- Lucky Land Plot Jackpot Modal ---------- */
+.lucky-plot-card {
+  position: relative;
+  text-align: center;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 42px rgba(255, 23, 68, 0.5), 0 0 120px rgba(255, 23, 68, 0.25) !important;
+  animation: luckyCardDrop 0.55s cubic-bezier(0.18, 1.2, 0.5, 1) both;
+}
+@keyframes luckyCardDrop {
+  0% { transform: translateY(-40px) scale(0.8); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.lucky-plot-card h2 {
+  font-size: 19px;
+  letter-spacing: 1px;
+  color: #ffe9a8;
+  text-shadow: 0 0 14px rgba(224, 168, 79, 0.9);
+}
+.lucky-glow-halo {
+  font-size: 42px;
+  line-height: 1;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 0 14px rgba(255, 215, 130, 0.9));
+  animation: luckyHaloSpin 3s linear infinite;
+}
+@keyframes luckyHaloSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.15); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.lucky-plot-badge {
+  display: inline-block;
+  margin: 4px auto 10px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--epic);
+  color: var(--epic);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  background: rgba(13, 20, 32, 0.75);
+  box-shadow: 0 0 14px currentColor;
+}
+.lucky-plot-rate {
+  margin: 0 0 14px;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 700;
+}
+.lucky-plot-card.rarity-common  { border-color: var(--common) !important; }
+.lucky-plot-card.rarity-rare    { border-color: var(--rare) !important; }
+.lucky-plot-card.rarity-epic    { border-color: var(--epic) !important; box-shadow: 0 0 42px rgba(168, 110, 224, 0.5) !important; }
+.lucky-plot-card.rarity-legendary {
+  border-color: var(--legendary) !important;
+  box-shadow: 0 0 52px rgba(224, 168, 79, 0.65), 0 0 140px rgba(224, 168, 79, 0.3) !important;
 }

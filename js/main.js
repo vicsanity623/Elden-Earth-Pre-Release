@@ -893,6 +893,7 @@
     }
     
     if (typeof Citadels !== "undefined") Citadels.setPlayerPosition(currentPos.lat, currentPos.lon);
+    if (typeof EldenStops !== "undefined") EldenStops.setPlayerPosition(currentPos.lat, currentPos.lon);
     
     // 1. Move 3D Character & Radius Layer
     Character3D.setPlayerPosition(currentPos.lon, currentPos.lat);
@@ -919,7 +920,7 @@
     // 2. Camera Follow Deadzone: Only glide camera if player actually moved > 0.8 meters
     const dist = lastCameraCenter ? Geo.haversine(lastCameraCenter.lat, lastCameraCenter.lon, currentPos.lat, currentPos.lon) : 999;
 
-    if (dist > 0.8 && !isUserInteracting && !isOrbiting) {
+    if (dist > 0.8 && !isUserInteracting && !isOrbiting && !(typeof EldenStops !== "undefined" && EldenStops.isCinematicOpen())) {
       lastCameraCenter = { lat: currentPos.lat, lon: currentPos.lon };
       map.easeTo({
         center: [currentPos.lon, currentPos.lat],
@@ -1262,6 +1263,10 @@
       Citadels.init(map);
       Citadels.setPlayerPosition(currentPos.lat, currentPos.lon); // Immediate GPS sync on boot!
     }
+    if (typeof EldenStops !== "undefined") {
+      EldenStops.init(map, { onRewards: () => updateTopbar() });
+      EldenStops.setPlayerPosition(currentPos.lat, currentPos.lon);
+    }
     if (typeof WeeklyPool !== "undefined") WeeklyPool.init();
     startIncomeLoop();
     wireUI();
@@ -1305,6 +1310,7 @@
       if (typeof Citadels !== "undefined") Citadels.checkCapsuleUnlock();
       const now = Date.now();
       const rawDelta = (now - lastTickTime) / 1000;
+      
       // Anti-cheat: Reject anomalous tick deltas (speed hack / Date manipulation)
       if (rawDelta < 0.3 || rawDelta > 120) {
         lastTickTime = now;
@@ -1328,6 +1334,11 @@
         lastIncomeCloudSave = now;
         if (state.sessionLock) state.sessionLock.lockedAt = now;
         Store.save(true);
+      }
+
+      // 🔥 CRITICAL: Update 30X/50X button label and countdown timers every second!
+      if (typeof Multiplier !== "undefined" && Multiplier.updateUI) {
+        Multiplier.updateUI(state);
       }
 
       updateTopbar();
@@ -2393,6 +2404,7 @@
     // --- Global Multiplier & +2EB Boost Wiring (Delegated to Multiplier module) ---
     if (typeof Multiplier !== "undefined") {
       Multiplier.init();
+      Multiplier.updateUI(Store.get());
     }
 
     // --- Smooth BUY LAND 2D Camera Transition (Zero Black Flash) ---

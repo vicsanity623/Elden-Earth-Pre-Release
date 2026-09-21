@@ -178,6 +178,12 @@ const Feed = (() => {
     } else if (type === "daily") {
       const day = details.day || 1;
       message = `📅 <strong>${playerName}</strong> has logged in for <strong>${day} day${day > 1 ? "s" : ""} in a row!</strong> Welcome back! 🔥`;
+    } else if (type === "elden_stop_planted") {
+      const name = details.name || "a public landmark";
+      message = `🗼 <strong>${playerName}</strong> planted a new <em>Elden Stop</em> Dyson Beacon at ${name}!`;
+    } else if (type === "elden_stop_lucky") {
+      const rarityLabel = details.rarityLabel || (details.rarity ? String(details.rarity).toUpperCase() : "LUCKY");
+      message = `🍀 <strong>${playerName}</strong> discovered a <strong>${rarityLabel} Lucky Land Plot</strong> spinning an Elden Stop!`;
     } else if (type === "dividend") {
       const ruler = details.rulerName || details.mayorName || "The Ruler";
       const territory = details.territory || details.city || "the Realm";

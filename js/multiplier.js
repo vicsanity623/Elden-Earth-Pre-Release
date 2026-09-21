@@ -354,11 +354,13 @@ const Multiplier = (() => {
   function init() {
     heroCard = el("hero-balance-card");
     timerBadge = el("boost-timer-badge");
+    multBtn = el("multiplier-btn");
 
     initShakeState();
     wireButtons();
     wireBoostButton();
     wireShakeToggle();
+    updateUI(Store.get());
   }
 
   // Public API

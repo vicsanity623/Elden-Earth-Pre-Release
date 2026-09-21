@@ -533,7 +533,7 @@ Modern Extraction Model:
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.68b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.70b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -967,6 +967,7 @@ Modern Extraction Model:
       <button id="buy-cancel-btn" class="btn btn-secondary">Cancel</button>
       <button id="plot-bag-btn" class="btn btn-primary" style="display:none;">Bag</button>
       <button id="plant-capsule-confirm-btn" class="btn btn-primary" style="display:none; background: linear-gradient(180deg, #a86ee0, #6c5ce7); color: #fff;">🔮 Plant Citadel (Free)</button>
+      <button id="plant-elden-stop-btn" class="btn btn-primary" style="display:none; background: linear-gradient(180deg, #ff1744, #8b0000); color: #fff;">🗼 Plant Elden Stop (Free)</button>
       <button id="buy-confirm-btn" class="btn btn-primary">Claim Tile</button>
     </div>
   </div>
@@ -1527,6 +1528,44 @@ Modern Extraction Model:
   </div>
 </div>
 
+<!-- ===================== ELDEN STOP DISC SPINNER OVERLAY ===================== -->
+<div id="elden-stop-overlay" class="elden-overlay hidden">
+  <div class="elden-overlay-top">
+    <div class="elden-stop-nameplate">
+      <span class="citadel-badge-pill elden-beacon-badge">🗼 ELDEN STOP</span>
+      <h3 id="elden-stop-title">Elden Stop</h3>
+      <p id="elden-stop-sub"></p>
+    </div>
+    <button class="close-btn" id="elden-stop-close" type="button">✕</button>
+  </div>
+  <div class="elden-overlay-spacer"></div>
+  <div class="elden-disc-stage">
+    <div class="elden-cooldown-banner hidden" id="eld-cooldown-banner">⏳ Recharging — ready in <span id="eld-cooldown-time">15:00</span></div>
+    <div class="elden-stop-disc large" id="elden-spin-disc">
+      <div class="elden-ring elden-ring-a"></div>
+      <div class="elden-ring elden-ring-b"></div>
+      <div class="elden-disc-core">
+        <img src="assets/eb-coin.png" alt="" class="elden-core-coin">
+        <span class="elden-ruby r1">◆</span><span class="elden-ruby r2">◆</span><span class="elden-ruby r3">◆</span><span class="elden-ruby r4">◆</span>
+      </div>
+    </div>
+    <p class="elden-swipe-hint" id="elden-swipe-hint">Swipe the Dyson Disc to absorb its energy!</p>
+  </div>
+</div>
+
+<!-- ===================== LUCKY LAND PLOT JACKPOT MODAL ===================== -->
+<div id="lucky-plot-modal" class="modal hidden">
+  <div class="modal-card lucky-plot-card" id="lucky-plot-card">
+    <button class="close-btn" id="lucky-plot-close" type="button">✕</button>
+    <div class="lucky-glow-halo">✨</div>
+    <h2>LUCKY LAND PLOT DISCOVERED!</h2>
+    <div class="lucky-plot-badge" id="lucky-plot-badge">EPIC PLOT</div>
+    <p class="lucky-plot-rate" id="lucky-plot-rate">Passive Rent: $0.0000000011/s</p>
+    <p class="modal-sub">A free plot was deposited straight into your Plot Bag — plant it on any valid tile.</p>
+    <button class="btn btn-primary" id="claim-lucky-plot-btn">Add to Bag 🎒</button>
+  </div>
+</div>
+
 <div id="signout-wrap" style="display:none">
   <button id="signout-btn">Sign out</button>
 </div>
@@ -1555,6 +1594,7 @@ Modern Extraction Model:
 <script src="js/leaderboard.js"></script>
 <script src="js/foliage.js"></script>
 <script src="js/citadels.js"></script>
+<script src="js/elden-stops.js"></script>
 <script src="js/pool.js"></script>
 <script src="js/chat.js"></script>
 <script src="js/friends.js"></script>

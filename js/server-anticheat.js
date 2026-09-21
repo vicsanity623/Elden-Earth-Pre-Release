@@ -263,5 +263,27 @@ const ServerAntiCheat = (() => {
     }
   }
 
-  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData, claimMailbox };
+  async function plantEldenStop(tx, ty) {
+    if (!functions) return { ok: false, reason: "functions_not_initialized" };
+    try {
+      const fn = functions.httpsCallable("plantEldenStop");
+      return (await fn({ tx, ty })).data;
+    } catch (e) {
+      console.warn("[ServerAntiCheat] plantEldenStop failed:", e.message);
+      return { ok: false, reason: "server_error" };
+    }
+  }
+
+  async function spinEldenStop(stopId, lat, lon) {
+    if (!functions) return { ok: false, reason: "functions_not_initialized" };
+    try {
+      const fn = functions.httpsCallable("spinEldenStop");
+      return (await fn({ stopId, lat, lon })).data;
+    } catch (e) {
+      console.warn("[ServerAntiCheat] spinEldenStop failed:", e.message);
+      return { ok: false, reason: "server_error" };
+    }
+  }
+
+  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData, claimMailbox, plantEldenStop, spinEldenStop };
 })();

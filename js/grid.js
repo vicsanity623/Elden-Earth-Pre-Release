@@ -88,6 +88,7 @@ const Grid = (() => {
 
     // Check if player holds an unplanted Citadel Capsule
     const hasCapsule = state.capsule && state.capsule.awarded && !state.capsule.planted;
+    const hasEldenSeed = (Number(state.eldenStopSeeds) || 0) > 0;
 
     // Always allow opening modal — server validates EB balance authoritatively
     pendingTile = { tx, ty };
@@ -98,6 +99,11 @@ const Grid = (() => {
     // Seamless toggle: Shows or hides the plant button without touching innerHTML!
     if (plantBtn) {
       plantBtn.style.display = hasCapsule ? "inline-block" : "none";
+    }
+    const eldenBtn = document.getElementById("plant-elden-stop-btn");
+    if (eldenBtn) {
+      eldenBtn.style.display = hasEldenSeed ? "inline-block" : "none";
+      eldenBtn.textContent = `🗼 Plant Elden Stop x${Number(state.eldenStopSeeds) || 0} (Free)`;
     }
     const bagBtn = document.getElementById("plot-bag-btn");
     if (bagBtn) bagBtn.style.display = hasBagPlots(state) ? "inline-block" : "none";
@@ -752,10 +758,10 @@ const Grid = (() => {
               <div class="orbit-ring ring-2"></div>
               <div class="beacon-core-gem">
                 <svg viewBox="0 0 32 38" class="beacon-svg">
-                  <polygon points="16,2 29,12 16,16 3,12" fill="#d4fbf6"/>
-                  <polygon points="3,12 16,16 16,36" fill="#1d7a6e"/>
-                  <polygon points="29,12 16,16 16,36" fill="#4fd6c4"/>
-                  <polygon points="16,2 20,8 16,16 12,8" fill="#ffffff"/>
+                  <polygon points="16,2 29,12 16,16 3,12" fill="#ff6b81"></polygon>
+                  <polygon points="3,12 16,16 16,36" fill="#8b0000"></polygon>
+                  <polygon points="29,12 16,16 16,36" fill="#ff1744"></polygon>
+                  <polygon points="16,2 20,8 16,16 12,8" fill="#ffffff"></polygon>
                 </svg>
               </div>
             </div>
@@ -869,6 +875,15 @@ const Grid = (() => {
           pendingTile = null;
           if (buyModal) buyModal.classList.add("hidden");
         }
+      }
+    });
+
+    document.getElementById("plant-elden-stop-btn")?.addEventListener("click", async () => {
+      if (!pendingTile || typeof EldenStops === "undefined") return;
+      const planted = await EldenStops.plantSeed(pendingTile.tx, pendingTile.ty);
+      if (planted) {
+        pendingTile = null;
+        if (buyModal) buyModal.classList.add("hidden");
       }
     });
 

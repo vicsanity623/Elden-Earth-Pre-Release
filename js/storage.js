@@ -55,6 +55,8 @@ const Store = (() => {
       totalDividends: 0,
       plots: {},
       plotBag: {},
+      eldenStopSeeds: 0,
+      eldenStopCooldowns: {},
       calendar: { claimedDays: 0, lastClaimTime: 0, lastClaimDate: null },
       liveDiamonds: {},
       collectedDiamondIds: [],
@@ -297,6 +299,15 @@ const Store = (() => {
           }
           state._epochWiped = true;
           localStorage.setItem(KEY, JSON.stringify(state));
+        } else if (Number.isFinite(Number(result.data?.eldenStopSeeds))) {
+          // Server owns eldenStopSeeds — mirror the authoritative count locally.
+          state.eldenStopSeeds = Math.max(0, Number(result.data.eldenStopSeeds) || 0);
+          localStorage.setItem(KEY, JSON.stringify(state));
+        }
+        if (result.data?.betaSeedsGranted) {
+          if (typeof window !== "undefined" && typeof window.showToast === "function") {
+            window.showToast("🔥 BETA GIFT: 5 Elden Stop Seeds added to your satchel! Find a public landmark and plant a Beacon!", 6000);
+          }
         }
         return true;
       })

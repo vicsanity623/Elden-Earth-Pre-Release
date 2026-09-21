@@ -4,7 +4,7 @@
 // ============================================================
 const CONFIG = {
   // --- Game Version (bump on every patch to auto-wipe stale localStorage) ---
-  GAME_VERSION: "0.1.9.96",
+  GAME_VERSION: "0.1.10.00",
 
   // --- Realm Server Epoch ---
   // Bump this timestamp whenever you intentionally wipe the Firestore database.
@@ -92,10 +92,10 @@ const CONFIG = {
   CITADEL_CONQUEST_BOUNTY_EB: 5,       // +5 EB bonus for dethroning a defender
   CITADEL_EVOLUTION_MS: 10 * 60 * 1000, // 10 Minutes Evolution Timer
   CITADEL_RARITIES: {
-    common:    { key: "common",    label: "Common Hold",    color: "#8fa3b8", diamondHours: 3,   ebChance: 0.15, ebAmount: 1, weight: 50 },
-    rare:      { key: "rare",      label: "Rare Hold",      color: "#4fd6c4", diamondHours: 2,   ebChance: 0.25, ebAmount: 2, weight: 30 },
-    epic:      { key: "epic",      label: "Epic Hold",      color: "#a86ee0", diamondHours: 1.5, ebChance: 0.40, ebAmount: 3, weight: 15 },
-    legendary: { key: "legendary", label: "Legendary Hold", color: "#f0d38a", diamondHours: 1,   ebChance: 0.60, ebAmount: 5, weight: 5  },
+    common:    { key: "common",    label: "Common Hold",    color: "#ff6b81", diamondHours: 3,   ebChance: 0.15, ebAmount: 1, weight: 50 },
+    rare:      { key: "rare",      label: "Rare Hold",      color: "#ff1744", diamondHours: 2,   ebChance: 0.25, ebAmount: 2, weight: 30 }, // 🔴 Crimson Red (was #4fd6c4)
+    epic:      { key: "epic",      label: "Epic Hold",      color: "#b30021", diamondHours: 1.5, ebChance: 0.40, ebAmount: 3, weight: 15 }, // 🔴 Deep Ruby
+    legendary: { key: "legendary", label: "Legendary Hold", color: "#f0d38a", diamondHours: 1,   ebChance: 0.60, ebAmount: 5, weight: 5  }, // 🟡 Legendary Gold
   },
   // Upgrade Forge Progression (Balanced: Diamonds as an Active Walking Sink)
   CITADEL_UPGRADE_COSTS: {
@@ -113,6 +113,14 @@ const CONFIG = {
     { key: "legendary", label: "Legendary", rate: 0.0000000022, weight: 5,  color: "#e0a84f" }, // 5%
   ],
   
+  // --- Elden Stops (Dyson Disc Beacons) ---
+  ELDEN_STOP_COOLDOWN_MS: 15 * 60 * 1000,        // 15-minute PokéStop-style recharge
+  ELDEN_STOP_SPIN_RADIUS_METERS: 75,             // Must walk within 75m to spin
+  ELDEN_STOP_VISIBILITY_METERS: 1500,            // Beacon culling range on the map
+  ELDEN_STOP_DIAMOND_RANGE: [1, 20],             // Diamonds per spin (informational)
+  ELDEN_STOP_EB_RANGE: [0, 5],                   // EB per spin (informational)
+  ELDEN_STOP_PLOT_JACKPOT_CHANCE: 0.015,         // 1.5% Lucky Land Plot drop
+
   // --- 3D Character Roster (Heroic Scale) ---
   AVAILABLE_CHARACTERS: [
     { id: "soldier",   name: "Vanguard Soldier", file: "models/Soldier.glb",   scale: 4.8, icon: "🛡️" },
