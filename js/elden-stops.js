@@ -19,6 +19,7 @@ const EldenStops = (() => {
   let lastPosUpdate = 0;
   let announcedBuilds = {};
   const justActivated = new Set();
+  let globalCooldowns = {}; // stopId -> readyAt (global 5-min cooldown after any spin)
 
   const COOLDOWN_MS = () => CONFIG.ELDEN_STOP_COOLDOWN_MS || 15 * 60 * 1000;
   const SPIN_RADIUS = () => CONFIG.ELDEN_STOP_SPIN_RADIUS_METERS || 75;
@@ -61,12 +62,25 @@ const EldenStops = (() => {
     refreshStopVisual(stopId);
   }
 
+  function getGlobalCooldown(stopId) {
+    return Number(globalCooldowns[stopId]) || 0;
+  }
+
+  function setGlobalCooldown(stopId, readyAt) {
+    globalCooldowns[stopId] = readyAt;
+    refreshStopVisual(stopId);
+  }
+
   function onCooldown(stopId) {
-    return getReadyAt(stopId) > Date.now();
+    const now = Date.now();
+    return getReadyAt(stopId) > now || getGlobalCooldown(stopId) > now;
   }
 
   function formatCooldown(stopId) {
-    const rem = Math.max(0, getReadyAt(stopId) - Date.now());
+    const now = Date.now();
+    const perPlayer = getReadyAt(stopId);
+    const global = getGlobalCooldown(stopId);
+    const rem = Math.max(0, Math.max(perPlayer, global) - now);
     const m = Math.floor(rem / 60000);
     const s = Math.floor((rem % 60000) / 1000);
     return `${m}:${String(s).padStart(2, "0")}`;
@@ -374,9 +388,17 @@ const EldenStops = (() => {
     if (spinning || !selectedStopId) return;
 
     if (onCooldown(selectedStopId)) {
-      const mins = Math.floor((getReadyAt(selectedStopId) - Date.now()) / 60000);
-      const secs = Math.floor(((getReadyAt(selectedStopId) - Date.now()) % 60000) / 1000);
-      if (typeof showToast === "function") showToast(`⏳ Recharging! Available again in ${mins}m ${secs}s`, 3000);
+      const now = Date.now();
+      const perPlayer = getReadyAt(selectedStopId);
+      const global = getGlobalCooldown(selectedStopId);
+      const isGlobal = global > perPlayer;
+      const readyAt = isGlobal ? global : perPlayer;
+      const mins = Math.floor((readyAt - now) / 60000);
+      const secs = Math.floor(((readyAt - now) % 60000) / 1000);
+      const msg = isGlobal
+        ? `🌐 Another player just spun this stop. Ready in ${mins}m ${secs}s`
+        : ` Recharging! Available again in ${mins}m ${secs}s`;
+      if (typeof showToast === "function") showToast(msg, 3000);
       return;
     }
 
@@ -426,6 +448,10 @@ const EldenStops = (() => {
         if (result && result.reason === "cooldown") {
           if (result.readyAt) setReadyAt(stopId, result.readyAt);
           if (typeof showToast === "function") showToast(result.message || "⏳ This Elden Stop is recharging.", 3500);
+        } else if (result && result.reason === "global_cooldown") {
+          // Global cooldown — another player just spun it, show purple for everyone
+          if (result.readyAt) setGlobalCooldown(stopId, result.readyAt);
+          if (typeof showToast === "function") showToast(result.message || "🌐 Another player just spun this stop. Wait a few minutes.", 3500);
         } else if (result && result.reason === "under_construction") {
           const stop = globalStops[stopId];
           if (stop && result.waitMs) stop.constructionFinish = Date.now() + Number(result.waitMs);
@@ -739,7 +765,9 @@ const EldenStops = (() => {
         }
 
         const readyAt = getReadyAt(sid);
+        const globalAt = getGlobalCooldown(sid);
         if (readyAt > 0 && readyAt < now + COOLDOWN_MS()) refreshStopVisual(sid);
+        if (globalAt > 0 && globalAt < now + 300000) refreshStopVisual(sid); // 5 min global
       }
 
       if (needsRender) renderAll();
