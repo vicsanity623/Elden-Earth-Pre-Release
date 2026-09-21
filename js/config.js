@@ -4,7 +4,7 @@
 // ============================================================
 const CONFIG = {
   // --- Game Version (bump on every patch to auto-wipe stale localStorage) ---
-  GAME_VERSION: "0.1.10.02",
+  GAME_VERSION: "0.1.10.03",
 
   // --- Realm Server Epoch ---
   // Bump this timestamp whenever you intentionally wipe the Firestore database.
@@ -56,9 +56,8 @@ const CONFIG = {
   EXTRACTOR_BUILD_COST_EB: 50,          // 50 EB to construct
 
   // --- 50X Super Boost Event Engine ---
-  BOOST_DURATION_MS: 3600 * 1000,
-  BOOST_MAX_BANK_MS: 6 * 3600 * 1000,
-  EVENT_50X_ANCHOR_MS: 1735689600000,          // Anchored to start RIGHT NOW!
+  // SINGLE SOURCE OF TRUTH — must match eventAnchor in functions/index.js (activateBoost).
+  EVENT_50X_ANCHOR_MS: 1788912000000,          // Server-locked cycle anchor (ms)
   EVENT_50X_DURATION_MS: 24 * 3600 * 1000,     // 24 Hours of 50X Active
   EVENT_50X_COOLDOWN_MS: 3 * 24 * 3600 * 1000, // 3 Days (72 Hours) 30X Cooldown
 

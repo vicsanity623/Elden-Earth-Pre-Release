@@ -8,9 +8,8 @@ const Multiplier = (() => {
   const BOOST_DURATION_MS = 3600 * 1000;          // 1 Hour per activation
   const BOOST_MAX_BANK_MS = 6 * 3600 * 1000;     // Max 6 Hours banked
   const BOOST_COOLDOWN_MS = 20 * 60 * 1000;      // 20 Minutes for +2EB
-  const EVENT_50X_ANCHOR_MS = 1704067200000;
-  const EVENT_50X_DURATION_MS = 24 * 3600 * 1000; // 24 Hours of 50X Active
-  const EVENT_50X_COOLDOWN_MS = 3 * 24 * 3600 * 1000; // 3 Days (72 Hours)
+  // 50X event schedule now lives in CONFIG (single source of truth, matches
+  // the eventAnchor baked into functions/index.js activateBoost).
 
   // --- DOM Elements Cache ---
   let multBtn = null;
@@ -28,11 +27,7 @@ const Multiplier = (() => {
    * @returns {boolean}
    */
   function is50XActive() {
-    const now = Date.now();
-    const totalCycle = EVENT_50X_DURATION_MS + EVENT_50X_COOLDOWN_MS;
-    let elapsed = (now - EVENT_50X_ANCHOR_MS) % totalCycle;
-    if (elapsed < 0) elapsed += totalCycle;
-    return elapsed < EVENT_50X_DURATION_MS;
+    return CONFIG.is50XActive();
   }
 
   /**
@@ -248,12 +243,12 @@ const Multiplier = (() => {
    */
   function get50XCountdownData() {
     const now = Date.now();
-    const totalCycle = EVENT_50X_DURATION_MS + EVENT_50X_COOLDOWN_MS;
-    let elapsed = (now - EVENT_50X_ANCHOR_MS) % totalCycle;
+    const totalCycle = CONFIG.EVENT_50X_DURATION_MS + CONFIG.EVENT_50X_COOLDOWN_MS;
+    let elapsed = (now - CONFIG.EVENT_50X_ANCHOR_MS) % totalCycle;
     if (elapsed < 0) elapsed += totalCycle;
 
-    const isLive = elapsed < EVENT_50X_DURATION_MS;
-    const remMs = isLive ? (EVENT_50X_DURATION_MS - elapsed) : (totalCycle - elapsed);
+    const isLive = elapsed < CONFIG.EVENT_50X_DURATION_MS;
+    const remMs = isLive ? (CONFIG.EVENT_50X_DURATION_MS - elapsed) : (totalCycle - elapsed);
     const remSec = Math.max(0, Math.floor(remMs / 1000));
 
     const d = Math.floor(remSec / 86400);
