@@ -5902,20 +5902,27 @@ body.no-shake .boost-timer-badge.super-50x {
   z-index: 25; /* Below .modal (z-30) so the Lucky Plot jackpot renders above the disc */
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   pointer-events: none; /* transparent cinematic — taps pass through to map */
-  background: radial-gradient(ellipse at 50% 120%, rgba(139, 0, 0, 0.18) 0%, transparent 55%);
+  background: radial-gradient(ellipse at 50% 50%, rgba(13, 20, 32, 0.3) 0%, transparent 70%);
+  touch-action: none; /* Block double-tap zoom during cinematic */
 }
 
 .elden-overlay-top {
+  position: absolute;
+  top: 80px; /* Below the top bar */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  padding: 14px 16px 0;
+  gap: 12px;
   pointer-events: none;
+  z-index: 26;
 }
 .elden-stop-nameplate {
   pointer-events: auto;
-  background: linear-gradient(180deg, rgba(13, 20, 32, 0.92), rgba(13, 20, 32, 0.78));
+  background: linear-gradient(180deg, rgba(13, 20, 32, 0.95), rgba(13, 20, 32, 0.85));
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 10px 14px;
@@ -5923,15 +5930,15 @@ body.no-shake .boost-timer-badge.super-50x {
   box-shadow: 0 0 18px rgba(255, 23, 68, 0.25);
 }
 .elden-stop-nameplate h3 {
-  margin: 6px 0 2px;
+  margin: 0 0 4px;
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 14px;
   color: #ffd7de;
   letter-spacing: 0.5px;
 }
 .elden-stop-nameplate p {
   margin: 0;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-dim);
 }
 .elden-beacon-badge {
@@ -5939,9 +5946,21 @@ body.no-shake .boost-timer-badge.super-50x {
   border-color: #ff1744 !important;
   color: #ff8a9a !important;
 }
-.elden-overlay-top .close-btn { pointer-events: auto; }
-
-.elden-overlay-spacer { flex: 1; }
+.elden-overlay-top .close-btn {
+  pointer-events: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(13, 20, 32, 0.9);
+  border: 1px solid var(--line);
+  color: #fff;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
 
 .elden-disc-stage {
   position: relative;
@@ -5949,9 +5968,9 @@ body.no-shake .boost-timer-badge.super-50x {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-bottom: max(48px, env(safe-area-inset-bottom));
+  justify-content: center;
+  gap: 16px;
+  padding: 20px;
 }
 
 /* Large spinnable disc */
@@ -5960,8 +5979,8 @@ body.no-shake .boost-timer-badge.super-50x {
   left: auto;
   bottom: auto;
   margin-left: 0;
-  width: min(180px, 44vw);
-  height: min(180px, 44vw);
+  width: min(140px, 36vw);
+  height: min(140px, 36vw);
   pointer-events: auto;
   touch-action: none;
   cursor: grab;

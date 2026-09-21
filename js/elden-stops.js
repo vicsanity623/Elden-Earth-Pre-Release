@@ -703,6 +703,19 @@ const EldenStops = (() => {
     document.getElementById("claim-lucky-plot-btn")?.addEventListener("click", closeLuckyPlotModal);
     document.getElementById("lucky-plot-close")?.addEventListener("click", closeLuckyPlotModal);
 
+    // Block double-tap zoom during the cinematic
+    const overlay = document.getElementById("elden-stop-overlay");
+    if (overlay) {
+      let lastTap = 0;
+      overlay.addEventListener("touchstart", (e) => {
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          e.preventDefault();
+        }
+        lastTap = now;
+      }, { passive: false });
+    }
+
     // 1-second ticker: recharge countdowns (purple → crimson) + construction growth
     setInterval(() => {
       if (document.hidden) return;
