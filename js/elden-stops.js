@@ -93,13 +93,15 @@ const EldenStops = (() => {
         </div>
       `;
     } else {
-      // 🌟 ACTIVE VIEW — crimson Dyson Disc beacon
+      // 🌟 ACTIVE VIEW — crimson Dyson Disc beacon, stacked exactly like the
+      // Citadel monument: ground rune → stem → floating disc → spire tip.
       const ruby = (cls, ch) => `<span class="elden-ruby ${cls}">${ch}</span>`;
       if (justActivated.has(stop.id)) {
         el.classList.add("just-built");
         setTimeout(() => justActivated.delete(stop.id), 4000);
       }
       el.innerHTML = `
+        <div class="elden-ground-pulse"></div>
         <div class="elden-beam"></div>
         <div class="elden-stop-disc" data-stop="${stop.id}">
           <div class="elden-ring elden-ring-a"></div>
@@ -110,6 +112,7 @@ const EldenStops = (() => {
           </div>
           <div class="cooldown-timer-overlay">${cooling ? formatCooldown(stop.id) : ""}</div>
         </div>
+        <div class="elden-spire-tip">✦</div>
         <div class="elden-stop-plate">${stop.poiName || "Elden Stop"}</div>
       `;
     }

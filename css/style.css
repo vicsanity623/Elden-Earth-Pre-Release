@@ -5689,40 +5689,62 @@ body.no-shake .boost-timer-badge.super-50x {
    ============================================================ */
 
 /* ---------- Map Beacon Marker ---------- */
+/* Citadel monument technique (short 20px ground-anchored box, children lifting
+   via bottom offsets, static fake-3D tilts, NO perspective/preserve-3d root)
+   PLUS one correction: position:absolute !important keeps MapLibre's inline
+   transform authoritative — with position:relative, multiple markers stack in
+   normal flow and each beacon drifts ~20px DOWN per planted neighbor. */
 .elden-stop-marker {
-  position: relative;
-  width: 64px;
-  height: 96px;
-  pointer-events: auto;
+  position: absolute !important;
+  width: 64px !important;
+  height: 20px !important;
+  pointer-events: auto !important;
   cursor: pointer;
-  transform-style: preserve-3d;
-  perspective: 600px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-/* Thin crimson particle beam shooting into the sky (visible from afar) */
+/* Ground rune snapped exactly onto the tile anchor (like .dyson-ground-shadow) */
+.elden-ground-pulse {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 44px;
+  height: 12px;
+  margin-left: -22px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 23, 68, 0.85) 0%, transparent 75%);
+  box-shadow: 0 0 12px rgba(255, 23, 68, 0.7);
+  animation: groundRunePulse 2s infinite alternate ease-in-out;
+}
+
+/* Stem: thin crimson shaft rising from the tile UP into the floating disc */
 .elden-beam {
   position: absolute;
   left: 50%;
-  bottom: 46px;
-  width: 5px;
-  height: 130px;
-  margin-left: -2.5px;
-  background: linear-gradient(180deg, rgba(255, 23, 68, 0) 0%, rgba(255, 23, 68, 0.85) 55%, #ff8a9a 100%);
-  filter: blur(1px);
-  border-radius: 3px;
-  opacity: 0.9;
+  bottom: 2px;
+  width: 4px;
+  height: 42px;
+  margin-left: -2px;
+  background: linear-gradient(180deg, #ff8a9a 0%, rgba(255, 23, 68, 0.9) 60%, rgba(255, 23, 68, 0.35) 100%);
+  filter: blur(0.5px);
+  border-radius: 2px;
+  opacity: 0.95;
   animation: eldenBeamPulse 2.2s ease-in-out infinite;
 }
 @keyframes eldenBeamPulse {
   0%, 100% { transform: scaleY(1); opacity: 0.85; }
-  50% { transform: scaleY(1.12); opacity: 1; }
+  50% { transform: scaleY(1.08); opacity: 1; }
 }
 
-/* Ready State: Glowing Crimson Red */
+/* Ready State: Glowing Crimson Red — floating on its stem above the tile */
 .elden-stop-disc {
   position: absolute;
   left: 50%;
-  bottom: 8px;
+  bottom: 40px;
   width: 58px;
   height: 58px;
   margin-left: -29px;
@@ -5731,7 +5753,6 @@ body.no-shake .boost-timer-badge.super-50x {
   box-shadow: 0 0 14px rgba(255, 23, 68, 0.8), inset 0 0 10px rgba(255, 138, 154, 0.6);
   filter: drop-shadow(0 0 16px rgba(255, 0, 40, 0.85));
   transition: filter 0.8s, background 0.8s, box-shadow 0.8s;
-  transform-style: preserve-3d;
 }
 
 /* Counter-rotating neon Dyson rings */
@@ -5790,10 +5811,24 @@ body.no-shake .boost-timer-badge.super-50x {
   50% { opacity: 1; }
 }
 
+/* Spire tip above the disc (Citadel-style standing 3D silhouette) */
+.elden-spire-tip {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 15px;
+  line-height: 1;
+  color: #ff1744;
+  text-shadow: 0 0 8px #fff, 0 0 14px rgba(255, 23, 68, 0.95);
+  animation: sparkleTwinkle 2s infinite;
+  pointer-events: none;
+}
+
 /* Floating beacon nameplate */
 .elden-stop-plate {
   position: absolute;
-  top: -16px;
+  bottom: 122px;
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -5815,9 +5850,14 @@ body.no-shake .boost-timer-badge.super-50x {
   cursor: not-allowed;
 }
 .elden-stop-marker.cooling .elden-beam {
-  background: linear-gradient(180deg, rgba(107, 33, 168, 0) 0%, rgba(139, 92, 246, 0.6) 55%, #c4b5fd 100%);
+  background: linear-gradient(180deg, #c4b5fd 0%, rgba(139, 92, 246, 0.7) 55%, rgba(107, 33, 168, 0.25) 100%);
   animation-duration: 4s;
 }
+.elden-stop-marker.cooling .elden-ground-pulse {
+  background: radial-gradient(ellipse, rgba(139, 92, 246, 0.7) 0%, transparent 75%);
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
+}
+.elden-stop-marker.cooling .elden-spire-tip { color: #8a2be2; text-shadow: 0 0 8px #e9d5ff, 0 0 14px rgba(138, 43, 226, 0.9); }
 .elden-stop-marker.cooling .elden-ring {
   border-color: rgba(167, 139, 250, 0.7);
   box-shadow: 0 0 5px rgba(147, 51, 234, 0.6);
@@ -5844,9 +5884,11 @@ body.no-shake .boost-timer-badge.super-50x {
 .elden-stop-marker.cooling .elden-core-coin { opacity: 0.35; }
 
 /* DOM-Level LOD: far beacons are static, animation-free billboards */
-.elden-stop-marker.far { width: 40px; height: 60px; }
-.elden-stop-marker.far .elden-beam { height: 46px; bottom: 36px; width: 3px; margin-left: -1.5px; animation: none; }
-.elden-stop-marker.far .elden-stop-disc { width: 34px; height: 34px; margin-left: -17px; filter: none; }
+.elden-stop-marker.far { width: 40px !important; height: 20px !important; }
+.elden-stop-marker.far .elden-ground-pulse { width: 22px; height: 7px; margin-left: -11px; animation: none; }
+.elden-stop-marker.far .elden-beam { height: 22px; bottom: 2px; width: 2.5px; margin-left: -1.25px; animation: none; }
+.elden-stop-marker.far .elden-stop-disc { width: 34px; height: 34px; margin-left: -17px; bottom: 22px; filter: none; }
+.elden-stop-marker.far .elden-spire-tip { bottom: 58px; font-size: 10px; animation: none; }
 .elden-stop-marker.far .elden-ring,
 .elden-stop-marker.far .elden-ruby,
 .elden-stop-marker.far .elden-stop-plate { display: none; }
@@ -5902,6 +5944,8 @@ body.no-shake .boost-timer-badge.super-50x {
 .elden-overlay-spacer { flex: 1; }
 
 .elden-disc-stage {
+  position: relative;
+  perspective: 800px; /* 3D tilt lives ONLY in this fixed-DOM stage (like .citadel-dyson-stage), never in map markers */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -6033,7 +6077,7 @@ body.no-shake .boost-timer-badge.super-50x {
 }
 
 /* ---------- Construction Phase (Citadel-style growth billboard) ---------- */
-.elden-stop-marker.building { width: 96px; height: 120px; }
+.elden-stop-marker.building { width: 96px !important; height: 20px !important; }
 .elden-construct-anchor {
   position: absolute;
   inset: 0;
@@ -6058,13 +6102,13 @@ body.no-shake .boost-timer-badge.super-50x {
   50% { transform: scale(1.35); opacity: 1; }
 }
 
-/* Amber construction laser lifting the beacon into existence */
+/* Stem shaft welding the beacon into existence, grounded on the tile */
 .elden-construct-beam {
   position: absolute;
   left: 50%;
-  bottom: 8px;
+  bottom: 0;
   width: 4px;
-  height: 58px;
+  height: 60px;
   margin-left: -2px;
   border-radius: 2px;
   background: linear-gradient(180deg, rgba(255, 23, 68, 0) 0%, rgba(255, 138, 154, 0.9) 60%, #ffd7de 100%);
@@ -6126,7 +6170,7 @@ body.no-shake .boost-timer-badge.super-50x {
   letter-spacing: 1.4px;
   color: var(--text-dim);
 }
-.elden-stop-marker.building.far { width: 64px; height: 84px; }
+.elden-stop-marker.building.far { width: 64px !important; height: 20px !important; }
 .elden-stop-marker.building.far .elden-construct-billboard { transform: translateX(-50%) scale(0.78); transform-origin: bottom center; }
 
 /* Golden activation burst when the beacon goes ONLINE */
