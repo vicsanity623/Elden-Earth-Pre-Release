@@ -2913,7 +2913,7 @@
 
   // ---------------- Boot ----------------
   document.addEventListener("DOMContentLoaded", () => {
-    const repairHosts = new Set(["elden-earth-main.pages.dev"]);
+    const repairHosts = new Set([]);
     if (repairHosts.has(window.location.hostname)) {
       document.body.innerHTML = `
         <main style="min-height:100vh;display:grid;place-items:center;background:#0e1522;color:#f4f0e8;font-family:Manrope,system-ui,sans-serif;text-align:center;padding:24px;">
