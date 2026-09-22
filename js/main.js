@@ -2860,8 +2860,8 @@
           el("wheel-result").textContent = `🎉 MEGA JACKPOT! +${winDiamonds} Diamonds!`;
           showToast(`💎 MEGA JACKPOT! Won +${winDiamonds} Diamonds!`);
 
-          // Broadcast diamond jackpot to Feed
-          if (typeof Feed !== "undefined") {
+          // Only broadcast diamond jackpots on 1X spins (not 10X) to prevent feed flooding
+          if (multAward === 1 && typeof Feed !== "undefined") {
             Feed.broadcast("diamond_jackpot", { amount: winDiamonds });
           }
 
@@ -2877,8 +2877,8 @@
           el("wheel-result").textContent = `🎉 You won ${winAmount} EB!`;
           showToast(`🎉 Won +${winAmount} Elden Bucks!`);
 
-          // Broadcast 25+ EB Jackpots worldwide!
-          if (winAmount >= 25 && typeof Feed !== "undefined") {
+          // Only broadcast 25+ EB Jackpots on 1X spins (not 10X) to prevent feed flooding
+          if (winAmount >= 25 && multAward === 1 && typeof Feed !== "undefined") {
             Feed.broadcast("jackpot", { amount: winAmount });
           }
 
