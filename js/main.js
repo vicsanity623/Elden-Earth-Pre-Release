@@ -2696,6 +2696,40 @@
       modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
     });
 
+    // --- 10X Multi-Spin Toggle Wiring ---
+    const toggle10x = document.getElementById("wheel-10x-toggle");
+    const spinBtn = el("spin-btn");
+
+    function updateSpinButtonState() {
+      const is10x = toggle10x && toggle10x.checked;
+      const mult = is10x ? 10 : 1;
+      const cost = is10x ? 20 : 2;
+
+      // 1. Tell Wheel to update numbers on canvas
+      if (typeof Wheel !== "undefined" && Wheel.setMultiplier) {
+        Wheel.setMultiplier(mult);
+        Wheel.redraw();
+      }
+
+      // 2. Update top subtitle text
+      const wheelSub = el("wheel-sub");
+      if (wheelSub && !el("wheel-result")?.textContent?.includes("Spinning")) {
+        wheelSub.innerHTML = `${cost} <span class="hud-gem-icon"></span> per spin`;
+      }
+
+      // 3. Update Spin button text
+      if (spinBtn && !el("wheel-result")?.textContent?.includes("Spinning")) {
+        spinBtn.innerHTML = `Spin (${cost} <span class="hud-gem-icon"></span>)`;
+      }
+    }
+
+    if (toggle10x) {
+      toggle10x.addEventListener("change", () => {
+        updateSpinButtonState();
+      });
+    }
+
+    // --- Spin Button Execution ---
     el("spin-btn").addEventListener("click", async () => {
       // Session lock: block if paused
       if (typeof Store !== "undefined" && !Store.isSessionActive()) {
@@ -2716,17 +2750,21 @@
         return;
       }
 
+      const currentMult = (typeof Wheel !== "undefined" && Wheel.getMultiplier) ? Wheel.getMultiplier() : 1;
+      const spinCost = 2 * currentMult;
+
       // Client-side diamond check before hitting server
-      const hasFreeSpins = Number(state.player?.freeSpins) > 0 && state.player?.freeSpinsNoDiamondCost;
-      if (!hasFreeSpins && (Number(state.diamonds) || 0) < 2) {
-        showToast("Not enough diamonds — go find some!", 3500);
+      const hasFreeSpins = Number(state.player?.freeSpins) > 0 && state.player?.freeSpinsNoDiamondCost && currentMult === 1;
+      if (!hasFreeSpins && (Number(state.diamonds) || 0) < spinCost) {
+        showToast(`Not enough diamonds — you need ${spinCost} diamonds for this spin!`, 3500);
         return;
       }
 
-      const spinResult = await ServerAntiCheat.spinWheel();
+      // Pass the multiplier (1 or 10) to the server
+      const spinResult = await ServerAntiCheat.spinWheel(currentMult);
       if (!spinResult.spun) {
         const msgs = {
-          insufficient_diamonds: "Not enough diamonds — go find some!",
+          insufficient_diamonds: `Not enough diamonds — you need ${spinCost} diamonds!`,
           no_save_found: "⚠️ Account not found. Please restart the game.",
           functions_not_initialized: "⚠️ Server connection required to spin the wheel.",
         };
@@ -2753,20 +2791,23 @@
           window.completeDailyQuest("wheel");
         }
 
-        // Coordinates from the center of the wheel
+        // Coordinates from the center of the wheel for flying particle fountains
         const wheelEl = el("wheel-canvas");
         const wRect = wheelEl ? wheelEl.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
         const originX = wRect.left + wRect.width / 2;
         const originY = wRect.top + wRect.height / 2;
 
+        const multAward = currentMult; // 1 or 10
+
         if (slice.type === "diamond") {
-          el("wheel-result").textContent = "Your diamond found its way back to you. (◆ +1)";
-          showToast("💎 +1 Diamond Refunded!");
-          spawnFlyingGemToHUD(originX, originY);
+          const winDiamonds = 1 * multAward;
+          el("wheel-result").textContent = `Your diamond found its way back to you. (◆ +${winDiamonds})`;
+          showToast(`💎 +${winDiamonds} Diamond${winDiamonds > 1 ? 's' : ''} Refunded!`);
+          launchFlyingGemStream(originX, originY, winDiamonds);
 
         } else if (slice.type === "diamond_jackpot") {
           // 💎 +12 or +24 Diamond Jackpot!
-          const winDiamonds = Number(slice.amount) || 12;
+          const winDiamonds = (Number(slice.amount) || 12) * multAward;
           el("wheel-result").textContent = `🎉 MEGA JACKPOT! +${winDiamonds} Diamonds!`;
           showToast(`💎 MEGA JACKPOT! Won +${winDiamonds} Diamonds!`);
 
@@ -2782,11 +2823,12 @@
           showToast("🚫 Nothing this time — keep searching!");
 
         } else {
-          const winAmount = Number(slice.amount) || 0;
+          // 🪙 Elden Bucks Winner
+          const winAmount = (Number(slice.amount) || 0) * multAward;
           el("wheel-result").textContent = `🎉 You won ${winAmount} EB!`;
           showToast(`🎉 Won +${winAmount} Elden Bucks!`);
 
-          // Broadcast 25 EB or 50 EB Jackpots worldwide!
+          // Broadcast 25+ EB Jackpots worldwide!
           if (winAmount >= 25 && typeof Feed !== "undefined") {
             Feed.broadcast("jackpot", { amount: winAmount });
           }
@@ -2796,6 +2838,7 @@
 
         updateTopbar();
         el("spin-btn").disabled = false;
+        updateSpinButtonState();
       }, spinResult.slice);
     });
 

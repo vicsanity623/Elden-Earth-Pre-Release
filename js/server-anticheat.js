@@ -116,11 +116,12 @@ const ServerAntiCheat = (() => {
     }
   }
 
-  async function spinWheel() {
+  async function spinWheel(multiplier = 1) {
     if (!functions) return { spun: false, reason: "functions_not_initialized" };
     try {
       const spinWheelFn = functions.httpsCallable("spinWheel");
-      const result = await spinWheelFn();
+      // Pass the multiplier (1 or 10) to the Firebase Cloud Function
+      const result = await spinWheelFn({ multiplier });
       return result.data;
     } catch (e) {
       console.warn("[ServerAntiCheat] Wheel spin failed:", e.message);

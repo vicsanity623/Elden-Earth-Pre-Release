@@ -533,7 +533,7 @@ Modern Extraction Model:
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.29b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.32b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -686,6 +686,8 @@ Modern Extraction Model:
   </div>
 </div>
 
+
+
 <!-- ===================== SPIN WHEEL MODAL ===================== -->
 <div id="wheel-modal" class="modal hidden">
   <div class="modal-card wheel-card">
@@ -710,6 +712,17 @@ Modern Extraction Model:
     <div class="wheel-wrap">
       <div class="wheel-pointer">▼</div>
       <canvas id="wheel-canvas" width="320" height="320"></canvas>
+    </div>
+    <!-- 10X Multi-Spin Toggle Switch -->
+    <div class="wheel-multiplier-row">
+      <div class="wheel-mult-info">
+        <span class="wheel-mult-badge">⚡ 10X SPIN</span>
+        <span class="wheel-mult-desc">Cost: 20 <span class="hud-gem-icon"></span> • 10X Rewards</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="wheel-10x-toggle" />
+        <span class="toggle-slider"></span>
+      </label>
     </div>
     <button id="spin-btn" class="btn btn-primary">Spin (2 <span class="hud-gem-icon"></span>)</button>
     <p id="wheel-result" class="wheel-result"></p>

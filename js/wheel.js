@@ -6,6 +6,7 @@
 const Wheel = (() => {
   let canvas, ctx;
   let rotation = 0; // current resting rotation, degrees
+  let currentMultiplier = 1;
 
   // 1. Create and preload the coin image
   const ebCoinImg = new Image();
@@ -102,17 +103,19 @@ const Wheel = (() => {
       ctx.fillStyle = "#0d1420";
       ctx.font = "bold 15px Manrope, sans-serif";
 
+      const displayAmount = slices[i].amount * currentMultiplier;
+
       if (slices[i].type === "diamond" || slices[i].type === "diamond_jackpot") {
         ctx.textAlign = "right";
-        ctx.fillText("+" + slices[i].amount, radius - 26, 5);
+        ctx.fillText("+" + displayAmount, radius - 26, 5);
         renderCanvas3DGem(radius - 14, 0, 18);
       } else {
         ctx.textAlign = "right";
-        
+
         // Draw the coin if loaded, otherwise draw label as fallback
         if (ebCoinImg.complete && ebCoinImg.naturalWidth > 0) {
           // Draw the amount (e.g., "1", "2", "5", "50")
-          ctx.fillText(slices[i].amount, radius - 28, 5);
+          ctx.fillText(displayAmount, radius - 28, 5);
           // Draw the coin image next to it
           ctx.drawImage(ebCoinImg, radius - 24, -9, 18, 18);
         } else {
@@ -255,5 +258,19 @@ let spinTimeoutId = null;
     }
   }
 
-  return { init, spin, resetSpinningState };
+  function setMultiplier(mult) {
+    currentMultiplier = mult;
+  }
+
+  function getMultiplier() {
+    return currentMultiplier;
+  }
+
+  function redraw() {
+    if (canvas && ctx) {
+      draw();
+    }
+  }
+
+  return { init, spin, resetSpinningState, setMultiplier, getMultiplier, redraw };
 })();
