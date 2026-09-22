@@ -2651,6 +2651,8 @@
       localStorage.setItem(TUTORIAL_KEY, "true");
       if (menuDot) menuDot.classList.add("hidden");
       openModal("menu-modal");
+      // Update phone verification button state when menu opens
+      updatePhoneButtonState();
     });
 
     // Wire up Session Conflict Resume Button
@@ -3030,12 +3032,43 @@
       }
     }
 
+    function updatePhoneButtonState() {
+      const user = firebase.auth().currentUser;
+      const btn = el("link-phone-btn");
+      const label = el("phone-verified-label");
+      if (!btn || !label) return;
+      
+      if (user) {
+        const phoneProvider = user.providerData.find(p => p.providerId === "phone");
+        if (phoneProvider) {
+          // Phone is verified - show green checkmark state
+          btn.textContent = "✓ Verified";
+          btn.style.background = "linear-gradient(180deg, #4ade80, #22c55e)";
+          btn.style.color = "#ffffff";
+          btn.style.border = "1px solid #4ade80";
+          btn.style.boxShadow = "0 4px 12px rgba(74, 222, 128, 0.3)";
+          btn.disabled = true;
+          label.classList.remove("hidden");
+          return;
+        }
+      }
+      // Not verified - show default state
+      btn.textContent = "Link Phone Number";
+      btn.style.background = "";
+      btn.style.color = "";
+      btn.style.border = "";
+      btn.style.boxShadow = "";
+      btn.disabled = false;
+      label.classList.add("hidden");
+    }
+    window.updatePhoneButtonState = updatePhoneButtonState;
+
     el("link-phone-btn")?.addEventListener("click", async () => {
       const user = firebase.auth().currentUser;
       if (!user) { showToast("Please log in first."); return; }
       const phoneProvider = user.providerData.find(p => p.providerId === "phone");
       if (phoneProvider) {
-        showToast("Phone number already linked: " + phoneProvider.phoneNumber);
+        showToast("Phone number already verified: " + phoneProvider.phoneNumber);
         return;
       }
       resetPhoneModal();
@@ -3135,6 +3168,7 @@
         resetPhoneModal();
         el("phone-step-loading").querySelector("p").textContent = "Sending SMS code...";
         showToast("Phone number linked successfully!");
+        updatePhoneButtonState();
       } catch (err) {
         console.error("[Phone] Verify error:", err);
         el("phone-step-loading").classList.add("hidden");

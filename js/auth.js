@@ -324,6 +324,10 @@ const Auth = (() => {
 
               completeSignIn(Store.get().player, user.uid);
             }
+            // Update phone verification button state
+            if (typeof updatePhoneButtonState === "function") {
+              updatePhoneButtonState();
+            }
           }
         });
       } catch (e) {
