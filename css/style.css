@@ -438,11 +438,10 @@ html,body{
 
 /* ---------- Toast (Floats Cleanly Above Buttons) ---------- */
 .toast {
-  position: absolute; 
+  position: fixed; 
   left: 50%; 
-  /* Floats cleanly above the BUY LAND and EARN buttons */
   bottom: calc(135px + env(safe-area-inset-bottom)); 
-  z-index: 2147483647 !important;
+  z-index: 999999 !important;
   transform: translateX(-50%);
   background: rgba(13, 20, 32, 0.95);
   border: 1.5px solid var(--gold);
