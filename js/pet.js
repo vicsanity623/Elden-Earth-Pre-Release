@@ -21,7 +21,7 @@ const CompanionPet = (() => {
   let currentAnimState = "idle";
 
   const FOLLOW_OFFSET_METERS = 4.5;
-  const FETCH_RADIUS_METERS = 375;
+  const FETCH_RADIUS_METERS = 500;
   const WALK_SPEED = 0.00003;
   const RUN_SPEED = 0.00012;
   const LERP_FACTOR = 0.08;
@@ -372,26 +372,72 @@ const CompanionPet = (() => {
     updateFollowLogic();
   }
 
+  let isAngryCatchingUp = false;
+
   function updateFollowLogic() {
     const state = Store.get();
-
     if (isFetching) return;
+
+    const isAngry = (state.pet?.mood || 0) <= 15;
 
     const targetLng = playerCoords.lng + PET_FOLLOW_OFFSET_LNG;
     const targetLat = playerCoords.lat + PET_FOLLOW_OFFSET_LAT;
-
     const dist = Geo.haversine(playerCoords.lat, playerCoords.lng, petCoords.lat, petCoords.lng);
 
-    if (dist > 1.0) {
+    // ================= ANGRY / EXHAUSTED PET BEHAVIOR =================
+    if (isAngry) {
+      // 1. Ignore small GPS drift (under 3.5 meters) — let it sit in peace!
+      if (!isAngryCatchingUp && dist < 3.5) {
+        isFollowing = false;
+        playAnimation("sitting");
+        return;
+      }
+
+      // 2. Player walked or drifted far away (> 3.5m) — reluctantly stand up and catch up!
+      if (dist >= 3.5) {
+        isAngryCatchingUp = true;
+      }
+
+      // 3. Slowly walk to catch up
+      if (isAngryCatchingUp) {
+        if (dist <= 1.8) {
+          // Arrived! Sit back down grumpily
+          isAngryCatchingUp = false;
+          isFollowing = false;
+          playAnimation("sitting");
+          return;
+        }
+
+        isFollowing = true;
+        const targetAngle = computeTargetHeading(petCoords.lat, petCoords.lng, targetLat, targetLng);
+        smoothHeadingUpdate(targetAngle);
+
+        // Reluctant, slow walk (constant step)
+        const step = 0.000008;
+        const totalDist = Math.hypot(targetLng - petCoords.lng, targetLat - petCoords.lat);
+        if (totalDist > 0) {
+          petCoords.lng += ((targetLng - petCoords.lng) / totalDist) * step;
+          petCoords.lat += ((targetLat - petCoords.lat) / totalDist) * step;
+        }
+
+        playAnimation("walk");
+        return;
+      }
+    }
+
+    // ================= NORMAL HAPPY / CONTENT PET BEHAVIOR =================
+    isAngryCatchingUp = false;
+    if (dist > 1.2) {
       isFollowing = true;
+      const targetAngle = computeTargetHeading(petCoords.lat, petCoords.lng, targetLat, targetLng);
+      smoothHeadingUpdate(targetAngle);
 
-      const dx = targetLng - petCoords.lng;
-      const dy = targetLat - petCoords.lat;
-      const newHeading = Math.atan2(dx, dy);
-      smoothHeadingUpdate(newHeading);
-
-      petCoords.lng += dx * LERP_FACTOR;
-      petCoords.lat += dy * LERP_FACTOR;
+      const step = 0.000012; // Normal follow speed
+      const totalDist = Math.hypot(targetLng - petCoords.lng, targetLat - petCoords.lat);
+      if (totalDist > 0) {
+        petCoords.lng += ((targetLng - petCoords.lng) / totalDist) * step;
+        petCoords.lat += ((targetLat - petCoords.lat) / totalDist) * step;
+      }
 
       playAnimation("walk");
     } else {
@@ -469,37 +515,33 @@ const CompanionPet = (() => {
 
   function updateIdleRoaming() {
     const state = Store.get();
-
-    // 🛑 If mood is 0, the pet is angry/exhausted: Sit down and DO NOT ROAM!
-    if (state.pet?.mood <= 0) {
+    
+    // 🛡️ If pet is angry, NEVER wander or roam!
+    if ((state.pet?.mood || 0) <= 15) {
       idleRoamTarget = null;
-      playAnimation("sitting");
+      if (!isFollowing && !isAngryCatchingUp) {
+        playAnimation("sitting");
+      }
       return;
     }
 
-    if (!idleRoamTarget || isFetching || isFollowing) {
-      if (!isFetching && !isFollowing) playAnimation("idle");
-      return;
-    }
+    if (!idleRoamTarget || isFetching || isFollowing) return;
 
     const dist = Geo.haversine(petCoords.lat, petCoords.lng, idleRoamTarget.lat, idleRoamTarget.lng);
-
     if (dist < 0.8) {
       idleRoamTarget = null;
       playAnimation("idle");
       return;
     }
 
-    const dx = idleRoamTarget.lng - petCoords.lng;
-    const dy = idleRoamTarget.lat - petCoords.lat;
     const targetAngle = computeTargetHeading(petCoords.lat, petCoords.lng, idleRoamTarget.lat, idleRoamTarget.lng);
     smoothHeadingUpdate(targetAngle);
 
-    const step = 0.000005; // Gentle walk
-    const totalDist = Math.hypot(dx, dy);
+    const step = 0.000005;
+    const totalDist = Math.hypot(idleRoamTarget.lng - petCoords.lng, idleRoamTarget.lat - petCoords.lat);
     if (totalDist > 0) {
-      petCoords.lng += (dx / totalDist) * step;
-      petCoords.lat += (dy / totalDist) * step;
+      petCoords.lng += ((idleRoamTarget.lng - petCoords.lng) / totalDist) * step;
+      petCoords.lat += ((idleRoamTarget.lat - petCoords.lat) / totalDist) * step;
     }
 
     playAnimation("walk");
@@ -619,40 +661,57 @@ const CompanionPet = (() => {
       return;
     }
 
-    console.log("[CompanionPet] Collecting diamond:", diamondId);
-    
-    // Drain mood by 15% per diamond
-    state.pet.mood = Math.max(0, (state.pet.mood || 100) - MOOD_DRAIN_PER_DIAMOND);
-    
-    if (!state.collectedDiamondIds) state.collectedDiamondIds = [];
-    state.collectedDiamondIds.push(diamondId);
-    if (state.collectedDiamondIds.length > 100) state.collectedDiamondIds.shift();
-
-    delete state.liveDiamonds[diamondId];
-    state.diamonds = (Number(state.diamonds) || 0) + 1;
-    state.pet.totalFetched = (state.pet.totalFetched || 0) + 1;
-    Store.save(true);
-
-    if (typeof Diamonds !== "undefined" && Diamonds.renderAll) {
-      Diamonds.renderAll();
+    // Server-side validation with byPet flag for extended 500m range
+    if (typeof ServerAntiCheat === "undefined" || !ServerAntiCheat.isReady()) {
+      console.log("[CompanionPet] Server not ready, cannot collect");
+      returnToPlayer();
+      return;
     }
 
-    if (typeof showToast === "function") {
-      showToast(` Your Buddy found a gift! (+1 ◆) Mood: ${Math.round(state.pet.mood)}%`);
-    }
+    try {
+      const result = await ServerAntiCheat.validateCollect(
+        petCoords.lat, petCoords.lng, diamondId, d.lat, d.lon, true
+      );
 
-    playAnimation("jump");
-    
-    // Check if mood is now 0
-    if (state.pet.mood <= 0) {
-      console.log("[CompanionPet] Pet mood depleted, returning angry");
+      if (!result || !result.allowed) {
+        console.log("[CompanionPet] Server rejected collection:", result?.reason);
+        if (result?.reason === "too_far") {
+          console.log("[CompanionPet] Diamond too far even for pet range");
+        }
+        returnToPlayer();
+        return;
+      }
+
+      console.log("[CompanionPet] Collecting diamond:", diamondId);
+      
+      // Drain mood by 15% per diamond
+      state.pet.mood = Math.max(0, (state.pet.mood || 100) - MOOD_DRAIN_PER_DIAMOND);
+      
+      if (!state.collectedDiamondIds) state.collectedDiamondIds = [];
+      state.collectedDiamondIds.push(diamondId);
+      if (state.collectedDiamondIds.length > 100) state.collectedDiamondIds.shift();
+
+      delete state.liveDiamonds[diamondId];
+      state.diamonds = Number(result.nextDiamonds) || ((Number(state.diamonds) || 0) + 1);
+      state.pet.totalFetched = (state.pet.totalFetched || 0) + 1;
+      Store.save(true);
+
+      if (typeof Diamonds !== "undefined" && Diamonds.renderAll) {
+        Diamonds.renderAll();
+      }
+
+      if (typeof showToast === "function") {
+        showToast(`🎁 Your Buddy found a gift! (+1 ◆) Mood: ${Math.round(state.pet.mood)}%`);
+      }
+
+      playAnimation("jump");
+      
       setTimeout(() => {
         returnToPlayer();
       }, 1500);
-    } else {
-      setTimeout(() => {
-        returnToPlayer();
-      }, 1500);
+    } catch (e) {
+      console.warn("[CompanionPet] Collect failed:", e);
+      returnToPlayer();
     }
   }
 

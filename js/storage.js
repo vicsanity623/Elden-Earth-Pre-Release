@@ -55,6 +55,7 @@ const Store = (() => {
       totalDividends: 0,
       plots: {},
       plotBag: {},
+      plotsVersion: 0,
       eldenStopSeeds: 0,
       eldenStopCooldowns: {},
       calendar: { claimedDays: 0, lastClaimTime: 0, lastClaimDate: null },

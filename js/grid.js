@@ -176,6 +176,9 @@ const Grid = (() => {
     // Update local state from server result
     state.plots = result.plots || state.plots;
     state.plotBag = result.plotBag || state.plotBag;
+    if (result.plotsVersion !== undefined) {
+      state.plotsVersion = result.plotsVersion;
+    }
     delete globalPlots[selectedPlotId];
     Store.save(true);
 

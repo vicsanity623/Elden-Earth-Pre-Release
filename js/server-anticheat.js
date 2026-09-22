@@ -75,7 +75,7 @@ const ServerAntiCheat = (() => {
    * Throws on transport/auth failures so callers can fail open using the
    * client-side proximity check instead of wrongly treating it as "too far".
    */
-  async function validateCollect(lat, lon, diamondId, diamondLat, diamondLon) {
+  async function validateCollect(lat, lon, diamondId, diamondLat, diamondLon, byPet) {
     if (!functions) {
       return { allowed: false, reason: "functions_not_initialized" };
     }
@@ -87,6 +87,7 @@ const ServerAntiCheat = (() => {
       diamondId,
       diamondLat,
       diamondLon,
+      byPet: Boolean(byPet),
     });
     return result.data;
   }
