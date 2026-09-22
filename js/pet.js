@@ -27,7 +27,7 @@ const CompanionPet = (() => {
   const LERP_FACTOR = 0.08;
   const HEADING_LERP = 0.12;
   const MOOD_DECAY_PER_HOUR = 4;
-  const MOOD_DRAIN_PER_DIAMOND = 15;
+  const MOOD_DRAIN_PER_DIAMOND = 2;
   const PET_FOLLOW_OFFSET_LAT = -0.0001;
   const PET_FOLLOW_OFFSET_LNG = -0.0001;
   const IDLE_ROAM_RADIUS = 0.00006;
@@ -684,7 +684,7 @@ const CompanionPet = (() => {
 
       console.log("[CompanionPet] Collecting diamond:", diamondId);
       
-      // Drain mood by 15% per diamond
+      // Drain mood by 2% per diamond
       state.pet.mood = Math.max(0, (state.pet.mood || 100) - MOOD_DRAIN_PER_DIAMOND);
       
       if (!state.collectedDiamondIds) state.collectedDiamondIds = [];
