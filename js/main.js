@@ -2959,6 +2959,130 @@
         }
       }
     });
+
+    // --- LINK PHONE NUMBER ---
+    let phoneConfirmationResult = null;
+    let recaptchaVerifier = null;
+
+    function resetPhoneModal() {
+      el("phone-step-input").classList.remove("hidden");
+      el("phone-step-verify").classList.add("hidden");
+      el("phone-step-loading").classList.add("hidden");
+      el("phone-number-input").value = "";
+      el("phone-code-input").value = "";
+      phoneConfirmationResult = null;
+    }
+
+    el("link-phone-btn")?.addEventListener("click", () => {
+      const user = firebase.auth().currentUser;
+      if (!user) { showToast("Please log in first."); return; }
+      const phoneProvider = user.providerData.find(p => p.providerId === "phone");
+      if (phoneProvider) {
+        showToast("Phone number already linked: " + phoneProvider.phoneNumber);
+        return;
+      }
+      resetPhoneModal();
+      el("phone-link-modal").classList.remove("hidden");
+    });
+
+    el("phone-cancel-btn")?.addEventListener("click", () => {
+      el("phone-link-modal").classList.add("hidden");
+      resetPhoneModal();
+    });
+
+    el("phone-back-btn")?.addEventListener("click", () => {
+      el("phone-step-verify").classList.add("hidden");
+      el("phone-step-input").classList.remove("hidden");
+      phoneConfirmationResult = null;
+    });
+
+    el("phone-send-code-btn")?.addEventListener("click", async () => {
+      const phoneNumber = el("phone-number-input").value.trim();
+      if (!phoneNumber || phoneNumber.length < 7) {
+        showToast("Please enter a valid phone number with country code.");
+        return;
+      }
+      const user = firebase.auth().currentUser;
+      if (!user) { showToast("Please log in first."); return; }
+
+      el("phone-step-input").classList.add("hidden");
+      el("phone-step-loading").classList.remove("hidden");
+
+      try {
+        if (!recaptchaVerifier) {
+          recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", {
+            size: "invisible",
+            callback: () => {}
+          });
+        }
+        phoneConfirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
+        el("phone-step-loading").classList.add("hidden");
+        el("phone-step-verify").classList.remove("hidden");
+        showToast("SMS code sent!");
+      } catch (err) {
+        console.error("[Phone] Send code error:", err);
+        el("phone-step-loading").classList.add("hidden");
+        el("phone-step-input").classList.remove("hidden");
+        if (err.code === "auth/too-many-requests") {
+          showToast("Too many attempts. Please try again later.");
+        } else if (err.code === "auth/invalid-phone-number") {
+          showToast("Invalid phone number format.");
+        } else {
+          showToast("Failed to send code: " + err.message);
+        }
+        if (recaptchaVerifier) {
+          recaptchaVerifier.clear();
+          recaptchaVerifier = null;
+        }
+      }
+    });
+
+    el("phone-verify-btn")?.addEventListener("click", async () => {
+      const code = el("phone-code-input").value.trim();
+      if (!code || code.length < 4) {
+        showToast("Please enter the verification code.");
+        return;
+      }
+      if (!phoneConfirmationResult) {
+        showToast("Please request a code first.");
+        return;
+      }
+
+      el("phone-step-verify").classList.add("hidden");
+      el("phone-step-loading").classList.remove("hidden");
+      el("phone-step-loading").querySelector("p").textContent = "Verifying code...";
+
+      try {
+        const credential = firebase.auth.PhoneAuthProvider.credential(
+          phoneConfirmationResult.verificationId,
+          code
+        );
+        const user = firebase.auth().currentUser;
+        await user.linkWithCredential(credential);
+        el("phone-link-modal").classList.add("hidden");
+        resetPhoneModal();
+        el("phone-step-loading").querySelector("p").textContent = "Sending SMS code...";
+        showToast("Phone number linked successfully!");
+        if (recaptchaVerifier) {
+          recaptchaVerifier.clear();
+          recaptchaVerifier = null;
+        }
+      } catch (err) {
+        console.error("[Phone] Verify error:", err);
+        el("phone-step-loading").classList.add("hidden");
+        el("phone-step-verify").classList.remove("hidden");
+        el("phone-step-loading").querySelector("p").textContent = "Sending SMS code...";
+        if (err.code === "auth/invalid-verification-code") {
+          showToast("Invalid code. Please try again.");
+        } else if (err.code === "auth/code-expired") {
+          showToast("Code expired. Please request a new one.");
+        } else if (err.code === "auth/credential-already-in-use") {
+          showToast("This phone number is already linked to another account.");
+        } else {
+          showToast("Verification failed: " + err.message);
+        }
+      }
+    });
   }
   
   // Hardware Compass: Rotates 3D Character when turning your body in place
