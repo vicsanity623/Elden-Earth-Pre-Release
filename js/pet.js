@@ -322,11 +322,12 @@ const CompanionPet = (() => {
     });
   }
 
- function playAnimation(animName) {
+  function playAnimation(animName) {
     if (!petModel || !mixer) return;
 
     const lower = animName.toLowerCase();
-    // 🛡️ Prevent animation jitter/twitch: ignore if already playing this state
+    
+    // 🛡️ Prevent restarting an animation that is already active!
     if (currentAnimState === lower) return;
 
     const key = Object.keys(animationsMap).find((k) => k.includes(lower));
@@ -335,8 +336,23 @@ const CompanionPet = (() => {
     const nextAction = animationsMap[key];
     if (currentAction === nextAction) return;
 
-    nextAction.reset().setEffectiveTimeScale(0.8).fadeIn(0.25).play();
-    if (currentAction) currentAction.fadeOut(0.25);
+    // 🧘 Sitting must play ONCE and HOLD its final pose!
+    if (lower.includes("sit")) {
+      nextAction.reset();
+      nextAction.setLoop(THREE.LoopOnce, 1);
+      nextAction.clampWhenFinished = true; // Stays seated peacefully!
+      nextAction.fadeIn(0.4).play();
+    } else {
+      nextAction.reset();
+      nextAction.setLoop(THREE.LoopRepeat);
+      nextAction.clampWhenFinished = false;
+      nextAction.fadeIn(0.3).play();
+    }
+
+    if (currentAction) {
+      currentAction.fadeOut(0.3);
+    }
+
     currentAction = nextAction;
     currentAnimState = lower;
   }
@@ -707,24 +723,39 @@ const CompanionPet = (() => {
     const state = Store.get();
     if (!state.pet) return;
 
-    const mood = state.pet.mood;
+    const mood = Number(state.pet.mood) || 0;
 
-    // Apply facial expressions based on mood
+    // Apply facial expression morph targets cleanly
     applyMoodExpression(mood);
 
-    if (mood <= 0) {
+    // If fetching or following the player, let movement animation take priority
+    if (isFetching || isFollowing) return;
+
+    // 🛑 Low Mood States:
+    if (mood <= 15) {
+      // Sit down on the ground and STAY seated (No twitching)
       playAnimation("sitting");
-    } else if (mood < 15) {
-      playAnimation("sad");
     } else if (mood < 40) {
+      // Content / Mildly hungry: calm standing idle
       playAnimation("idle");
     }
   }
 
+  let lastAppliedMoodTier = null;
+
   function applyMoodExpression(mood) {
     if (!petModel || Object.keys(petMorphTargets).length === 0) return;
 
-    // Reset all expressions first
+    // Only update morph target if the mood category actually changed!
+    // This stops the violent vertex twitching.
+    let currentTier = "happy";
+    if (mood <= 15) currentTier = "angry";
+    else if (mood <= 40) currentTier = "sad";
+
+    if (lastAppliedMoodTier === currentTier) return; // Already applied, don't spam!
+    lastAppliedMoodTier = currentTier;
+
+    // Reset influences
     for (const key in petMorphTargets) {
       const { mesh, index } = petMorphTargets[key];
       if (mesh.morphTargetInfluences) {
@@ -732,22 +763,16 @@ const CompanionPet = (() => {
       }
     }
 
-    // Apply expression based on mood
-    if (mood <= 15 && petMorphTargets.angry) {
+    // Apply clean facial expression
+    if (currentTier === "angry" && petMorphTargets.angry) {
       const { mesh, index } = petMorphTargets.angry;
-      if (mesh.morphTargetInfluences) {
-        mesh.morphTargetInfluences[index] = 1.0;
-      }
-    } else if (mood <= 40 && petMorphTargets.sad) {
+      mesh.morphTargetInfluences[index] = 1.0;
+    } else if (currentTier === "sad" && petMorphTargets.sad) {
       const { mesh, index } = petMorphTargets.sad;
-      if (mesh.morphTargetInfluences) {
-        mesh.morphTargetInfluences[index] = 1.0;
-      }
-    } else if (mood >= 75 && petMorphTargets.surprised) {
+      mesh.morphTargetInfluences[index] = 1.0;
+    } else if (currentTier === "happy" && petMorphTargets.surprised) {
       const { mesh, index } = petMorphTargets.surprised;
-      if (mesh.morphTargetInfluences) {
-        mesh.morphTargetInfluences[index] = 0.5;
-      }
+      mesh.morphTargetInfluences[index] = 0.4;
     }
   }
 
