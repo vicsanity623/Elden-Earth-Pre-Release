@@ -2977,6 +2977,16 @@
         recaptchaVerifier = null;
         recaptchaWidgetId = null;
       }
+      // Clear the reCAPTCHA container HTML
+      const container = el("recaptcha-container");
+      if (container) container.innerHTML = "";
+      // Reset send button state
+      const sendBtn = el("phone-send-code-btn");
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = "0.5";
+        sendBtn.textContent = "Complete reCAPTCHA first";
+      }
     }
 
     async function sendPhoneCode() {
@@ -2988,25 +2998,15 @@
       const user = firebase.auth().currentUser;
       if (!user) { showToast("Please log in first."); return; }
 
+      if (!recaptchaVerifier) {
+        showToast("Verification not ready. Please close and reopen the modal.");
+        return;
+      }
+
       el("phone-step-input").classList.add("hidden");
       el("phone-step-loading").classList.remove("hidden");
 
       try {
-        if (!recaptchaVerifier) {
-          recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", {
-            size: "normal",
-            callback: () => {},
-            "expired-callback": () => {
-              showToast("reCAPTCHA expired. Please try again.");
-              el("phone-step-loading").classList.add("hidden");
-              el("phone-step-input").classList.remove("hidden");
-              if (recaptchaVerifier) {
-                try { grecaptcha.reset(recaptchaWidgetId); } catch (e) {}
-              }
-            }
-          });
-          recaptchaWidgetId = await recaptchaVerifier.render();
-        }
         phoneConfirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
         el("phone-step-loading").classList.add("hidden");
         el("phone-step-verify").classList.remove("hidden");
@@ -3030,7 +3030,7 @@
       }
     }
 
-    el("link-phone-btn")?.addEventListener("click", () => {
+    el("link-phone-btn")?.addEventListener("click", async () => {
       const user = firebase.auth().currentUser;
       if (!user) { showToast("Please log in first."); return; }
       const phoneProvider = user.providerData.find(p => p.providerId === "phone");
@@ -3040,6 +3040,51 @@
       }
       resetPhoneModal();
       el("phone-link-modal").classList.remove("hidden");
+      console.log("[Phone] Modal opened");
+      
+      // Disable send button initially
+      const sendBtn = el("phone-send-code-btn");
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = "0.5";
+        sendBtn.textContent = "Complete reCAPTCHA first";
+      }
+      
+      // Wait for modal to be visible, then render reCAPTCHA
+      await new Promise(resolve => setTimeout(resolve, 300));
+      try {
+        if (!recaptchaVerifier) {
+          const container = el("recaptcha-container");
+          console.log("[Phone] Container visible:", container.offsetParent !== null);
+          recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", {
+            size: "normal",
+            callback: () => {
+              console.log("[Phone] reCAPTCHA solved - enabling send button");
+              if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.style.opacity = "1";
+                sendBtn.textContent = "Send Code";
+              }
+            },
+            "expired-callback": () => {
+              showToast("reCAPTCHA expired. Please try again.");
+              if (sendBtn) {
+                sendBtn.disabled = true;
+                sendBtn.style.opacity = "0.5";
+                sendBtn.textContent = "Complete reCAPTCHA first";
+              }
+              if (recaptchaVerifier) {
+                try { grecaptcha.reset(recaptchaWidgetId); } catch (e) {}
+              }
+            }
+          });
+          recaptchaWidgetId = await recaptchaVerifier.render();
+          console.log("[Phone] reCAPTCHA rendered, widgetId:", recaptchaWidgetId);
+        }
+      } catch (err) {
+        console.error("[Phone] reCAPTCHA render error:", err);
+        showToast("Failed to load verification. Please refresh and try again.");
+      }
     });
 
     el("phone-cancel-btn")?.addEventListener("click", () => {
@@ -3051,6 +3096,13 @@
       el("phone-step-verify").classList.add("hidden");
       el("phone-step-input").classList.remove("hidden");
       phoneConfirmationResult = null;
+      // Reset send button state
+      const sendBtn = el("phone-send-code-btn");
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.style.opacity = "1";
+        sendBtn.textContent = "Send Code";
+      }
     });
 
     el("phone-send-code-btn")?.addEventListener("click", () => {

@@ -865,7 +865,7 @@ const CompanionPet = (() => {
     }
 
     state.berries--;
-    state.pet.mood = Math.min(100, (state.pet.mood || 0) + 25);
+    state.pet.mood = Math.min(100, (state.pet.mood || 0) + 5);
     state.pet.lastFedAt = Date.now();
     Store.save(true);
 
