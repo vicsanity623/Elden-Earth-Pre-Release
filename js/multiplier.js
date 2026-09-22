@@ -218,9 +218,15 @@ const Multiplier = (() => {
     const is50XEvent = is50XActive();
     const isBoosted = state.boostExpiry && state.boostExpiry > now;
 
-    // Update Floating Button Tag (50X vs 30X)
+    // Update Floating Button Tag with effective multiplier (scaled by plot count)
     const multLabel = el("mult-label");
-    if (multLabel) multLabel.textContent = is50XEvent ? "50X" : "30X";
+    if (multLabel) {
+      const baseMult = is50XEvent ? 50 : 30;
+      const plotCount = state.plots ? Object.keys(state.plots).length : 0;
+      const tierFactor = getTierFactor(plotCount);
+      const effectiveMult = Math.round(baseMult * tierFactor);
+      multLabel.textContent = effectiveMult + "X";
+    }
 
     if (multBtn) {
       if (is50XEvent) multBtn.classList.add("event-50x");
@@ -307,10 +313,14 @@ const Multiplier = (() => {
     if (multBtn) {
       multBtn.addEventListener("click", () => {
         const is50X = is50XActive();
-        const targetMult = is50X ? 50 : 30;
-        el("mult-label").textContent = targetMult + "X";
+        const baseMult = is50X ? 50 : 30;
+        const state = Store.get();
+        const plotCount = state.plots ? Object.keys(state.plots).length : 0;
+        const tierFactor = getTierFactor(plotCount);
+        const effectiveMult = Math.round(baseMult * tierFactor);
+        el("mult-label").textContent = effectiveMult + "X";
         el("booster-modal-title").textContent = is50X ? "🔥 Activate 50X Super Boost" : "Activate 30X Boost";
-        el("modal-mult-rate").textContent = `${targetMult}X Income`;
+        el("modal-mult-rate").textContent = `${effectiveMult}X Income`;
         document.getElementById("booster-modal")?.classList.remove("hidden");
       });
     }
@@ -326,7 +336,10 @@ const Multiplier = (() => {
         document.getElementById("booster-modal")?.classList.add("hidden");
         updateTopbar();
         const icon = activeMult === 50 ? "🔥" : "⚡";
-        showToast(`${icon} ${activeMult}X Multiplier Activated! (+1 Hr)`);
+        const plotCount = state.plots ? Object.keys(state.plots).length : 0;
+        const tierFactor = getTierFactor(plotCount);
+        const effectiveMult = Math.round(activeMult * tierFactor);
+        showToast(`${icon} ${effectiveMult}X Multiplier Activated! (+1 Hr)`);
         });
       });
     }
