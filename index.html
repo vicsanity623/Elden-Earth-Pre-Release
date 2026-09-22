@@ -533,7 +533,7 @@ Modern Extraction Model:
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.33b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.34b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -1714,9 +1714,6 @@ Modern Extraction Model:
   </div>
 </div>
 
-<!-- Hidden reCAPTCHA container for Firebase Phone Auth -->
-<div id="recaptcha-container" style="display:none;"></div>
-
 <!-- ===================== PHONE LINKING MODAL ===================== -->
 <div id="phone-link-modal" class="modal game-confirm-center hidden">
   <div class="modal-card" style="max-width:380px;text-align:center;padding:28px 24px;">
@@ -1727,6 +1724,7 @@ Modern Extraction Model:
     <!-- Step 1: Enter phone number -->
     <div id="phone-step-input">
       <input id="phone-number-input" type="tel" placeholder="+1 234 567 8900" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--parchment);font-size:14px;box-sizing:border-box;margin-bottom:12px;outline:none;" />
+      <div id="recaptcha-container" style="margin-bottom:12px;display:flex;justify-content:center;"></div>
       <div style="display:flex;gap:10px;justify-content:center;">
         <button id="phone-cancel-btn" class="btn" style="background:var(--panel-2);border:1px solid var(--line);color:var(--text-dim);padding:10px 20px;border-radius:10px;font-weight:600;cursor:pointer;">Cancel</button>
         <button id="phone-send-code-btn" class="btn btn-primary" style="padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer;">Send Code</button>

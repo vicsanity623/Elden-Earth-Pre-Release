@@ -2963,6 +2963,7 @@
     // --- LINK PHONE NUMBER ---
     let phoneConfirmationResult = null;
     let recaptchaVerifier = null;
+    let recaptchaWidgetId = null;
 
     function resetPhoneModal() {
       el("phone-step-input").classList.remove("hidden");
@@ -2971,6 +2972,62 @@
       el("phone-number-input").value = "";
       el("phone-code-input").value = "";
       phoneConfirmationResult = null;
+      if (recaptchaVerifier) {
+        try { recaptchaVerifier.clear(); } catch (e) {}
+        recaptchaVerifier = null;
+        recaptchaWidgetId = null;
+      }
+    }
+
+    async function sendPhoneCode() {
+      const phoneNumber = el("phone-number-input").value.trim();
+      if (!phoneNumber || phoneNumber.length < 7) {
+        showToast("Please enter a valid phone number with country code.");
+        return;
+      }
+      const user = firebase.auth().currentUser;
+      if (!user) { showToast("Please log in first."); return; }
+
+      el("phone-step-input").classList.add("hidden");
+      el("phone-step-loading").classList.remove("hidden");
+
+      try {
+        if (!recaptchaVerifier) {
+          recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", {
+            size: "normal",
+            callback: () => {},
+            "expired-callback": () => {
+              showToast("reCAPTCHA expired. Please try again.");
+              el("phone-step-loading").classList.add("hidden");
+              el("phone-step-input").classList.remove("hidden");
+              if (recaptchaVerifier) {
+                try { grecaptcha.reset(recaptchaWidgetId); } catch (e) {}
+              }
+            }
+          });
+          recaptchaWidgetId = await recaptchaVerifier.render();
+        }
+        phoneConfirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
+        el("phone-step-loading").classList.add("hidden");
+        el("phone-step-verify").classList.remove("hidden");
+        showToast("SMS code sent!");
+      } catch (err) {
+        console.error("[Phone] Send code error:", err);
+        el("phone-step-loading").classList.add("hidden");
+        el("phone-step-input").classList.remove("hidden");
+        if (err.code === "auth/too-many-requests") {
+          showToast("Too many attempts. Please try again later.");
+        } else if (err.code === "auth/invalid-phone-number") {
+          showToast("Invalid phone number format.");
+        } else if (err.code === "auth/captcha-check-failed") {
+          showToast("reCAPTCHA check failed. Please try again.");
+        } else {
+          showToast("Failed to send code: " + err.message);
+        }
+        if (recaptchaVerifier) {
+          try { grecaptcha.reset(recaptchaWidgetId); } catch (e) {}
+        }
+      }
     }
 
     el("link-phone-btn")?.addEventListener("click", () => {
@@ -2996,45 +3053,8 @@
       phoneConfirmationResult = null;
     });
 
-    el("phone-send-code-btn")?.addEventListener("click", async () => {
-      const phoneNumber = el("phone-number-input").value.trim();
-      if (!phoneNumber || phoneNumber.length < 7) {
-        showToast("Please enter a valid phone number with country code.");
-        return;
-      }
-      const user = firebase.auth().currentUser;
-      if (!user) { showToast("Please log in first."); return; }
-
-      el("phone-step-input").classList.add("hidden");
-      el("phone-step-loading").classList.remove("hidden");
-
-      try {
-        if (!recaptchaVerifier) {
-          recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", {
-            size: "invisible",
-            callback: () => {}
-          });
-        }
-        phoneConfirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
-        el("phone-step-loading").classList.add("hidden");
-        el("phone-step-verify").classList.remove("hidden");
-        showToast("SMS code sent!");
-      } catch (err) {
-        console.error("[Phone] Send code error:", err);
-        el("phone-step-loading").classList.add("hidden");
-        el("phone-step-input").classList.remove("hidden");
-        if (err.code === "auth/too-many-requests") {
-          showToast("Too many attempts. Please try again later.");
-        } else if (err.code === "auth/invalid-phone-number") {
-          showToast("Invalid phone number format.");
-        } else {
-          showToast("Failed to send code: " + err.message);
-        }
-        if (recaptchaVerifier) {
-          recaptchaVerifier.clear();
-          recaptchaVerifier = null;
-        }
-      }
+    el("phone-send-code-btn")?.addEventListener("click", () => {
+      sendPhoneCode();
     });
 
     el("phone-verify-btn")?.addEventListener("click", async () => {
@@ -3063,10 +3083,6 @@
         resetPhoneModal();
         el("phone-step-loading").querySelector("p").textContent = "Sending SMS code...";
         showToast("Phone number linked successfully!");
-        if (recaptchaVerifier) {
-          recaptchaVerifier.clear();
-          recaptchaVerifier = null;
-        }
       } catch (err) {
         console.error("[Phone] Verify error:", err);
         el("phone-step-loading").classList.add("hidden");

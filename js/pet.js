@@ -189,10 +189,7 @@ const CompanionPet = (() => {
       lastTapTime = now;
 
       const state = Store.get();
-      if (!state.pet || !state.pet.unlocked) {
-        console.log("[CompanionPet] Tap ignored - pet not unlocked");
-        return;
-      }
+      if (!state.pet || !state.pet.unlocked) return;
 
       const petScreenPos = projectPetToScreen();
       if (!petScreenPos) return;
@@ -203,11 +200,12 @@ const CompanionPet = (() => {
         Math.pow(clickX - petScreenPos.x, 2) + Math.pow(clickY - petScreenPos.y, 2)
       );
 
+      const TAP_RADIUS = 20;
       console.log("[CompanionPet] Tap distance from pet:", dist.toFixed(0), "px");
 
-      if (dist < 60) {
-        console.log("[CompanionPet] Opening pet modal");
-        openPetModal();
+      if (dist < TAP_RADIUS) {
+        console.log("[CompanionPet] Pet tapped - playing emote");
+        playPetTapEmote();
       }
     });
 
@@ -231,13 +229,32 @@ const CompanionPet = (() => {
         Math.pow(clickX - petScreenPos.x, 2) + Math.pow(clickY - petScreenPos.y, 2)
       );
 
+      const TAP_RADIUS = 20;
       console.log("[CompanionPet] Touch distance from pet:", dist.toFixed(0), "px");
 
-      if (dist < 60) {
-        console.log("[CompanionPet] Opening pet modal (touch)");
-        openPetModal();
+      if (dist < TAP_RADIUS) {
+        console.log("[CompanionPet] Pet tapped (touch) - playing emote");
+        playPetTapEmote();
       }
     });
+  }
+
+  function playPetTapEmote() {
+    if (isFetching || isFollowing) return;
+
+    const state = Store.get();
+    if (!state.pet || state.pet.mood <= 0) return;
+
+    const emotes = ["wave", "dance", "jump"];
+    const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
+    console.log("[CompanionPet] Tap emote:", randomEmote);
+    playAnimation(randomEmote);
+
+    setTimeout(() => {
+      if (!isFetching && !isFollowing) {
+        playAnimation("idle");
+      }
+    }, 3000);
   }
 
   function projectPetToScreen() {
