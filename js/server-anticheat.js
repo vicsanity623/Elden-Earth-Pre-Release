@@ -285,5 +285,38 @@ const ServerAntiCheat = (() => {
     }
   }
 
-  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData, claimMailbox, plantEldenStop, spinEldenStop };
+  async function checkChatEligibility() {
+    if (!functions) return { chatUnlocked: false, plotCount: 0 };
+    try {
+      const fn = functions.httpsCallable("checkChatEligibility");
+      return (await fn()).data;
+    } catch (e) {
+      console.warn("[ServerAntiCheat] checkChatEligibility failed:", e.message);
+      return { chatUnlocked: false, plotCount: 0 };
+    }
+  }
+
+  async function validateUsername(name) {
+    if (!functions) return { valid: false, reason: "functions_not_initialized" };
+    try {
+      const fn = functions.httpsCallable("validateUsername");
+      return (await fn({ name })).data;
+    } catch (e) {
+      console.warn("[ServerAntiCheat] validateUsername failed:", e.message);
+      return { valid: false, reason: "server_error" };
+    }
+  }
+
+  async function filterChatMessage(text, senderName) {
+    if (!functions) return { allowed: false, reason: "functions_not_initialized" };
+    try {
+      const fn = functions.httpsCallable("filterChatMessage");
+      return (await fn({ text, senderName })).data;
+    } catch (e) {
+      console.warn("[ServerAntiCheat] filterChatMessage failed:", e.message);
+      return { allowed: false, reason: "server_error" };
+    }
+  }
+
+  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData, claimMailbox, plantEldenStop, spinEldenStop, checkChatEligibility, validateUsername, filterChatMessage };
 })();

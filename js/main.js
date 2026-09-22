@@ -1877,49 +1877,80 @@
       const cleanName = newName.trim().slice(0, 16);
       if (cleanName.length < 2 || cleanName === currentName) return;
 
-      const lowerName = cleanName.toLowerCase();
-
-      // 1. 🛡️ RESERVED DEVELOPER & SYSTEM NAMES
-      const reservedSystemNames = ["vic", "admin", "developer", "system", "moderator", "official"];
-      if (reservedSystemNames.includes(lowerName)) {
-        showToast(`⛔ The handle "${cleanName}" is a reserved developer handle and cannot be claimed.`, 4000);
-        return;
-      }
-
-      // 2. 🌐 GLOBAL UNIQUE NAME CHECK IN FIRESTORE (First-Come, First-Served)
-      if (db && myId) {
+      // Server-side validation (profanity filter + strike system)
+      if (typeof ServerAntiCheat !== "undefined" && ServerAntiCheat.isReady()) {
         try {
-          const nameDoc = await db.collection("usernames").doc(lowerName).get();
-          if (nameDoc.exists) {
-            const existingOwner = nameDoc.data().uid;
-            if (existingOwner && existingOwner !== myId) {
-              showToast(`⚠️ The name "${cleanName}" is already taken by another player. Please pick a unique name!`, 4000);
+          const result = await ServerAntiCheat.validateUsername(cleanName);
+          
+          if (!result.valid) {
+            if (result.banned) {
+              showToast(`⛔ ${result.reason}`, 5000);
+              setTimeout(() => window.location.reload(), 3000);
               return;
             }
+            if (result.nameReset) {
+              showToast(` ${result.reason}`, 4000);
+              if (typeof Store.syncFromCloud === "function") {
+                await Store.syncFromCloud();
+                updateTopbar();
+                updatePlayerInfoModal();
+              }
+              return;
+            }
+            showToast(`⚠️ ${result.reason}`, 3500);
+            return;
           }
 
-          // Register this unique name in Firestore
-          await db.collection("usernames").doc(lowerName).set({
-            uid: myId,
-            name: cleanName,
-            updatedAt: Date.now()
-          });
-
-          // Release old name from registry if changing names
-          if (currentName && currentName !== "Traveler" && currentName.toLowerCase() !== lowerName) {
-            db.collection("usernames").doc(currentName.toLowerCase()).delete().catch(() => {});
-          }
+          state.player.name = result.name;
+          Store.save(true);
+          updateTopbar();
+          updatePlayerInfoModal();
+          showToast(`Name updated to "${result.name}"!`);
         } catch (err) {
-          console.warn("[Registry] Username check notice:", err);
+          console.warn("[Name] Server validation failed:", err);
+          showToast("️ Name change unavailable. Try again.", 3000);
+          return;
         }
-      }
+      } else {
+        // Fallback: client-side validation only
+        const lowerName = cleanName.toLowerCase();
+        const reservedSystemNames = ["vic", "admin", "developer", "system", "moderator", "official"];
+        if (reservedSystemNames.includes(lowerName)) {
+          showToast(`⛔ The handle "${cleanName}" is a reserved developer handle and cannot be claimed.`, 4000);
+          return;
+        }
 
-      // 3. Update local state & HUD
-      state.player.name = cleanName;
-      Store.save(true);
-      updateTopbar();
-      updatePlayerInfoModal();
-      showToast(`Name updated to "${cleanName}"!`);
+        if (db && myId) {
+          try {
+            const nameDoc = await db.collection("usernames").doc(lowerName).get();
+            if (nameDoc.exists) {
+              const existingOwner = nameDoc.data().uid;
+              if (existingOwner && existingOwner !== myId) {
+                showToast(`⚠️ The name "${cleanName}" is already taken by another player. Please pick a unique name!`, 4000);
+                return;
+              }
+            }
+
+            await db.collection("usernames").doc(lowerName).set({
+              uid: myId,
+              name: cleanName,
+              updatedAt: Date.now()
+            });
+
+            if (currentName && currentName !== "Traveler" && currentName.toLowerCase() !== lowerName) {
+              db.collection("usernames").doc(currentName.toLowerCase()).delete().catch(() => {});
+            }
+          } catch (err) {
+            console.warn("[Registry] Username check notice:", err);
+          }
+        }
+
+        state.player.name = cleanName;
+        Store.save(true);
+        updateTopbar();
+        updatePlayerInfoModal();
+        showToast(`Name updated to "${cleanName}"!`);
+      }
 
       // 4. Broadcast name change to all owned plots in Firestore so other players see it
       if (db && myId && state.plots) {

@@ -106,32 +106,65 @@ const Chat = (() => {
       return;
     }
 
-    const db = Store.getDb();
-    if (!db) {
-      showToast("Database unavailable. Please check your connection.");
+    const state = Store.get();
+    const senderName = state?.player?.name || "Traveler";
+    const senderId = state?.player?.id;
+
+    if (!senderId || senderId.startsWith("guest-")) {
+      showToast("️ Sign in with Google to chat!", 3000);
       return;
     }
 
-    const state = Store.get();
-    const senderName = state?.player?.name || "Traveler";
-    const senderId = state?.player?.id || "guest-" + Math.random().toString(36).slice(2, 8);
-    const avatar = state?.player?.avatar || "🙂";
-
-    const cleanText = filterProfanity(text).slice(0, 120);
+    // Check chat eligibility (50 plots required)
+    if (typeof ServerAntiCheat !== "undefined" && ServerAntiCheat.isReady()) {
+      try {
+        const eligibility = await ServerAntiCheat.checkChatEligibility();
+        if (!eligibility.chatUnlocked) {
+          showToast(` Chat locked! Own ${eligibility.plotsNeeded} more plots to unlock (${eligibility.plotCount}/50).`, 4000);
+          return;
+        }
+      } catch (e) {
+        console.warn("[Chat] Eligibility check failed:", e);
+      }
+    }
 
     inputEl.value = "";
     lastSentTime = now;
 
-    try {
-      await db.collection("chat").add({
-        text: cleanText,
-        senderId,
-        senderName,
-        avatar,
-        timestamp: now,
-      });
-    } catch (err) {
-      console.warn("[Chat] Send failed:", err);
+    // Use server-side filtering
+    if (typeof ServerAntiCheat !== "undefined" && ServerAntiCheat.isReady()) {
+      try {
+        const result = await ServerAntiCheat.filterChatMessage(text, senderName);
+        if (!result.allowed) {
+          showToast(`⚠️ ${result.reason}`, 3500);
+          return;
+        }
+        if (result.filtered) {
+          showToast("⚠️ Your message contained filtered words.", 2500);
+        }
+      } catch (err) {
+        console.warn("[Chat] Server filter failed:", err);
+        showToast("⚠️ Chat unavailable. Try again.", 3000);
+      }
+    } else {
+      // Fallback: local filter (legacy)
+      const db = Store.getDb();
+      if (!db) {
+        showToast("Database unavailable. Please check your connection.");
+        return;
+      }
+      const cleanText = filterProfanity(text).slice(0, 120);
+      try {
+        await db.collection("chat").add({
+          text: cleanText,
+          senderId,
+          senderName,
+          timestamp: now,
+          filtered: true,
+        });
+      } catch (err) {
+        console.warn("[Chat] Send failed:", err);
+      }
     }
   }
 
@@ -162,6 +195,20 @@ const Chat = (() => {
           snapshot.forEach((doc) => {
             const data = doc.data();
             const message = JSON.parse(JSON.stringify(data));
+
+            // Auto-remove filtered messages after 5 seconds (client-side)
+            if (message.filtered && message.autoDeleteAt) {
+              const delay = message.autoDeleteAt - Date.now();
+              if (delay > 0 && delay < 10000) {
+                setTimeout(() => {
+                  const idx = messages.findIndex(m => m.timestamp === message.timestamp);
+                  if (idx >= 0) {
+                    messages.splice(idx, 1);
+                    renderMessages();
+                  }
+                }, delay);
+              }
+            }
 
             messages.unshift(message);
 
@@ -223,7 +270,7 @@ const Chat = (() => {
     }
   }
 
-  function open() {
+  async function open() {
     if (!drawer) return;
     isOpen = true;
     drawer.classList.remove("hidden");
@@ -233,6 +280,28 @@ const Chat = (() => {
     if (unreadBadge) {
       unreadBadge.textContent = "0";
       unreadBadge.classList.add("hidden");
+    }
+
+    // Check chat eligibility
+    if (typeof ServerAntiCheat !== "undefined" && ServerAntiCheat.isReady() && inputEl && sendBtn) {
+      try {
+        const eligibility = await ServerAntiCheat.checkChatEligibility();
+        if (!eligibility.chatUnlocked) {
+          inputEl.disabled = true;
+          inputEl.placeholder = `Chat locked (${eligibility.plotCount}/50 plots)`;
+          sendBtn.disabled = true;
+          sendBtn.style.opacity = "0.5";
+          sendBtn.style.cursor = "not-allowed";
+        } else {
+          inputEl.disabled = false;
+          inputEl.placeholder = "Type a message...";
+          sendBtn.disabled = false;
+          sendBtn.style.opacity = "1";
+          sendBtn.style.cursor = "pointer";
+        }
+      } catch (e) {
+        console.warn("[Chat] Eligibility check failed:", e);
+      }
     }
 
     renderMessages();
