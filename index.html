@@ -533,7 +533,7 @@ Modern Extraction Model:
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.81b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.26b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -632,6 +632,15 @@ Modern Extraction Model:
         <div class="cal-card-top" id="cal-hud-month">SEP</div>
         <div class="cal-card-body" id="cal-hud-day">4</div>
       </div>
+    </button>
+
+    <!-- Companion Pet Button -->
+    <button id="pet-hud-btn" class="side-hud-btn pet-btn hidden" aria-label="Companion Pet">
+      <div class="side-hud-card pet-hud-card">
+        <div id="pet-hud-3d-container" class="pet-hud-3d-container"></div>
+        <span id="pet-mood-badge" class="pet-mood-badge mood-happy">100%</span>
+      </div>
+      <span class="side-hud-subtext">🍓 <span id="pet-berry-count">0</span></span>
     </button>
   </div>
 
@@ -1600,7 +1609,59 @@ Modern Extraction Model:
 <script src="js/referrals.js"></script>
 <script src="js/server-anticheat.js"></script>
 <script src="js/profanity-filter.js"></script>
+<script src="js/pet.js"></script>
 <script src="js/main.js"></script>
+
+<!-- ===================== COMPANION PET MODAL ===================== -->
+<div id="pet-modal" class="modal hidden">
+  <div class="modal-card pet-modal-card">
+    <button class="close-btn" data-close="pet-modal">✕</button>
+    <div class="pet-modal-header">
+      <span class="pet-modal-icon"></span>
+      <h2 id="pet-modal-name">Buddy</h2>
+      <button id="pet-rename-btn" class="pet-rename-badge" title="Rename Pet">✎</button>
+    </div>
+
+    <div class="pet-stage-wrap">
+      <div class="pet-stage-glow"></div>
+      <div class="pet-stage-ring"></div>
+      <div id="pet-modal-3d-container" class="pet-modal-3d-container"></div>
+    </div>
+
+    <div class="pet-mood-section">
+      <div class="pet-mood-label-row">
+        <span class="pet-mood-label">MOOD</span>
+        <strong id="pet-modal-mood-text" class="pet-mood-text">Ecstatic (100%)</strong>
+      </div>
+      <div class="pet-mood-bar-outer">
+        <div id="pet-modal-mood-bar" class="pet-mood-bar-inner"></div>
+      </div>
+    </div>
+
+    <div class="pet-stats-row">
+      <div class="pet-stat-chip">
+        <span class="pet-stat-icon">🍓</span>
+        <span class="pet-stat-label"></span>
+        <strong id="pet-modal-berry-count" class="pet-stat-val">0</strong>
+      </div>
+      <div class="pet-stat-chip">
+        <svg viewBox="0 0 32 38" class="pet-stat-diamond-svg">
+          <polygon points="16,2 29,12 16,16 3,12" fill="#ff6b81"/>
+          <polygon points="3,12 16,16 16,36" fill="#8b0000"/>
+          <polygon points="29,12 16,16 16,36" fill="#ff1744"/>
+          <polygon points="16,2 20,8 16,16 12,8" fill="rgba(255,255,255,0.85)"/>
+        </svg>
+        <span class="pet-stat-label"></span>
+        <strong id="pet-modal-fetched" class="pet-stat-val">0</strong>
+      </div>
+    </div>
+
+    <button id="pet-feed-btn" class="btn btn-primary pet-feed-btn">
+      🍓 Feed Berry
+    </button>
+    <p class="fine-print">Your companion scouts for diamonds within 375m! Keep mood high for +25% sprint speed.</p>
+  </div>
+</div>
 
 <!-- ===================== REFRESH KICK MODAL ===================== -->
 <div id="refresh-kick-modal" class="modal hidden" style="z-index:2147483647;">

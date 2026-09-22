@@ -153,6 +153,17 @@ const EldenStops = (() => {
   function renderAll() {
     if (!map || !map.getStyle || !map.getStyle() || document.hidden) return;
 
+    const zoom = map.getZoom();
+
+    // Hide Elden Stops at low zoom levels (zoom out too far)
+    if (zoom < 14) {
+      for (const sid in markers) {
+        markers[sid].remove();
+        delete markers[sid];
+      }
+      return;
+    }
+
     for (const sid in markers) {
       if (!globalStops[sid]) {
         markers[sid].remove();
@@ -269,6 +280,12 @@ const EldenStops = (() => {
 
   // ---------------- TAP → FLY-IN → OVERLAY ----------------
   function openStopSession(stopId) {
+    // Prevent opening multiple sessions simultaneously
+    if (selectedStopId || spinning) {
+      if (typeof showToast === "function") showToast("⏳ Finish your current spin first!", 2000);
+      return;
+    }
+
     const stop = globalStops[stopId];
     if (!stop || !map) return;
 
@@ -308,6 +325,16 @@ const EldenStops = (() => {
       clearTimeout(spinTimeout);
       spinTimeout = null;
     }
+    // Always reset spinning state when closing session
+    spinning = false;
+    const discEl = document.getElementById("elden-spin-disc");
+    if (discEl) {
+      discEl.classList.remove("spinning");
+      discEl.style.transform = "";
+    }
+    const hint = document.getElementById("elden-swipe-hint");
+    if (hint) hint.textContent = "Swipe the Dyson Disc to absorb its energy!";
+    
     const overlay = document.getElementById("elden-stop-overlay");
     if (overlay) overlay.classList.add("hidden");
     selectedStopId = null;
@@ -580,6 +607,7 @@ const EldenStops = (() => {
     const state = Store.get();
     if (Number.isFinite(Number(result.nextDiamonds))) state.diamonds = Number(result.nextDiamonds);
     if (Number.isFinite(Number(result.nextEb))) state.eb = Number(result.nextEb);
+    if (Number.isFinite(Number(result.nextBerries))) state.berries = Number(result.nextBerries);
     Store.save(true);
     if (typeof onRewards === "function") onRewards(result);
 
@@ -595,22 +623,168 @@ const EldenStops = (() => {
       }, 250);
     }
 
+    // Spawn berry drops on map (1-3 berries around the stop)
+    if (result.berries > 0) {
+      spawnBerryDrops(result.berries);
+    }
+
+    // Always reset spinning state immediately after successful spin
+    spinning = false;
+    const discEl = document.getElementById("elden-spin-disc");
+    if (discEl) {
+      discEl.classList.remove("spinning");
+      discEl.style.transform = "";
+    }
+    const hint = document.getElementById("elden-swipe-hint");
+    if (hint) hint.textContent = "⚡ Energy absorbed!";
+
     if (result.wonPlot) {
       addLuckyPlotToBag(result.wonPlot.rarity);
+      // Close the stop session first to free up the player, then open lucky plot modal
+      closeStopSession();
       setTimeout(() => openLuckyPlotModal(result.wonPlot.rarity), 900);
       if (typeof Feed !== "undefined") {
         const rr = CONFIG.PLOT_RARITIES.find((r) => r.key === result.wonPlot.rarity) || CONFIG.PLOT_RARITIES[0];
         Feed.broadcast("elden_stop_lucky", { rarityLabel: rr.label });
       }
-    }
-
-    const hint = document.getElementById("elden-swipe-hint");
-    if (hint) hint.textContent = "⚡ Energy absorbed!";
-    if (!result.wonPlot) {
+    } else {
+      // No plot won - close session after showing rewards
+      if (spinTimeout) {
+        clearTimeout(spinTimeout);
+        spinTimeout = null;
+      }
       spinTimeout = setTimeout(() => {
-        finishSpinFailure();
         closeStopSession();
       }, 2300);
+    }
+  }
+
+  // ---------------- BERRY DROPS ----------------
+  let berryMarkers = {};
+
+  function spawnBerryDrops(count) {
+    if (!map || !playerPos) return;
+    const state = Store.get();
+    if (!state.liveBerries) state.liveBerries = {};
+
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 10 + Math.random() * 30; // 10-40 meters from stop
+      const lat = playerPos.lat + (Math.cos(angle) * distance) / 111320;
+      const lon = playerPos.lon + (Math.sin(angle) * distance) / (111320 * Math.cos(playerPos.lat * Math.PI / 180));
+
+      const berryId = `berry_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 7)}`;
+      state.liveBerries[berryId] = {
+        id: berryId,
+        lat,
+        lon,
+        spawnedAt: Date.now(),
+        stopId: selectedStopId
+      };
+
+      createBerryMarker(berryId, lat, lon);
+    }
+
+    Store.save(true);
+    showToast(`🍓 ${count} Berries dropped nearby! Tap to collect!`, 3000);
+  }
+
+  function createBerryMarker(berryId, lat, lon) {
+    const el = document.createElement("div");
+    el.className = "berry-marker";
+    el.innerHTML = `
+      <div class="berry-icon">🍓</div>
+      <div class="berry-glow"></div>
+    `;
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      collectBerry(berryId);
+    });
+
+    const marker = new mapboxgl.Marker({ element: el })
+      .setLngLat([lon, lat])
+      .addTo(map);
+
+    berryMarkers[berryId] = marker;
+  }
+
+  function collectBerry(berryId) {
+    const state = Store.get();
+    if (!state.liveBerries || !state.liveBerries[berryId]) return;
+
+    const berry = state.liveBerries[berryId];
+    const dist = Geo.haversine(playerPos.lat, playerPos.lon, berry.lat, berry.lon);
+
+    if (dist > 75) {
+      showToast("🚶 Walk closer to collect that berry!", 2500);
+      return;
+    }
+
+    // Remove from map
+    if (berryMarkers[berryId]) {
+      berryMarkers[berryId].remove();
+      delete berryMarkers[berryId];
+    }
+
+    // Add to inventory
+    state.berries = (state.berries || 0) + 1;
+    delete state.liveBerries[berryId];
+    Store.save(true);
+
+    // Visual feedback
+    const marker = berryMarkers[berryId];
+    if (marker) {
+      const pt = map.project([berry.lon, berry.lat]);
+      spawnFloatingText(pt.x, pt.y, "+1 🍓");
+    }
+
+    if (typeof CompanionPet !== "undefined") {
+      CompanionPet.updatePetHUD();
+    }
+
+    showToast("🍓 Berry collected!", 2000);
+  }
+
+  function pruneExpiredBerries() {
+    const state = Store.get();
+    if (!state.liveBerries) return;
+
+    const now = Date.now();
+    const BERRY_LIFETIME_MS = 5 * 60 * 1000; // 5 minutes
+
+    for (const berryId in state.liveBerries) {
+      const berry = state.liveBerries[berryId];
+      if (now - berry.spawnedAt > BERRY_LIFETIME_MS) {
+        if (berryMarkers[berryId]) {
+          berryMarkers[berryId].remove();
+          delete berryMarkers[berryId];
+        }
+        delete state.liveBerries[berryId];
+      }
+    }
+
+    Store.save(true);
+  }
+
+  function renderAllBerries() {
+    if (!map || document.hidden) return;
+    const state = Store.get();
+    if (!state.liveBerries) return;
+
+    // Remove stale markers
+    for (const berryId in berryMarkers) {
+      if (!state.liveBerries[berryId]) {
+        berryMarkers[berryId].remove();
+        delete berryMarkers[berryId];
+      }
+    }
+
+    // Add missing markers
+    for (const berryId in state.liveBerries) {
+      if (!berryMarkers[berryId]) {
+        const berry = state.liveBerries[berryId];
+        createBerryMarker(berryId, berry.lat, berry.lon);
+      }
     }
   }
 
@@ -650,10 +824,11 @@ const EldenStops = (() => {
   function closeLuckyPlotModal() {
     const modal = document.getElementById("lucky-plot-modal");
     if (modal) modal.classList.add("hidden");
-    finishSpinFailure();
+    // Session state is already reset by closeStopSession() before modal opened
     const overlay = document.getElementById("elden-stop-overlay");
     if (overlay) overlay.classList.add("hidden");
     selectedStopId = null;
+    spinning = false;
     returnCameraAndClose();
   }
 
@@ -783,8 +958,10 @@ const EldenStops = (() => {
       lastPosUpdate = now;
       lastRenderPos = { lat, lon };
       renderAll();
+      pruneExpiredBerries();
+      renderAllBerries();
     }
   }
 
-  return { init, setPlayerPosition, renderAll, plantSeed, isCinematicOpen, closeStopSession };
+  return { init, setPlayerPosition, renderAll, plantSeed, isCinematicOpen, closeStopSession, spawnBerryDrops, collectBerry, renderAllBerries };
 })();

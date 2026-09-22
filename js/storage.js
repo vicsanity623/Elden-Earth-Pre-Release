@@ -67,6 +67,8 @@ const Store = (() => {
       boostExpiry: 0,
       boostMultiplier: 30,
       extractor: { built: false, level: 1, lastHarvest: Date.now(), stored: 0 },
+      pet: { unlocked: false, nickname: "Buddy", mood: 100, lastFedAt: 0, totalFetched: 0, lastFetchedResetDate: null },
+      berries: 0,
       lastTick: Date.now(),
       createdAt: Date.now(),
       antiCheatStrikes: 0,
@@ -75,19 +77,12 @@ const Store = (() => {
 
   let state = null;
 
-  // --- REALM SERVER EPOCH GATE ---
-  // Detects local saves that predate an intentional Firestore wipe (CONFIG.REALM_SERVER_EPOCH)
-  // so a stale 24/7-open tab can never resurrect pre-wipe data into the clean database.
-  // Epoch of 0 means the gate is disabled and nothing is ever purged by it.
+  // --- REALM SERVER EPOCH GATE: DISABLED ---
+  // Previously purged local saves older than REALM_SERVER_EPOCH. This caused
+  // existing players to lose their cash/lifetimeRent on every sync. Disabled
+  // so no player save is ever wiped by timestamp mismatches.
   function isPreEpochSave(savedState) {
-    if (!savedState) return false;
-    const epoch = (typeof CONFIG !== "undefined" && CONFIG.REALM_SERVER_EPOCH) || 0;
-    if (!epoch) return false;
-    const saveBirth = Number(savedState.createdAt || 0);
-    // Missing or seconds-unit createdAt is NOT pre-epoch — the server
-    // normalizes those saves instead of resetting them.
-    if (!saveBirth || saveBirth < 1e11) return false;
-    return saveBirth < epoch;
+    return false;
   }
 
   // --- CONSOLE TAMPER TRAPS ---
@@ -162,6 +157,12 @@ const Store = (() => {
         }
         if (parsed.extractor) {
           state.extractor = Object.assign(defaultState().extractor, parsed.extractor);
+        }
+        if (parsed.pet) {
+          state.pet = Object.assign(defaultState().pet, parsed.pet);
+        }
+        if (parsed.berries !== undefined) {
+          state.berries = parsed.berries;
         }
       } else {
         state = defaultState();

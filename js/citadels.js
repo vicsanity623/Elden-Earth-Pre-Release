@@ -220,6 +220,15 @@ const Citadels = (() => {
     // Battery Saver: Don't spend CPU rebuilding markers if phone is in pocket!
     if (!mapInstance || !mapInstance.getStyle() || document.hidden) return;
 
+    const zoom = mapInstance.getZoom();
+
+    // Hide Citadels at low zoom levels (zoom out too far)
+    if (zoom < 14) {
+      activeMarkers.forEach(m => m.remove());
+      activeMarkers = [];
+      return;
+    }
+
     // --- AUTO-PROMOTE COMPLETED EVOLUTIONS ---
     const now = Date.now();
     for (const cid in globalCitadels) {
@@ -241,7 +250,7 @@ const Citadels = (() => {
           Feed.broadcast("citadel_evolve", {
             creatorName: c.creatorName,
             tierName: CONFIG.CITADEL_RARITIES[promotedTier].label,
-            location: "the Realm 🌐"
+            location: "the Realm "
           });
         }
       }

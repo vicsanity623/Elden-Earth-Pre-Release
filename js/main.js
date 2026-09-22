@@ -897,6 +897,9 @@
     
     // 1. Move 3D Character & Radius Layer
     Character3D.setPlayerPosition(currentPos.lon, currentPos.lat);
+    if (typeof CompanionPet !== "undefined") {
+      CompanionPet.setPlayerPosition(currentPos.lon, currentPos.lat);
+    }
     updatePlayerRadiusLayer();
     Diamonds.setPlayerPosition(currentPos.lat, currentPos.lon);
 
@@ -1149,6 +1152,11 @@
       // 3. Mount 3D Animated Character
       Character3D.init(map, currentPos.lon, currentPos.lat);
 
+      // 3.1. Mount 3D Companion Pet System
+      if (typeof CompanionPet !== "undefined") {
+        CompanionPet.init(map, currentPos.lon, currentPos.lat);
+      }
+
       // 3.2. Initialize 3D Standing Foliage Engine
       if (typeof Foliage !== "undefined") {
         Foliage.init(map);
@@ -1207,15 +1215,21 @@
         onBuyAttempt: (success, rarity) => {
           if (success) {
             showToast(`Claimed a ${rarity.label} plot!`);
-      updateTopbar();
+            updateTopbar();
 
-      // Refresh leaderboard data every 60 seconds so passive rent stays current
-      if (now - lastLeaderboardRefresh >= 60000) {
-        lastLeaderboardRefresh = now;
-        if (typeof Leaderboard !== "undefined" && Leaderboard.fetchRankings) {
-          Leaderboard.fetchRankings(true);
-        }
-      }
+            // Check if pet should be unlocked (50 plots milestone)
+            if (typeof CompanionPet !== "undefined") {
+              CompanionPet.checkUnlockMilestone();
+              CompanionPet.updatePetHUD();
+            }
+
+            // Refresh leaderboard data every 60 seconds so passive rent stays current
+            if (now - lastLeaderboardRefresh >= 60000) {
+              lastLeaderboardRefresh = now;
+              if (typeof Leaderboard !== "undefined" && Leaderboard.fetchRankings) {
+                Leaderboard.fetchRankings(true);
+              }
+            }
             updateLandModal();
           } else {
             // Grid already shows the precise failure reason (cooldown, distance,
@@ -1264,7 +1278,17 @@
       Citadels.setPlayerPosition(currentPos.lat, currentPos.lon); // Immediate GPS sync on boot!
     }
     if (typeof EldenStops !== "undefined") {
-      EldenStops.init(map, { onRewards: () => updateTopbar() });
+      EldenStops.init(map, { 
+        onRewards: () => {
+          updateTopbar();
+          // Award berries when spinning Elden Stops
+          if (typeof CompanionPet !== "undefined") {
+            const berryCount = Math.floor(Math.random() * 3) + 1; // 1-3 berries per spin
+            CompanionPet.addBerries(berryCount);
+            showToast(`🍓 +${berryCount} Berries from Elden Stop!`);
+          }
+        }
+      });
       EldenStops.setPlayerPosition(currentPos.lat, currentPos.lon);
     }
     if (typeof WeeklyPool !== "undefined") WeeklyPool.init();
@@ -1339,6 +1363,11 @@
       // 🔥 CRITICAL: Update 30X/50X button label and countdown timers every second!
       if (typeof Multiplier !== "undefined" && Multiplier.updateUI) {
         Multiplier.updateUI(state);
+      }
+
+      // Update Companion Pet HUD (mood decay, berry count)
+      if (typeof CompanionPet !== "undefined" && CompanionPet.updatePetHUD) {
+        CompanionPet.updatePetHUD();
       }
 
       updateTopbar();
@@ -1995,6 +2024,25 @@
         const panel = document.querySelector(`[data-pi-panel="${target}"]`);
         if (panel) panel.classList.add("active");
       });
+    });
+
+    // --- Companion Pet UI Handlers ---
+    el("pet-hud-btn")?.addEventListener("click", () => {
+      if (typeof CompanionPet !== "undefined") {
+        CompanionPet.openPetModal();
+      }
+    });
+
+    el("pet-feed-btn")?.addEventListener("click", () => {
+      if (typeof CompanionPet !== "undefined") {
+        CompanionPet.feedBerry();
+      }
+    });
+
+    el("pet-rename-btn")?.addEventListener("click", () => {
+      if (typeof CompanionPet !== "undefined") {
+        CompanionPet.renamePet();
+      }
     });
 
     // 1c. Avatar Tap to Upload — triggers hidden file input

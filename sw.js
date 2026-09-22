@@ -1,5 +1,5 @@
 // Bump this version string whenever you deploy an update!
-const CACHE_NAME = 'elden-EARTH-v22.11';
+const CACHE_NAME = 'elden-EARTH-v22.35';
 
 const ASSETS_TO_CACHE = [
     './',
@@ -31,7 +31,8 @@ const ASSETS_TO_CACHE = [
     './js/chat.js',
     './js/pool.js',
     './js/referrals.js',
-    './js/server-anticheat.js'
+    './js/server-anticheat.js',
+    './js/pet.js'
 ];
 
 // 1. Force Immediate Activation without waiting for tabs to close
