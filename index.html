@@ -533,7 +533,7 @@ Modern Extraction Model:
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.35b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.36b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -798,6 +798,14 @@ Modern Extraction Model:
         </div>
         <!-- Report button (shown on other players) -->
         <button id="report-player-btn" class="report-player-btn hidden" title="Report this player">🚨 Report</button>
+      </div>
+
+      <!-- Phone Verification Status -->
+      <div id="info-phone-verified" class="hidden" style="margin-top:12px;padding:8px 12px;border-radius:8px;background:rgba(74,222,128,0.15);border:1px solid #4ade80;text-align:center;">
+        <span style="color:#4ade80;font-size:13px;font-weight:600;">✓ Phone Verified</span>
+      </div>
+      <div id="info-phone-not-verified" class="hidden" style="margin-top:12px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--line);text-align:center;">
+        <span style="color:var(--text-dim);font-size:12px;">Phone not linked — verify for cashout eligibility</span>
       </div>
 
       <!-- Income Rate -->
@@ -1745,6 +1753,70 @@ Modern Extraction Model:
     <!-- Loading state -->
     <div id="phone-step-loading" class="hidden">
       <p style="font-size:13px;color:var(--text-dim);margin:0;">Sending SMS code...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CASHOUT / CONVERT PAGE ===================== -->
+<div id="cashout-page" class="cashout-page hidden">
+  <div class="cashout-overlay-bg"></div>
+  <div class="cashout-container">
+    <!-- Close Button -->
+    <button id="cashout-close-btn" class="cashout-close-btn" data-close="cashout-page"></button>
+
+    <!-- Header -->
+    <div class="cashout-header">
+      <h2 class="cashout-title">CASHOUT</h2>
+    </div>
+
+    <!-- Cash Balance Card -->
+    <div class="cashout-balance-card">
+      <div class="cashout-balance-label">MY CASH BALANCE</div>
+      <div class="cashout-balance-value">
+        <span class="cashout-dollar">$</span><span id="cashout-cash-amount">0.000000000000000</span>
+      </div>
+    </div>
+
+    <!-- Convert Section -->
+    <div class="cashout-convert-section">
+      <div class="cashout-convert-info">
+        <p>Every $1.00 you earn can be converted to Elden Bucks.<br>Use EB to buy more land and grow your empire!</p>
+      </div>
+
+      <!-- Amount to Convert -->
+      <div class="cashout-amount-section">
+        <div class="cashout-amount-label">AMOUNT TO CONVERT</div>
+        <div class="cashout-amount-controls">
+          <button id="cashout-decrease-btn" class="cashout-arrow-btn">◀</button>
+          <div class="cashout-amount-display">
+            <span class="cashout-amount-dollar">$</span><span id="cashout-convert-amount">1</span>
+          </div>
+          <button id="cashout-increase-btn" class="cashout-arrow-btn">▶</button>
+        </div>
+
+        <!-- What you get -->
+        <div class="cashout-reward-display">
+          <div class="cashout-reward-card">
+            <div class="cashout-reward-icon"></div>
+            <div class="cashout-reward-value" id="cashout-eb-reward">25</div>
+            <div class="cashout-reward-label">EB</div>
+          </div>
+          <div class="cashout-reward-card">
+            <div class="cashout-reward-icon" style="color:#ff1744;">◆</div>
+            <div class="cashout-reward-value" id="cashout-diamond-reward">10</div>
+            <div class="cashout-reward-label">Diamonds</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Convert Button -->
+      <button id="cashout-convert-btn" class="cashout-convert-btn">CONVERT</button>
+
+      <!-- Redeem Section (Coming Soon) -->
+      <div class="cashout-redeem-section">
+        <p class="cashout-redeem-info">When your cash balance reaches $5.00, you can redeem it for real money.</p>
+        <button id="cashout-redeem-btn" class="cashout-redeem-btn" disabled>REDEEM NOW — COMING SOON</button>
+      </div>
     </div>
   </div>
 </div>

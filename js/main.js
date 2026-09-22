@@ -328,6 +328,21 @@
       googleLinkSection.style.display = "none";
     }
 
+    // Phone verification status
+    const phoneVerifiedEl = el("info-phone-verified");
+    const phoneNotVerifiedEl = el("info-phone-not-verified");
+    if (phoneVerifiedEl && phoneNotVerifiedEl) {
+      if (!isOtherPlayer) {
+        const user = firebase.auth().currentUser;
+        const hasPhone = user && user.providerData.some(p => p.providerId === "phone");
+        phoneVerifiedEl.classList.toggle("hidden", !hasPhone);
+        phoneNotVerifiedEl.classList.toggle("hidden", hasPhone);
+      } else {
+        phoneVerifiedEl.classList.add("hidden");
+        phoneNotVerifiedEl.classList.add("hidden");
+      }
+    }
+
     // Reset to Profile tab
     document.querySelectorAll(".pi-tab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".pi-tab-panel").forEach(p => p.classList.remove("active"));
@@ -2588,7 +2603,7 @@
       }
     });
     
-    // Tap Balance or Profile Chip to open Player Info Modal
+    // Tap Profile Chip to open Player Info Modal (balance card now opens cashout)
     function openPlayerInfo() {
       updatePlayerInfoModal();
       openModal("player-info-modal");
@@ -2596,7 +2611,6 @@
         window.completeDailyQuest("mayor");
       }
     }
-    el("hero-balance-card").addEventListener("click", openPlayerInfo);
     document.querySelector(".player-chip")?.addEventListener("click", openPlayerInfo);
     // Wire up Guest "Sign in with Google" button in Player Info Modal
     document.getElementById("google-link-btn")?.addEventListener("click", () => {
@@ -3186,7 +3200,112 @@
       }
     });
   }
-  
+
+  // ===================== CASHOUT / CONVERT PAGE =====================
+  let cashoutConvertAmount = 1;
+
+  function openCashoutPage() {
+    const state = Store.get();
+    const cashBalance = state.cash || 0;
+    el("cashout-cash-amount").textContent = cashBalance.toFixed(11);
+    cashoutConvertAmount = 1;
+    updateCashoutDisplay();
+    el("cashout-page").classList.remove("hidden");
+  }
+
+  function closeCashoutPage() {
+    el("cashout-page").classList.add("hidden");
+  }
+
+  function updateCashoutDisplay() {
+    el("cashout-convert-amount").textContent = cashoutConvertAmount;
+    el("cashout-eb-reward").textContent = cashoutConvertAmount * 25;
+    el("cashout-diamond-reward").textContent = cashoutConvertAmount * 10;
+
+    const state = Store.get();
+    const cashBalance = state.cash || 0;
+    const convertBtn = el("cashout-convert-btn");
+    if (convertBtn) {
+      convertBtn.disabled = cashBalance < cashoutConvertAmount;
+    }
+  }
+
+  // Wire up cashout page
+  el("hero-balance-card")?.addEventListener("click", openCashoutPage);
+
+  el("cashout-close-btn")?.addEventListener("click", closeCashoutPage);
+
+  // Tap black background to close
+  el("cashout-page")?.addEventListener("click", (e) => {
+    if (e.target.id === "cashout-page" || e.target.classList.contains("cashout-overlay-bg")) {
+      closeCashoutPage();
+    }
+  });
+
+  el("cashout-decrease-btn")?.addEventListener("click", () => {
+    if (cashoutConvertAmount > 1) {
+      cashoutConvertAmount--;
+      updateCashoutDisplay();
+    }
+  });
+
+  el("cashout-increase-btn")?.addEventListener("click", () => {
+    const state = Store.get();
+    const cashBalance = state.cash || 0;
+    if (cashoutConvertAmount < Math.floor(cashBalance) && cashoutConvertAmount < 1000) {
+      cashoutConvertAmount++;
+      updateCashoutDisplay();
+    }
+  });
+
+  el("cashout-convert-btn")?.addEventListener("click", async () => {
+    const state = Store.get();
+    const cashBalance = state.cash || 0;
+
+    if (cashBalance < cashoutConvertAmount) {
+      showToast("Insufficient cash balance.");
+      return;
+    }
+
+    const convertBtn = el("cashout-convert-btn");
+    if (convertBtn) {
+      convertBtn.disabled = true;
+      convertBtn.textContent = "CONVERTING...";
+    }
+
+    try {
+      const convertFn = firebase.functions().httpsCallable("convertCash");
+      const result = await convertFn({ amount: cashoutConvertAmount });
+
+      if (result.data?.ok) {
+        showToast(`✓ Converted $${cashoutConvertAmount} → +${result.data.ebReward} EB +${result.data.diamondReward} Diamonds!`, 4000);
+        // Update local state
+        state.cash = result.data.newCash;
+        state.eb = result.data.newEb;
+        state.diamonds = result.data.newDiamonds;
+        Store.save(true);
+        updateTopbar();
+        closeCashoutPage();
+      } else {
+        showToast("Conversion failed. Please try again.");
+      }
+    } catch (err) {
+      console.error("[Cashout] Convert error:", err);
+      if (err.code === "permission-denied") {
+        showToast("Phone verification required. Please link your phone number first.");
+      } else if (err.code === "failed-precondition") {
+        showToast("Insufficient cash balance.");
+      } else {
+        showToast("Conversion failed: " + err.message);
+      }
+    } finally {
+      if (convertBtn) {
+        convertBtn.disabled = false;
+        convertBtn.textContent = "CONVERT";
+      }
+    }
+  });
+
   // Hardware Compass: Rotates 3D Character when turning your body in place
   if (typeof window !== "undefined" && window.DeviceOrientationEvent) {
     window.addEventListener("deviceorientation", (e) => {
