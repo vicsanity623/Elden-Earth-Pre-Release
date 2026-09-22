@@ -457,6 +457,27 @@ html,body{
 }
 .toast.hidden { opacity: 0; pointer-events: none; }
 
+/* ---------- VPN Block Overlay ---------- */
+.vpn-block-overlay {
+  position: fixed; inset: 0; z-index: 999999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(6, 10, 16, 0.95);
+  backdrop-filter: blur(4px);
+}
+.vpn-block-card {
+  text-align: center; padding: 40px 32px; max-width: 380px;
+  background: var(--panel); border: 2px solid #ff4757;
+  border-radius: 16px; color: var(--parchment);
+}
+.vpn-block-card h2 { margin: 0 0 16px; font-size: 22px; color: #ff4757; }
+.vpn-block-card p { margin: 8px 0; font-size: 14px; color: #aab; line-height: 1.5; }
+.vpn-block-btn {
+  margin-top: 20px; padding: 12px 32px; font-size: 15px; font-weight: 700;
+  background: #ff4757; color: #fff; border: none; border-radius: 8px;
+  cursor: pointer;
+}
+.vpn-block-btn:hover { background: #ff6b81; }
+
 /* ---------- Modals ---------- */
 .modal{
   position:fixed; inset:0; z-index:30;

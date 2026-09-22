@@ -67,6 +67,19 @@ const CONFIG = {
     if (elapsed < 0) elapsed += totalCycle;
     return elapsed < this.EVENT_50X_DURATION_MS;
   },
+
+  // --- Boost Tier Collapse (Anti-Whale Curve) ---
+  // Multiplier scales down as plot count increases to prevent runaway liabilities.
+  // Based on the Atlas Earth model: base multiplier * tier factor = effective multiplier.
+  BOOST_TIERS: [
+    { minPlots: 0,   maxPlots: 150,  tierFactor: 1.00 }, // 1-150:   full 30X/50X
+    { minPlots: 151, maxPlots: 220,  tierFactor: 0.67 }, // 151-220: 20X effective (30X * 0.67)
+    { minPlots: 221, maxPlots: 290,  tierFactor: 0.50 }, // 221-290: 15X effective
+    { minPlots: 291, maxPlots: 365,  tierFactor: 0.40 }, // 291-365: 12X effective
+    { minPlots: 366, maxPlots: 730,  tierFactor: 0.30 }, // 366-730: 9X effective
+    { minPlots: 731, maxPlots: 1500, tierFactor: 0.20 }, // 731-1500: 6X effective
+    { minPlots: 1501, maxPlots: Infinity, tierFactor: 0.067 }, // 1501+: 2X effective
+  ],
   
   // --- Spin wheel --- (+12 & +24 Diamond Jackpots, 1 Miss Slice)
   WHEEL_SLICES: [

@@ -46,7 +46,7 @@ const Store = (() => {
 
   function defaultState() {
     return {
-      player: { name: "Traveler", id: null, avatar: "🙂", model3d: "robot", freeSpins: 0, freeSpinsNoDiamondCost: false },
+      player: { name: "Traveler", id: null, avatar: "🙂", model3d: "robot", freeSpins: 0, freeSpinsNoDiamondCost: false, phoneVerified: false },
       cash: 0,
       lifetimeRent: 0,
       eb: 0,
@@ -73,6 +73,9 @@ const Store = (() => {
       lastTick: Date.now(),
       createdAt: Date.now(),
       antiCheatStrikes: 0,
+      networkVerification: null,
+      cashoutBlocked: false,
+      redemptions: [],
     };
   }
 
@@ -946,7 +949,10 @@ let lastConflictCheck = {};
       normalSec = Math.max(0, elapsedSec - boostedSec);
     }
 
-    const mult = (typeof Multiplier !== "undefined") ? (state.boostMultiplier || Multiplier.getActiveMultiplier()) : 30;
+    const baseMult = (typeof Multiplier !== "undefined") ? (state.boostMultiplier || Multiplier.getActiveMultiplier()) : 30;
+    const plotCount = state.plots ? Object.keys(state.plots).length : 0;
+    const tierFactor = (typeof Multiplier !== "undefined" && Multiplier.getTierFactor) ? Multiplier.getTierFactor(plotCount) : 1.0;
+    const mult = baseMult * tierFactor;
 
     // 3. Earned = (boosted time * boosted rate) + (normal time * normal rate)
     const earned = (boostedSec * baseRate * mult) + (normalSec * baseRate);

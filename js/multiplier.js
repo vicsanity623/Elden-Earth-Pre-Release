@@ -31,7 +31,21 @@ const Multiplier = (() => {
   }
 
   /**
-   * Get the currently active multiplier value (30 or 50)
+   * Get the boost tier factor based on number of plots owned
+   * Uses CONFIG.BOOST_TIERS anti-whale curve to scale down multiplier.
+   * @param {number} plotCount - Total number of plots owned
+   * @returns {number} Tier factor (1.0 = full multiplier, lower = scaled down)
+   */
+  function getTierFactor(plotCount) {
+    const tiers = CONFIG.BOOST_TIERS;
+    for (let i = tiers.length - 1; i >= 0; i--) {
+      if (plotCount >= tiers[i].minPlots) return tiers[i].tierFactor;
+    }
+    return 1.0;
+  }
+
+  /**
+   * Get the currently active base multiplier value (30 or 50)
    * @returns {number}
    */
   function getActiveMultiplier() {
@@ -39,7 +53,19 @@ const Multiplier = (() => {
   }
 
   /**
-   * Apply boost multiplier to a rate if boost is active
+   * Get the effective multiplier after applying boost tier collapse
+   * @param {object} state - Game state object
+   * @returns {number} Effective multiplier (base * tierFactor)
+   */
+  function getEffectiveMultiplier(state) {
+    const base = state.boostMultiplier || getActiveMultiplier();
+    const plotCount = state.plots ? Object.keys(state.plots).length : 0;
+    const tierFactor = getTierFactor(plotCount);
+    return Math.round(base * tierFactor);
+  }
+
+  /**
+   * Apply boost multiplier to a rate if boost is active, with tier collapse
    * @param {number} rate - Base rate to multiply
    * @param {object} state - Game state object
    * @param {boolean} isOtherPlayer - If viewing another player's stats
@@ -48,7 +74,10 @@ const Multiplier = (() => {
   function applyMultiplier(rate, state, isOtherPlayer = false) {
     if (isOtherPlayer) return rate;
     if (state.boostExpiry && Date.now() < state.boostExpiry) {
-      return rate * (state.boostMultiplier || 30);
+      const base = state.boostMultiplier || 30;
+      const plotCount = state.plots ? Object.keys(state.plots).length : 0;
+      const tierFactor = getTierFactor(plotCount);
+      return rate * base * tierFactor;
     }
     return rate;
   }
@@ -207,13 +236,16 @@ const Multiplier = (() => {
     if (isBoosted) {
       const remainingMs = state.boostExpiry - now;
       // AUTOMATIC UPGRADE: If event is active, force active multiplier to 50X!
-      const activeMult = is50XEvent ? 50 : (state.boostMultiplier || 30);
+      const baseMult = is50XEvent ? 50 : (state.boostMultiplier || 30);
+      const plotCount = state.plots ? Object.keys(state.plots).length : 0;
+      const tierFactor = getTierFactor(plotCount);
+      const effectiveMult = Math.round(baseMult * tierFactor);
 
       heroCard?.classList.add("boosted");
       timerBadge?.classList.remove("hidden");
 
       // Shaking & Vibrate Effect when 50X is active!
-      if (activeMult === 50) {
+      if (baseMult === 50) {
         heroCard?.classList.add("super-50x");
         timerBadge?.classList.add("super-50x");
       } else {
@@ -227,8 +259,9 @@ const Multiplier = (() => {
       const timerStr = `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 
       if (timerBadge) {
-        const icon = activeMult === 50 ? "🔥" : "⚡";
-        timerBadge.innerHTML = `${icon} ${activeMult}X BOOST <span id="boost-countdown">${timerStr}</span>`;
+        const icon = baseMult === 50 ? "🔥" : "⚡";
+        const tierLabel = tierFactor < 1.0 ? ` (${tierFactor === 0.67 ? '20' : tierFactor === 0.5 ? '15' : tierFactor === 0.4 ? '12' : tierFactor === 0.3 ? '9' : tierFactor === 0.2 ? '6' : '2'}X)` : '';
+        timerBadge.innerHTML = `${icon} ${effectiveMult}X BOOST${tierLabel} <span id="boost-countdown">${timerStr}</span>`;
       }
     } else {
       heroCard?.classList.remove("boosted", "super-50x");
@@ -363,6 +396,8 @@ const Multiplier = (() => {
     init,
     is50XActive,
     getActiveMultiplier,
+    getEffectiveMultiplier,
+    getTierFactor,
     applyMultiplier,
     activateBoost,
     scheduleBoost,

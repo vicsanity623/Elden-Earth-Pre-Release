@@ -938,29 +938,62 @@
   function launchGame(coords) {
     document.body.classList.toggle("no-shake", Boolean(Store.get()?.disableShake));
     currentPos = { lat: coords.latitude, lon: coords.longitude };
-    el("locate-screen")?.classList.add("hidden");
-    el("loading-screen")?.classList.add("hidden");
-    el("game-screen")?.classList.remove("hidden");
 
-    // --- NetworkVerifier: IP geolocation cross-reference on first GPS fix ---
+    // --- HARD VPN BLOCK: Run verification BEFORE showing the game screen ---
+    // VPN/Datacenter users are blocked entirely — no gameplay allowed.
     if (typeof Geo !== "undefined" && Geo.NetworkVerifier) {
       Geo.NetworkVerifier.verify(coords.latitude, coords.longitude).then(result => {
         const state = Store.get();
         state.networkVerification = result;
         Store.save(true);
-        if (result.isVPN) {
-          showToast("⚠️ VPN detected. Some features may be restricted.", 5000);
+
+        if (result.isVPN || result.isDatacenter) {
+          const reason = result.isVPN ? "VPN" : "datacenter";
+          el("locate-screen")?.classList.add("hidden");
+          el("loading-screen")?.classList.add("hidden");
+          el("game-screen")?.classList.add("hidden");
+
+          const blockModal = document.getElementById("vpn-block-modal");
+          const reasonEl = document.getElementById("vpn-block-reason");
+          if (reasonEl) {
+            reasonEl.textContent = reason === "VPN"
+              ? "VPN connections are not allowed in Elden Earth."
+              : "Datacenter/proxy connections are not allowed.";
+          }
+          if (blockModal) blockModal.classList.remove("hidden");
+
           gateCashoutButtons(true);
-        } else if (result.isDatacenter) {
-          showToast("⚠️ Datacenter connection detected. Session flagged.", 5000);
-          gateCashoutButtons(true);
-        } else if (result.isSuspicious) {
+          return;
+        }
+
+        if (result.isSuspicious) {
           showToast("⚠️ Network location mismatch. Please disable VPN.", 5000);
           gateCashoutButtons(true);
         }
-      }).catch(() => {});
+
+        // Network clean — launch the game
+        el("locate-screen")?.classList.add("hidden");
+        el("loading-screen")?.classList.add("hidden");
+        el("game-screen")?.classList.remove("hidden");
+        _finishGameLaunch();
+      }).catch(() => {
+        // If verification fails entirely, allow gameplay but flag for review
+        el("locate-screen")?.classList.add("hidden");
+        el("loading-screen")?.classList.add("hidden");
+        el("game-screen")?.classList.remove("hidden");
+        _finishGameLaunch();
+      });
+      return; // Defer — verification handles the launch
     }
 
+    // No NetworkVerifier available — launch immediately
+    el("locate-screen")?.classList.add("hidden");
+    el("loading-screen")?.classList.add("hidden");
+    el("game-screen")?.classList.remove("hidden");
+    _finishGameLaunch();
+  }
+
+  function _finishGameLaunch() {
     const MAP_STYLES = {
       "elden-earth": "https://tiles.openfreemap.org/styles/dark",
       liberty: "https://tiles.openfreemap.org/styles/liberty",
@@ -2988,6 +3021,9 @@
     if (typeof ServerAntiCheat !== "undefined") ServerAntiCheat.init();
     el("locate-btn")?.addEventListener("click", startLocating);
     el("retry-location-btn")?.addEventListener("click", startLocating);
+
+    // --- VPN Block Retry ---
+    el("vpn-block-retry")?.addEventListener("click", () => window.location.reload());
 
     // Periodic friend request notification dot check (every 30s)
     setInterval(() => {
