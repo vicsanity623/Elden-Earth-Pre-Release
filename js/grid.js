@@ -268,6 +268,76 @@ const Grid = (() => {
     setTimeout(() => popup.remove(), 1500);
   }
 
+  // Checks Firestore for a plot the server committed even though the callable
+  // response was lost (mobile timeout / crash). Returns plot data if we own it.
+  async function recoverCommittedPurchase(tid) {
+    try {
+      const db = Store.getDb();
+      const myId = Store.get()?.player?.id;
+      if (!db || !myId) return null;
+      const doc = await db.collection("plots").doc(tid).get();
+      if (!doc.exists) return null;
+      const data = doc.data() || {};
+      if (data.ownerId !== myId) return null;
+      console.log(`[Grid] Recovered committed purchase for ${tid} despite failed response.`);
+      return data;
+    } catch (e) {
+      console.warn("[Grid] Purchase recovery check failed:", e && e.message);
+      return null;
+    }
+  }
+
+  // Applies a server-approved (or recovered) purchase to local state and UI.
+  // Isolated so a UI/decoration error can never be misreported as a failure.
+  function applyPurchaseSuccess(plotData, tid, opts, centerLat, centerLon) {
+    const state = Store.get();
+    if (!state.plots) state.plots = {};
+    if (typeof opts.nextEb === "number") {
+      state.eb = opts.nextEb;
+    } else {
+      // Server committed the transaction (it always deducts 100 EB on success),
+      // but didn't report the new balance — mirror the cost locally.
+      state.eb = Math.max(0, (Number(state.eb) || 0) - 100);
+    }
+    if (opts.lastLandPurchaseAt) state.lastLandPurchaseAt = opts.lastLandPurchaseAt;
+    state.plots[tid] = plotData;
+    globalPlots[tid] = plotData;
+    Store.save(true);
+
+    const rarityObj = CONFIG.PLOT_RARITIES.find(r => r.key === plotData.rarity) || CONFIG.PLOT_RARITIES[0];
+
+    try {
+      onBuyAttempt(true, rarityObj);
+      render();
+      if (typeof updateTopbar === "function") updateTopbar();
+      if (typeof updatePlayerInfoModal === "function") updatePlayerInfoModal();
+      if (typeof showToast === "function") {
+        showToast(`✅ Land purchase verified! -100 EB deducted. +1 ${rarityObj.label} Plot added!`, 3000);
+      }
+    } catch (uiErr) {
+      console.warn("[Grid] Post-purchase UI notice:", uiErr && uiErr.message);
+    }
+
+    try {
+      const rarityLabel = rarityObj.label || plotData.rarity;
+      if (typeof map !== "undefined" && map) {
+        const pt = map.project([centerLon, centerLat]);
+        const popup = document.createElement("div");
+        popup.className = "combat-text-popup";
+        popup.style.left = `${pt.x}px`;
+        popup.style.top = `${pt.y}px`;
+        popup.innerHTML = `+1 ${rarityLabel} Plot!`;
+        document.body.appendChild(popup);
+        setTimeout(() => popup.remove(), 1100);
+      }
+      if (typeof AntiCheat !== "undefined") AntiCheat.recordPurchase("land", tid);
+      if (typeof window.completeDailyQuest === "function") window.completeDailyQuest("survey");
+      if (typeof Leaderboard !== "undefined" && Leaderboard.invalidateCache) Leaderboard.invalidateCache();
+    } catch (extraErr) {
+      console.warn("[Grid] Post-purchase extras notice:", extraErr && extraErr.message);
+    }
+  }
+
   async function executeBuy() {
     if (!pendingTile) return;
     if (typeof Store !== "undefined" && Store.isSessionActive && !Store.isSessionActive()) {
@@ -337,10 +407,10 @@ const Grid = (() => {
 
     // 🛡️ SERVER-SIDE PURCHASE VALIDATION — authoritative check before any client write
     if (typeof ServerAntiCheat !== "undefined" && ServerAntiCheat.isReady() && playerCoords) {
-      try {
-        // Force a fresh position ping so stationary players never hit
-        // "waiting for GPS lock" — the purchase itself re-verifies server-side.
-        if (ServerAntiCheat.sendPosition) {
+      // Force a fresh position ping so stationary players never hit
+      // "waiting for GPS lock" — the purchase itself re-verifies server-side.
+      if (ServerAntiCheat.sendPosition) {
+        try {
           await ServerAntiCheat.sendPosition({
             latitude: playerCoords.lat,
             longitude: playerCoords.lon,
@@ -350,92 +420,65 @@ const Grid = (() => {
             altitudeAccuracy: null,
             timestamp: Date.now(),
           }, true);
+        } catch (posErr) {
+          console.warn("[Grid] Position ping failed (proceeding to purchase):", posErr && posErr.message);
         }
-        const serverResult = await ServerAntiCheat.validatePurchase(
+      }
+
+      let serverResult = null;
+      let transportError = false;
+      try {
+        serverResult = await ServerAntiCheat.validatePurchase(
           playerCoords.lat, playerCoords.lon, tx, ty, territory
         );
-        if (!serverResult.allowed) {
-          const toastFn = window.showToast || alert;
-          // Sync server's cooldown timestamp to keep client in check
-          if (serverResult.lastLandPurchaseAt) {
-            state.lastLandPurchaseAt = serverResult.lastLandPurchaseAt;
-            Store.save(true);
-          }
-          // Sync server's EB balance if provided
-          if (typeof serverResult.nextEb === "number") {
-            state.eb = serverResult.nextEb;
-            Store.save(true);
-          }
-          let msg = "🛡️ Purchase rejected by server.";
-          if (serverResult.reason === "insufficient_eb") msg = "⚠️ Not enough EB — you need 100 EB to claim land.";
-          else if (serverResult.reason === "cooldown") msg = `⏳ Purchase cooldown active. Wait ${Math.ceil((serverResult.waitMs || 60000) / 1000)}s.`;
-          else if (serverResult.reason === "plot_already_claimed") msg = "⚠️ This tile was just claimed by someone else!";
-          else if (serverResult.reason === "too_far_from_tile") msg = "🚶 You must walk closer to claim this tile.";
-          else if (serverResult.reason === "velocity_check_failed") msg = "🚫 Movement anomaly detected.";
-          else if (serverResult.reason === "position_not_verified") msg = "📍 Waiting for GPS lock — try again in a moment.";
-          else if (serverResult.reason === "location_not_resolved") msg = "📍 Could not resolve location — try a different area.";
-          else if (serverResult.reason) msg = "🛡️ " + serverResult.reason;
-          toastFn(msg, 3500);
-          onBuyAttempt(false, null);
+      } catch (callErr) {
+        console.warn("[Grid] Purchase call threw:", callErr && callErr.stack || callErr);
+        transportError = true;
+      }
+
+      // Transport-level failure (timeout / dropped response): the server
+      // transaction may still have COMMITTED. Verify against the authoritative
+      // plots collection before ever reporting a failure to the player.
+      if (transportError || (serverResult && !serverResult.allowed && serverResult.reason === "server_error")) {
+        const recoveredPlot = await recoverCommittedPurchase(tid);
+        if (recoveredPlot) {
+          applyPurchaseSuccess(recoveredPlot, tid, { recovered: true, lastLandPurchaseAt: Date.now() }, centerLat, centerLon);
           return;
         }
-        // Server approved — apply authoritative results FIRST so a later
-        // decoration error can never undo the purchase or misreport failure.
-        const serverPlotData = serverResult.plotData;
-        const serverTid = serverResult.tid;
+      }
 
-        // Use server-authoritative EB balance and cooldown timestamp
-        if (typeof serverResult.nextEb === "number") state.eb = serverResult.nextEb;
-        if (serverResult.lastLandPurchaseAt) state.lastLandPurchaseAt = serverResult.lastLandPurchaseAt;
-        state.plots[serverTid] = serverPlotData;
-        globalPlots[serverTid] = serverPlotData;
-        Store.save(true);
-
-        const rarityObj = CONFIG.PLOT_RARITIES.find(r => r.key === serverPlotData.rarity) || CONFIG.PLOT_RARITIES[0];
-        onBuyAttempt(true, rarityObj);
-        render();
-
-        // Update UI to reflect the new EB balance immediately
-        if (typeof updateTopbar === "function") updateTopbar();
-        if (typeof updatePlayerInfoModal === "function") updatePlayerInfoModal();
-
-        // Show success toast confirming EB deduction
-        if (typeof showToast === "function") {
-          showToast(`✅ Land purchase verified! -100 EB deducted. +1 ${rarityObj.label} Plot added!`, 3000);
+      if (!serverResult || !serverResult.allowed) {
+        const toastFn = window.showToast || alert;
+        const reason = serverResult ? serverResult.reason : "server_error";
+        // Sync server's cooldown timestamp to keep client in check
+        if (serverResult && serverResult.lastLandPurchaseAt) {
+          state.lastLandPurchaseAt = serverResult.lastLandPurchaseAt;
+          Store.save(true);
         }
-
-        // Feed broadcast + territory dividends are now server-authoritative
-        // (validatePurchase posts them), so the client no longer duplicates them.
-        // Non-critical extras — isolated so they can never fail the purchase
-        try {
-          const rarityLabel = rarityObj.label || serverPlotData.rarity;
-
-          if (typeof map !== "undefined" && map) {
-            const pt = map.project([centerLon, centerLat]);
-            const popup = document.createElement("div");
-            popup.className = "combat-text-popup";
-            popup.style.left = `${pt.x}px`;
-            popup.style.top = `${pt.y}px`;
-            popup.innerHTML = `+1 ${rarityLabel} Plot!`;
-            document.body.appendChild(popup);
-            setTimeout(() => popup.remove(), 1100);
-          }
-
-          if (typeof AntiCheat !== "undefined") AntiCheat.recordPurchase("land", serverTid);
-          if (typeof window.completeDailyQuest === "function") window.completeDailyQuest("survey");
-
-          if (typeof Leaderboard !== "undefined" && Leaderboard.invalidateCache) Leaderboard.invalidateCache();
-        } catch (extraErr) {
-          console.warn("[Grid] Post-purchase extras notice:", extraErr && extraErr.message);
+        // Sync server's EB balance if provided
+        if (serverResult && typeof serverResult.nextEb === "number") {
+          state.eb = serverResult.nextEb;
+          Store.save(true);
+          if (typeof updateTopbar === "function") updateTopbar();
         }
-
-        return;
-      } catch (e) {
-        console.warn("[Grid] Server validation failed:", e && e.stack || e);
-        if (typeof showToast === "function") showToast("⚠️ Land claim could not be verified. Try again.", 3500);
+        let msg = "🛡️ Purchase rejected by server.";
+        if (reason === "insufficient_eb") msg = "⚠️ Not enough EB — you need 100 EB to claim land.";
+        else if (reason === "cooldown") msg = `⏳ Purchase cooldown active. Wait ${Math.ceil((serverResult?.waitMs || 60000) / 1000)}s.`;
+        else if (reason === "plot_already_claimed") msg = "⚠️ This tile was just claimed by someone else!";
+        else if (reason === "too_far_from_tile") msg = "🚶 You must walk closer to claim this tile.";
+        else if (reason === "velocity_check_failed") msg = "🚫 Movement anomaly detected.";
+        else if (reason === "position_not_verified") msg = "📍 Waiting for GPS lock — try again in a moment.";
+        else if (reason === "location_not_resolved") msg = "📍 Could not resolve location — try a different area.";
+        else if (reason === "server_error") msg = "⚠️ Land claim could not be verified. Try again.";
+        else if (reason) msg = "🛡️ " + reason;
+        toastFn(msg, 3500);
         onBuyAttempt(false, null);
         return;
       }
+
+      // Server approved — apply authoritative results.
+      applyPurchaseSuccess(serverResult.plotData, serverResult.tid, serverResult, centerLat, centerLon);
+      return;
     }
   }
 
