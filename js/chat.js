@@ -120,7 +120,7 @@ const Chat = (() => {
       try {
         const eligibility = await ServerAntiCheat.checkChatEligibility();
         if (!eligibility.chatUnlocked) {
-          showToast(` Chat locked! Own ${eligibility.plotsNeeded} more plots to unlock (${eligibility.plotCount}/50).`, 4000);
+          showToast(` Chat locked! Own ${eligibility.plotsNeeded} more plots to unlock (${eligibility.plotCount}/10).`, 4000);
           return;
         }
       } catch (e) {
@@ -288,7 +288,7 @@ const Chat = (() => {
         const eligibility = await ServerAntiCheat.checkChatEligibility();
         if (!eligibility.chatUnlocked) {
           inputEl.disabled = true;
-          inputEl.placeholder = `Chat locked (${eligibility.plotCount}/50 plots)`;
+          inputEl.placeholder = `Chat locked (${eligibility.plotCount}/10 plots)`;
           sendBtn.disabled = true;
           sendBtn.style.opacity = "0.5";
           sendBtn.style.cursor = "not-allowed";

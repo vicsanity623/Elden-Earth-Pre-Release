@@ -8,7 +8,7 @@ const ProfanityFilter = (() => {
   const PROFANITY_LIST = [
     // Sexual/Anatomical
     "anal", "anus", "ass", "asshole", "bastard", "bitch", "boob", "boobs",
-    "cock", "cunt", "dick", "dildo", "fag", "faggot", "fuck", "fucking",
+    "cock", "cunt", "dick", "dickhead", "dildo", "fag", "faggot", "fuck", "fucking",
     "pussy", "rape", "rapist", "sex", "sexual", "slut", "whore",
     
     // Racial/Ethnic Slurs

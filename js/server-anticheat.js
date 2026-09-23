@@ -7,7 +7,7 @@
 const ServerAntiCheat = (() => {
   let functions = null;
   let lastServerSync = 0;
-  const MIN_SYNC_INTERVAL_MS = 25000; // Don't ping server more than every 25s
+  const MIN_SYNC_INTERVAL_MS = 20000; // Don't ping server more than every 20s
 
   function init() {
     if (typeof firebase === "undefined" || !firebase.functions) {
