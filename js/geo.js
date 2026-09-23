@@ -128,7 +128,7 @@ const Geo = (() => {
 
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=14`, {
-        headers: { "User-Agent": "EldenEarth/1.0 (vicsanity623.github.io)" }
+        headers: { "User-Agent": "EldenEarth/1.0 (vicsanity623.github.io)", "Accept-Language": "en" }
       });
       const data = await res.json();
       const addr = data.address || {};

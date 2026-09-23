@@ -1,5 +1,5 @@
 // Bump this version string whenever you deploy an update!
-const CACHE_NAME = 'elden-EARTH-v22.56';
+const CACHE_NAME = 'elden-EARTH-v22.57';
 
 const ASSETS_TO_CACHE = [
     './',

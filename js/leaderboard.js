@@ -32,6 +32,12 @@ const Leaderboard = (() => {
     const c = (rawCountry || "").toLowerCase().trim();
     const ci = (cityStr || "").toLowerCase().trim();
 
+    // ⛔ FIRST: North Korea excluded from all titles/presidencies — must run
+    // before the flag-emoji fallback so 🇰🇵 never resolves to a title.
+    if (c.includes("north korea") || c.includes("dprk") || c.includes("corée du nord") || c === "kp" || c.includes("조선") || c.includes("🇰🇵") || ci.includes("🇰🇵")) {
+      return "⛔ Restricted Territory";
+    }
+
     // 1. South Africa (Checked FIRST so 'Africa' never collides with 'fr'!)
     if (c.includes("south africa") || c.includes("afrique du sud") || c.includes("südafrika") || ci.includes("🇿🇦") || ci.includes("eastern cape") || ci.includes("kouga")) {
       return "South Africa 🇿🇦";
@@ -81,9 +87,23 @@ const Leaderboard = (() => {
       } catch (e) {}
     }
 
-    // ⛔ Hard Block: North Korea Excluded from all Titles & Presidencies
-    if (c.includes("north korea") || c.includes("dprk") || c.includes("corée du nord") || c === "kp") {
-      return "⛔ Restricted Territory";
+    // 12. 🌐 Universal flag-emoji fallback: stored country values are always
+    // "LocalName + flag" (never a bare ISO code). The flag is language-
+    // independent — derive the ISO code from it and resolve the English name
+    // so ANY country in ANY language (中国 🇨🇳, 日本 🇯🇵, Brasil 🇧🇷…)
+    // resolves to one canonical English label for president/title grouping.
+    const flagSource =
+      (rawCountry || "").match(/[\u{1F1E6}-\u{1F1FF}]{2}/u) ||
+      (cityStr || "").match(/[\u{1F1E6}-\u{1F1FF}]{2}/u);
+    if (flagSource) {
+      const cc = flagSource[0]
+        .split("")
+        .map((ch) => String.fromCharCode(ch.codePointAt(0) - 0x1f1e6 + 65))
+        .join("");
+      try {
+        const enName = new Intl.DisplayNames(["en"], { type: "region" }).of(cc);
+        if (enName) return `${enName} ${getFlagEmoji(cc)}`;
+      } catch (e) {}
     }
 
     return "";
