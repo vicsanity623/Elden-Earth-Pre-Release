@@ -669,11 +669,22 @@ const CompanionPet = (() => {
     return angle;
   }
 
+  // Blacklist for diamonds that failed collection (prevents retry loops)
+  const failedDiamondBlacklist = new Set();
+
   async function collectDiamond(diamondId) {
     const state = Store.get();
     const d = state.liveDiamonds[diamondId];
     if (!d) {
-      console.log("[CompanionPet] Diamond not found, returning");
+      console.log("[CompanionPet] Diamond not found in local state, returning");
+      returnToPlayer();
+      return;
+    }
+
+    // Check if this diamond is blacklisted from previous failed attempts
+    if (failedDiamondBlacklist.has(diamondId)) {
+      console.log("[CompanionPet] Diamond blacklisted, skipping:", diamondId);
+      delete state.liveDiamonds[diamondId];
       returnToPlayer();
       return;
     }
@@ -692,14 +703,26 @@ const CompanionPet = (() => {
 
       if (!result || !result.allowed) {
         console.log("[CompanionPet] Server rejected collection:", result?.reason);
-        if (result?.reason === "too_far") {
+        
+        // Blacklist diamonds that are gone or already collected to prevent retry loops
+        if (result?.reason === "already_collected" || result?.reason === "unknown_diamond" || result?.reason === "diamond_expired") {
+          console.log("[CompanionPet] Blacklisting diamond (no longer available):", diamondId);
+          failedDiamondBlacklist.add(diamondId);
+          delete state.liveDiamonds[diamondId];
+          Store.save(true);
+        } else if (result?.reason === "too_far") {
           console.log("[CompanionPet] Diamond too far even for pet range");
+          // Don't blacklist - might be a positioning issue, let it retry once
         }
+        
         returnToPlayer();
         return;
       }
 
       console.log("[CompanionPet] Collecting diamond:", diamondId);
+      
+      // Clear from blacklist if it was previously failed (shouldn't happen, but safety)
+      failedDiamondBlacklist.delete(diamondId);
       
       // Drain mood by 2% per diamond
       state.pet.mood = Math.max(0, (state.pet.mood || 100) - MOOD_DRAIN_PER_DIAMOND);
@@ -774,6 +797,14 @@ const CompanionPet = (() => {
     fetchTarget = null;
     fetchReturnPhase = false;
     playAnimation("idle");
+    
+    // Clean up blacklist periodically to prevent memory leaks
+    // Keep only the last 50 entries
+    if (failedDiamondBlacklist.size > 50) {
+      const entries = Array.from(failedDiamondBlacklist);
+      failedDiamondBlacklist.clear();
+      entries.slice(-50).forEach(id => failedDiamondBlacklist.add(id));
+    }
   }
 
   function startMoodDecay() {

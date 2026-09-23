@@ -395,6 +395,15 @@ const Grid = (() => {
         onBuyAttempt(true, rarityObj);
         render();
 
+        // Update UI to reflect the new EB balance immediately
+        if (typeof updateTopbar === "function") updateTopbar();
+        if (typeof updatePlayerInfoModal === "function") updatePlayerInfoModal();
+
+        // Show success toast confirming EB deduction
+        if (typeof showToast === "function") {
+          showToast(`✅ Land purchase verified! -100 EB deducted. +1 ${rarityObj.label} Plot added!`, 3000);
+        }
+
         // Feed broadcast + territory dividends are now server-authoritative
         // (validatePurchase posts them), so the client no longer duplicates them.
         // Non-critical extras — isolated so they can never fail the purchase

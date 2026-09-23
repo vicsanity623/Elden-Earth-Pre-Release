@@ -555,6 +555,7 @@ const Store = (() => {
           const prevLastDiamondSpawn = state.lastDiamondSpawn || 0;
           const prevLastDiamondMovementAt = state.lastDiamondMovementAt || 0;
           const prevLastDiamondPlayerPosition = state.lastDiamondPlayerPosition || null;
+          const prevBerries = Number(state.berries) || 0;
           state = Object.assign(defaultState(), cloudData);
           state._gameVersion = (typeof CONFIG !== "undefined" && CONFIG.GAME_VERSION) || "0.0.0";
           state.calendar = mergedCalendar;
@@ -591,6 +592,12 @@ const Store = (() => {
           state.lastDiamondSpawn = Math.max(state.lastDiamondSpawn || 0, prevLastDiamondSpawn);
           state.lastDiamondMovementAt = Math.max(state.lastDiamondMovementAt || 0, prevLastDiamondMovementAt);
           state.lastDiamondPlayerPosition = prevLastDiamondPlayerPosition || state.lastDiamondPlayerPosition;
+
+          // Preserve local berries if cloud doesn't have them (old save migration)
+          if (cloudData.berries === undefined && prevBerries > 0) {
+            state.berries = prevBerries;
+            console.log(`[Cloud] Preserved local berries (${prevBerries}) — cloud save missing field.`);
+          }
 
           localStorage.setItem(KEY, JSON.stringify(state));
         }
