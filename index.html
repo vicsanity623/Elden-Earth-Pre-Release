@@ -533,7 +533,7 @@ Modern Extraction Model:
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.9.48b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.10.69b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -654,45 +654,53 @@ Modern Extraction Model:
     </button>
   </div>
 
-  <!-- Bird's Eye right-side visibility hub (shown only in birds-eye-mode) -->
-  <aside id="be-visibility-hub" class="be-visibility-hub hidden" aria-label="Bird's Eye object visibility">
-    <div class="be-hub-title">👁 VIEW</div>
-    <label class="be-toggle-row"><span>Player</span>
-      <input type="checkbox" class="be-toggle" data-be="player" checked><i class="be-switch"></i>
-    </label>
-    <label class="be-toggle-row"><span>Diamonds</span>
-      <input type="checkbox" class="be-toggle" data-be="diamonds" checked><i class="be-switch"></i>
-    </label>
-    <label class="be-toggle-row"><span>Mine</span>
-      <input type="checkbox" class="be-toggle" data-be="mine" checked><i class="be-switch"></i>
-    </label>
-    <label class="be-toggle-row"><span>Citadel</span>
-      <input type="checkbox" class="be-toggle" data-be="citadel" checked><i class="be-switch"></i>
-    </label>
-    <label class="be-toggle-row"><span>Foliage</span>
-      <input type="checkbox" class="be-toggle" data-be="foliage" checked><i class="be-switch"></i>
-    </label>
-    <label class="be-toggle-row"><span>Stops</span>
-      <input type="checkbox" class="be-toggle" data-be="stops" checked><i class="be-switch"></i>
-    </label>
-    <label class="be-toggle-row"><span>Plots</span>
-      <input type="checkbox" class="be-toggle" data-be="plots" checked><i class="be-switch"></i>
-    </label>
-  </aside>
-
-  <!-- Permanent Collapsable Worldwide Feed Card -->
-  <div id="live-feed-card" class="live-feed-card">
-    <div id="feed-interactive-header" class="feed-header-line" title="Tap to toggle feed">
-      <div class="feed-title-wrap">
-        <span class="feed-badge">Feed:</span>
-        <span class="feed-dot"></span>
-        <span id="feed-unread-badge" class="feed-unread-pill hidden">0</span>
+  <!-- Feed + permanent View hub row (hub collapses to 👁 VIEW) -->
+  <div class="top-hud-row">
+    <!-- Permanent Collapsable Worldwide Feed Card -->
+    <div id="live-feed-card" class="live-feed-card">
+      <div id="feed-interactive-header" class="feed-header-line" title="Tap to toggle feed">
+        <div class="feed-title-wrap">
+          <span class="feed-badge">Feed:</span>
+          <span class="feed-dot"></span>
+          <span id="feed-unread-badge" class="feed-unread-pill hidden">0</span>
+        </div>
+        <button id="feed-toggle-icon" class="feed-toggle-btn" aria-label="Toggle Feed">▴</button>
       </div>
-      <button id="feed-toggle-icon" class="feed-toggle-btn" aria-label="Toggle Feed">▴</button>
+      <div id="feed-scroll-container" class="feed-scroll-container">
+        <div class="feed-empty-msg">Connecting to live feed...</div>
+      </div>
     </div>
-    <div id="feed-scroll-container" class="feed-scroll-container">
-      <div class="feed-empty-msg">Connecting to live feed...</div>
-    </div>
+
+    <!-- Permanent object visibility hub (works in normal + Bird's Eye) -->
+    <aside id="be-visibility-hub" class="be-visibility-hub" aria-label="Object visibility">
+      <button type="button" id="be-hub-header" class="be-hub-header" aria-expanded="false">
+        <span class="be-hub-title">👁 VIEW</span>
+        <span class="be-hub-chevron" aria-hidden="true">▾</span>
+      </button>
+      <div class="be-hub-body" id="be-hub-body">
+        <label class="be-toggle-row"><span>Player</span>
+          <input type="checkbox" class="be-toggle" data-be="player" checked><i class="be-switch"></i>
+        </label>
+        <label class="be-toggle-row"><span>Diamonds</span>
+          <input type="checkbox" class="be-toggle" data-be="diamonds" checked><i class="be-switch"></i>
+        </label>
+        <label class="be-toggle-row"><span>Mine</span>
+          <input type="checkbox" class="be-toggle" data-be="mine" checked><i class="be-switch"></i>
+        </label>
+        <label class="be-toggle-row"><span>Citadel</span>
+          <input type="checkbox" class="be-toggle" data-be="citadel" checked><i class="be-switch"></i>
+        </label>
+        <label class="be-toggle-row"><span>Foliage</span>
+          <input type="checkbox" class="be-toggle" data-be="foliage" checked><i class="be-switch"></i>
+        </label>
+        <label class="be-toggle-row"><span>Stops</span>
+          <input type="checkbox" class="be-toggle" data-be="stops" checked><i class="be-switch"></i>
+        </label>
+        <label class="be-toggle-row"><span>Plots</span>
+          <input type="checkbox" class="be-toggle" data-be="plots" checked><i class="be-switch"></i>
+        </label>
+      </div>
+    </aside>
   </div>
 
   <!-- Floating Done Pill (Appears centered right above BUY LAND & EARN buttons) -->

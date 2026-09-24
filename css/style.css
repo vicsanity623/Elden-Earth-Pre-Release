@@ -1317,12 +1317,31 @@ html,body{
 }
 
 /* ================= PERMANENT COLLAPSABLE FEED HUD ================= */
-.live-feed-card {
+.top-hud-row {
   position: absolute;
-  /* Increased from 124px to 142px to clear the new red substats frame */
+  /* Same anchor as old feed — clear the red substats frame */
   top: calc(max(14px, env(safe-area-inset-top)) + 142px);
   left: 14px;
-  width: calc(100% - 28px);
+  right: 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.top-hud-row > * {
+  pointer-events: auto;
+}
+
+.live-feed-card {
+  position: relative;
+  top: auto;
+  left: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
   max-width: 360px;
   z-index: 6;
   /* Almost entirely transparent frosted glass */
@@ -6448,16 +6467,15 @@ body.birds-eye-mode #treasury-ad-container {
 }
 
 /* ============================================================
-   BIRD'S EYE — right-side object visibility hub
+   PERMANENT VIEW HUB — right of feed, collapsible
    ============================================================ */
 .be-visibility-hub {
-  position: fixed;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 9997;
-  width: 128px;
-  padding: 8px 8px 10px;
+  position: relative;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 72px;
+  max-width: 132px;
+  z-index: 7;
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.5);
   border: 2px solid rgba(255, 0, 43, 0.75);
@@ -6465,12 +6483,27 @@ body.birds-eye-mode #treasury-ad-container {
   box-shadow: 0 0 14px rgba(255, 0, 43, 0.35), 0 6px 18px rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  overflow: hidden;
   pointer-events: auto;
 }
 
-.be-visibility-hub.hidden,
-body:not(.birds-eye-mode) .be-visibility-hub {
+.be-visibility-hub.hidden {
   display: none !important;
+}
+
+.be-hub-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 7px 8px;
+  border: none;
+  background: rgba(13, 20, 32, 0.35);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .be-hub-title {
@@ -6479,9 +6512,29 @@ body:not(.birds-eye-mode) .be-visibility-hub {
   font-weight: 800;
   letter-spacing: 1px;
   color: #ff3344;
-  text-align: center;
-  margin-bottom: 6px;
   text-shadow: 0 0 8px rgba(255, 0, 40, 0.5);
+  line-height: 1;
+}
+
+.be-hub-chevron {
+  font-size: 10px;
+  color: #ff6b7a;
+  transition: transform 0.25s ease;
+  line-height: 1;
+}
+
+.be-visibility-hub.is-open .be-hub-chevron {
+  transform: rotate(180deg);
+}
+
+.be-hub-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.be-visibility-hub.is-open .be-hub-body {
+  max-height: 260px;
 }
 
 .be-toggle-row {
@@ -6489,7 +6542,7 @@ body:not(.birds-eye-mode) .be-visibility-hub {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 5px 4px;
+  padding: 5px 8px;
   cursor: pointer;
   user-select: none;
 }
@@ -6544,17 +6597,41 @@ body:not(.birds-eye-mode) .be-visibility-hub {
   box-shadow: 0 0 6px rgba(255, 23, 68, 0.9);
 }
 
-/* ---- Hide toggled-off object classes while in Bird's Eye ---- */
-body.birds-eye-mode.be-off-player .custom-plot-icon,
-body.birds-eye-mode.be-off-player .standing-plot-sign,
-body.birds-eye-mode.be-off-player .player-dot,
-body.birds-eye-mode.be-off-diamonds .diamond-3d-wrapper,
-body.birds-eye-mode.be-off-mine .extractor-3d-wrap,
-body.birds-eye-mode.be-off-citadel .citadel-3d-monument,
-body.birds-eye-mode.be-off-foliage .parcel-prop-wrap,
-body.birds-eye-mode.be-off-stops .elden-stop-marker,
-body.birds-eye-mode.be-off-stops .berry-marker {
+/* Hide toggled-off objects (normal view + Bird's Eye) */
+body.be-off-player .custom-plot-icon,
+body.be-off-player .standing-plot-sign,
+body.be-off-player .player-dot,
+body.be-off-diamonds .diamond-3d-wrapper,
+body.be-off-mine .extractor-3d-wrap,
+body.be-off-citadel .citadel-3d-monument,
+body.be-off-foliage .parcel-prop-wrap,
+body.be-off-stops .elden-stop-marker,
+body.be-off-stops .berry-marker {
   display: none !important;
+}
+
+/* Feed hidden in Bird's Eye — pin View hub to the right */
+body.birds-eye-mode .top-hud-row {
+  justify-content: flex-end;
+}
+
+@media (max-width: 380px) {
+  .top-hud-row {
+    left: 8px;
+    right: 8px;
+    gap: 6px;
+  }
+  .live-feed-card {
+    max-width: none;
+  }
+  .be-visibility-hub {
+    min-width: 68px;
+    max-width: 78px;
+  }
+  .be-hub-title {
+    font-size: 10px;
+    letter-spacing: 0.4px;
+  }
 }
 
 /* ---------- Disc Spinner Overlay (bottom-center modal matching game UI) ---------- */

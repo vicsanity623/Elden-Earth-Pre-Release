@@ -1020,12 +1020,12 @@
     _finishGameLaunch();
   }
 
-  // Shared with applyMapLod inside _finishGameLaunch (outer IIFE scope).
+  // Shared object visibility (normal view + Bird's Eye; outer IIFE scope).
   function applyBirdsEyeLayerVisibility() {
     if (typeof map === "undefined" || !map) return;
-    if (!document.body.classList.contains("birds-eye-mode")) return;
     const off = (k) => document.body.classList.contains("be-off-" + k);
-    const culled = map.getZoom() < (CONFIG.MAP_CULL_MIN_ZOOM || 14);
+    const culled = document.body.classList.contains("map-culled-far") ||
+      map.getZoom() < (CONFIG.MAP_CULL_MIN_ZOOM || 14);
     const setVis = (id, visible) => {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
     };
@@ -1218,13 +1218,7 @@
         setVis("empty-grid-fill", !culled);
         setVis("empty-grid-line", !culled);
         setVis("3d-buildings", !culled);
-      }
-
-      // Bird's Eye: keep layer toggles authoritative while zooming in/out
-      if (document.body.classList.contains("birds-eye-mode")) {
-        if (typeof applyBirdsEyeLayerVisibility === "function") {
-          applyBirdsEyeLayerVisibility();
-        }
+        applyBirdsEyeLayerVisibility();
       }
     }
 
@@ -2316,8 +2310,6 @@
       if (isBirdsEye || !map || !currentPos) return;
       isBirdsEye = true;
       document.body.classList.add("birds-eye-mode");
-      resetBirdsEyeToggles();
-      showBirdsEyeHub();
 
       // Bird's Eye keeps landplot tiles visible (player wants ONLY the plot
       // squares on screen when zoomed all the way out — no billboards/3D).
@@ -2418,21 +2410,14 @@
       if (!isBirdsEye || !map || !currentPos) return;
       isBirdsEye = false;
       document.body.classList.remove("birds-eye-mode");
-      hideBirdsEyeHub();
-      resetBirdsEyeToggles();
 
       // Remove territory overview layers
       if (map.getLayer("territory-overview-line")) map.removeLayer("territory-overview-line");
       if (map.getLayer("territory-overview-fill")) map.removeLayer("territory-overview-fill");
       if (map.getSource("territory-overview-source")) map.removeSource("territory-overview-source");
 
-      // Restore full default 3D view
-      ["plots-grass-base", "plots-fill", "plots-line"].forEach(id => {
-        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
-      });
-      ["player-sonar-fill", "player-sonar-line", "foliage-layer", "citadel-parcels-fill", "citadel-parcels-line"].forEach(id => {
-        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
-      });
+      // Restore layers from current toggle prefs (not forced-all-on)
+      applyMapLod();
 
       // Smooth fly back to player
       map.flyTo({
@@ -2448,15 +2433,21 @@
       showToast("📍 Back to your location", 2500);
     }
 
-    // ---- Bird's Eye visibility hub ----
+    // ---- Permanent View hub (collapse + toggles) ----
     const BE_KEYS = ["player", "diamonds", "mine", "citadel", "foliage", "stops", "plots"];
 
-    function showBirdsEyeHub() {
-      document.getElementById("be-visibility-hub")?.classList.remove("hidden");
-    }
+    document.getElementById("be-hub-header")?.addEventListener("click", () => {
+      const hub = document.getElementById("be-visibility-hub");
+      if (!hub) return;
+      const open = hub.classList.toggle("is-open");
+      document.getElementById("be-hub-header")?.setAttribute("aria-expanded", open ? "true" : "false");
+    });
 
-    function hideBirdsEyeHub() {
-      document.getElementById("be-visibility-hub")?.classList.add("hidden");
+    const beHub = document.getElementById("be-visibility-hub");
+    if (beHub) {
+      beHub.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: true });
+      beHub.addEventListener("touchmove", (e) => e.stopPropagation(), { passive: true });
+      beHub.addEventListener("wheel", (e) => e.stopPropagation(), { passive: true });
     }
 
     function resetBirdsEyeToggles() {
@@ -2464,6 +2455,7 @@
         cb.checked = true;
       });
       BE_KEYS.forEach(k => document.body.classList.remove("be-off-" + k));
+      applyBirdsEyeLayerVisibility();
     }
 
     function syncBirdsEyeToggleClasses() {
