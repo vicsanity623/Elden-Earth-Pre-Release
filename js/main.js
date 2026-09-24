@@ -2262,6 +2262,11 @@
     function enterBirdsEye() {
       if (isBirdsEye || !map || !currentPos) return;
       isBirdsEye = true;
+      document.body.classList.add("birds-eye-mode");
+
+      ["plots-grass-base", "plots-fill", "plots-line"].forEach(id => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
+      });
 
       // Bird's Eye keeps landplot tiles visible (player wants ONLY the plot
       // squares on screen when zoomed all the way out — no billboards/3D).
@@ -2360,6 +2365,7 @@
     function exitBirdsEye() {
       if (!isBirdsEye || !map || !currentPos) return;
       isBirdsEye = false;
+      document.body.classList.remove("birds-eye-mode");
 
       // Remove territory overview layers
       if (map.getLayer("territory-overview-line")) map.removeLayer("territory-overview-line");
@@ -2390,8 +2396,8 @@
       if (!exitBtn) {
         exitBtn = document.createElement("button");
         exitBtn.id = "exit-birds-eye-btn";
+        exitBtn.type = "button";
         exitBtn.textContent = "✕ Exit Bird's Eye";
-        exitBtn.style.cssText = "position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:9998;padding:12px 28px;border-radius:50px;border:none;background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#1a1206;font-family:var(--font-body);font-weight:800;font-size:14px;box-shadow:0 4px 20px rgba(212,175,97,0.4);cursor:pointer;";
         exitBtn.addEventListener("click", exitBirdsEye);
         document.body.appendChild(exitBtn);
       }

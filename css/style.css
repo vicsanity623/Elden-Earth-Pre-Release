@@ -6403,6 +6403,50 @@ body.map-culled-far .custom-plot-icon {
   display: none !important;
 }
 
+/* ============================================================
+   BIRD'S EYE MODE — top bar + exit button only
+   ============================================================ */
+body.birds-eye-mode #bottombar,
+body.birds-eye-mode .side-hud-stack,
+body.birds-eye-mode #live-feed-card,
+body.birds-eye-mode #boost-btn,
+body.birds-eye-mode #multiplier-btn,
+body.birds-eye-mode #weekly-pool-hud-btn,
+body.birds-eye-mode #buy-mode-banner,
+body.birds-eye-mode #treasury-ad-container {
+  display: none !important;
+}
+
+#exit-birds-eye-btn {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 9998;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 0;
+  background: #000 url('../assets/button-frame.png') no-repeat center center / 100% 100%;
+  color: #fff;
+  font-family: var(--font-display, 'Cinzel', serif);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(255, 0, 43, 0.45);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+#exit-birds-eye-btn:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
+#exit-birds-eye-btn.hidden {
+  display: none !important;
+}
+
 /* ---------- Disc Spinner Overlay (bottom-center modal matching game UI) ---------- */
 .elden-overlay {
   position: fixed;

@@ -580,18 +580,24 @@ const Grid = (() => {
     const refLat = (playerCoords && playerCoords.lat) ? playerCoords.lat : (map ? map.getCenter().lat : null);
     const refLon = (playerCoords && playerCoords.lon) ? playerCoords.lon : (map ? map.getCenter().lng : null);
 
+    // Horizon cull: tight near street level, opens up as you zoom out so
+    // plots stay visible all the way to Bird's Eye distance.
+    // scale ≈ 1 at z>=14, doubles every zoom level below that (capped).
+    const horizonM = zoom >= 14
+      ? 8000
+      : Math.min(2500000, 8000 * Math.pow(2, 14 - zoom));
+
     for (const tid in allPlots) {
       const plot = allPlots[tid];
       const bounds = Geo.tileBounds(plot.tx, plot.ty, CONFIG.TILE_SIZE_METERS);
       const coords = bounds.map(pt => [pt[1], pt[0]]);
       coords.push(coords[0]);
 
-      // 5-Mile Horizon Culling: Skip polygons in Ohio, Canada, or Puerto Rico!
-      if (refLat && refLon) {
+      if (refLat && refLon && horizonM < Infinity) {
         const cLat = (bounds[0][0] + bounds[2][0]) / 2;
         const cLon = (bounds[0][1] + bounds[2][1]) / 2;
-        if (Geo.haversine(refLat, refLon, cLat, cLon) > 8000) {
-          continue; // Skip distant plots!
+        if (Geo.haversine(refLat, refLon, cLat, cLon) > horizonM) {
+          continue;
         }
       }
 
@@ -644,13 +650,19 @@ const Grid = (() => {
       });
 
       // 3. Neon Rarity Borders (Thick on your plots, thin on rivals)
+      // Slightly wider lines at low zoom so parcels stay readable when tiny
       map.addLayer({
         id: "plots-line",
         type: "line",
         source: "plots-source",
         paint: {
           "line-color": ["get", "color"],
-          "line-width": ["case", ["==", ["get", "isSelf"], true], 2.5, 1.2],
+          "line-width": [
+            "interpolate", ["linear"], ["zoom"],
+            3, ["case", ["==", ["get", "isSelf"], true], 3.5, 2],
+            10, ["case", ["==", ["get", "isSelf"], true], 2.5, 1.2],
+            16, ["case", ["==", ["get", "isSelf"], true], 2.5, 1.2]
+          ],
           "line-opacity": ["case", ["==", ["get", "isSelf"], true], 0.95, 0.45],
         },
       });
