@@ -30,7 +30,10 @@ const Grid = (() => {
 
   function getAllPlots() {
     const state = Store.get();
-    return Object.assign({}, globalPlots, state.plots);
+    // Live listener wins over local state so a server-side deletion (pickup/
+    // relocate) can never be painted over by a stale local entry. Local plots
+    // still render as a fallback until the listener has delivered them.
+    return Object.assign({}, state.plots || {}, globalPlots);
   }
 
   function promptBuyTile(tx, ty) {
@@ -164,6 +167,15 @@ const Grid = (() => {
 
     const result = await ServerAntiCheat.pickupPlot(selectedPlotId);
     if (!result.allowed) {
+      // Transport error after the server already committed is indistinguishable
+      // from a real failure without a recovery read — check server truth.
+      if (result.reason === "server_error") {
+        const recovered = await recoverCommittedPickup(selectedPlotId);
+        if (recovered) {
+          applyPickupSuccess(recovered, selectedPlotId);
+          return;
+        }
+      }
       const msgs = {
         plot_not_found: "⚠️ This plot no longer exists.",
         not_your_plot: "⚠️ You can only relocate your own plots.",
@@ -173,19 +185,53 @@ const Grid = (() => {
       return;
     }
 
-    // Update local state from server result
+    applyPickupSuccess(result, selectedPlotId);
+  }
+
+  async function recoverCommittedPickup(tid) {
+    try {
+      const db = Store.getDb();
+      const state = Store.get();
+      const uid = state.player?.id;
+      if (!db || !uid) return null;
+      const plotSnap = await db.collection("plots").doc(tid).get();
+      if (plotSnap.exists) return null; // server did NOT commit
+      const saveSnap = await db.collection("saves").doc(uid).get();
+      if (!saveSnap.exists) return null;
+      const save = saveSnap.data() || {};
+      const localPlot = (state.plots || {})[tid] || getAllPlots()[tid] || {};
+      const rarityKey = localPlot.rarity || "common";
+      return {
+        allowed: true,
+        reason: "ok",
+        rarity: rarityKey,
+        plotBag: save.plotBag || {},
+        plots: save.plots || {},
+        plotsVersion: Number(save.plotsVersion) || 0,
+      };
+    } catch (e) {
+      console.warn("[Grid] Pickup recovery failed:", e);
+      return null;
+    }
+  }
+
+  function applyPickupSuccess(result, tid) {
+    const state = Store.get();
     state.plots = result.plots || state.plots;
+    // Always drop the picked-up tid even if the server response omitted plots
+    if (state.plots) delete state.plots[tid];
     state.plotBag = result.plotBag || state.plotBag;
     if (result.plotsVersion !== undefined) {
       state.plotsVersion = result.plotsVersion;
     }
-    delete globalPlots[selectedPlotId];
+    delete globalPlots[tid];
     Store.save(true);
 
     document.getElementById("plot-modal")?.classList.add("hidden");
     selectedPlotId = null;
     render();
-    showToast(`📦 Plot picked up! Added ${result.rarity.toUpperCase()} Plot to your bag.`, 3500);
+    const rarityLabel = String(result.rarity || "common").toUpperCase();
+    showToast(`📦 Plot picked up! Added ${rarityLabel} Plot to your bag.`, 3500);
   }
 
   function openPlotBag() {
@@ -246,6 +292,10 @@ const Grid = (() => {
     if (!state.plotBag[slot]) delete state.plotBag[slot];
     state.plots[serverTid] = serverPlotData;
     globalPlots[serverTid] = serverPlotData;
+    // Prefer authoritative ledger fields from the server response
+    if (serverResult.plots) state.plots = serverResult.plots;
+    if (serverResult.plotsVersion !== undefined) state.plotsVersion = serverResult.plotsVersion;
+    if (serverResult.plotBag) state.plotBag = serverResult.plotBag;
     pendingTile = null;
     Store.save(true);
     document.getElementById("plot-bag-modal")?.classList.add("hidden");
@@ -868,8 +918,20 @@ const Grid = (() => {
           const data = change.doc.data();
           if (change.type === "added" || change.type === "modified") {
             globalPlots[tid] = data;
+            // Keep local mirror in sync with server truth
+            const st = Store.get();
+            if (st && st.player && data.ownerId === st.player.id) {
+              if (!st.plots) st.plots = {};
+              st.plots[tid] = data;
+            }
           } else if (change.type === "removed") {
             delete globalPlots[tid];
+            // Server deleted this plot (pickup/relocate) — drop the local copy
+            // too, otherwise getAllPlots keeps rendering the ghost forever.
+            const st = Store.get();
+            if (st && st.plots && st.plots[tid]) {
+              delete st.plots[tid];
+            }
           }
         });
         render();

@@ -254,6 +254,17 @@ const ServerAntiCheat = (() => {
     }
   }
 
+  async function reconcilePlotData() {
+    if (!functions) return { ghostsRemoved: 0, reason: "functions_not_initialized" };
+    try {
+      const fn = functions.httpsCallable("reconcilePlotData");
+      return (await fn({})).data;
+    } catch (e) {
+      console.warn("[ServerAntiCheat] reconcilePlotData failed:", e.message);
+      return { ghostsRemoved: 0, reason: e.message };
+    }
+  }
+
   async function claimMailbox() {
     if (!functions) return { claimed: 0, dividendsEb: 0, giftsEb: 0 };
     try {
@@ -320,5 +331,5 @@ const ServerAntiCheat = (() => {
     }
   }
 
-  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData, claimMailbox, plantEldenStop, spinEldenStop, checkChatEligibility, validateUsername, filterChatMessage };
+  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData, reconcilePlotData, claimMailbox, plantEldenStop, spinEldenStop, checkChatEligibility, validateUsername, filterChatMessage };
 })();

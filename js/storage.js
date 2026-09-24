@@ -525,6 +525,9 @@ const Store = (() => {
           if (cloudData.plots) {
             if (!state.plots) state.plots = {};
             for (const plotId in cloudData.plots) {
+              // Only merge cloud plots that are NOT already known locally.
+              // Pruning against the plots collection happens after the owner
+              // query below — never re-add blindly here.
               if (!state.plots[plotId]) {
                 state.plots[plotId] = cloudData.plots[plotId];
                 console.log(`[Cloud] Merged cloud-only plot: ${plotId}`);
@@ -606,7 +609,7 @@ const Store = (() => {
 
       // 2. Query and restore all plots officially owned by this player from world map
       const plotSnap = await firestore.collection("plots").where("ownerId", "==", playerId).get();
-      
+
       if (!state.plots) state.plots = {};
       const officialPlotIds = new Set();
 
@@ -617,11 +620,27 @@ const Store = (() => {
         });
       }
 
-      // 3. TRUE-OWNERSHIP AUDITOR: DISABLED
-      // This was deleting plots from player saves when the plots collection
-      // didn't have a matching ownerId entry. This caused massive plot loss.
-      // Disabled permanently to prevent further data corruption.
-      // Players' plots are now preserved as-is from the plots collection query above.
+      // 3. GHOST PRUNER: the plots collection is the source of truth for what
+      // is on the map. Any local/save entry with no matching doc is a leftover
+      // from a pickup/relocate (or polluted save.plots) and must not render.
+      // Only prune when the query succeeded (plotSnap is a complete result).
+      let ghostPruned = 0;
+      if (plotSnap && typeof plotSnap.empty === "boolean") {
+        for (const tid of Object.keys(state.plots)) {
+          if (!officialPlotIds.has(tid)) {
+            delete state.plots[tid];
+            ghostPruned++;
+          }
+        }
+      }
+      if (ghostPruned > 0) {
+        console.log(`[Cloud] Pruned ${ghostPruned} ghost plot(s) not present on the world map.`);
+        // Bump version so the cleaned plot map wins the syncSafeState guard
+        state.plotsVersion = (Number(state.plotsVersion) || 0) + 1;
+        state.lastSavedAt = Date.now();
+        localStorage.setItem(KEY, JSON.stringify(state));
+        syncSafeStateToCloud();
+      }
 
       localStorage.setItem(KEY, JSON.stringify(state));
 
