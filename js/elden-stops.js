@@ -900,11 +900,12 @@ const EldenStops = (() => {
 
     if (!result || !result.ok) {
       const reason = result && result.reason;
-      if (result && result.message) toast(result.message, 4500);
+      if (result && result.message) toast(result.message, 5000);
       else if (reason === "no_seed") toast("🌱 You have no Elden Stop Seeds left.", 3000);
       else if (reason === "too_far") toast("🚶 Stand directly on the tile to plant a Beacon.", 3000);
       else if (reason === "stop_exists") toast("⚔️ An Elden Stop already anchors this tile.", 3000);
       else if (reason === "plot_claimed") toast("⚠️ That tile is owned land — find a public landmark.", 3000);
+      else if (reason === "estate_limit") toast("Sorry — only one Legendary Estate stop is allowed at your home base. Please plant elsewhere in a public place.", 5000);
       else if (reason === "rate_limited") toast("⏳ Slow down, planter — try again in a minute.", 3000);
       else toast("⚠️ The Beacon seed failed to take root. Try again.", 3000);
       return false;
