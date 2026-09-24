@@ -1103,10 +1103,10 @@
       });
       localStorage.setItem("eldenEarth.mapStyle", styleKey);
       document.querySelectorAll(".map-style-btn").forEach(btn => {
-        const isActive = btn.dataset.style === styleKey;
-        btn.style.borderColor = isActive ? "#4fd6c4" : "#555";
-        btn.style.color = isActive ? "#4fd6c4" : "#ccc";
-        btn.style.background = isActive ? "rgba(79,214,196,0.1)" : "#1a1a2e";
+        btn.classList.toggle("is-active", btn.dataset.style === styleKey);
+        btn.style.borderColor = "";
+        btn.style.color = "";
+        btn.style.background = "";
       });
     }
 
