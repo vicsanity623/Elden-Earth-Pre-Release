@@ -96,8 +96,8 @@ const Leaderboard = (() => {
       (rawCountry || "").match(/[\u{1F1E6}-\u{1F1FF}]{2}/u) ||
       (cityStr || "").match(/[\u{1F1E6}-\u{1F1FF}]{2}/u);
     if (flagSource) {
-      const cc = flagSource[0]
-        .split("")
+      // Iterate by code point — split("") breaks surrogate pairs in flag emoji.
+      const cc = [...flagSource[0]]
         .map((ch) => String.fromCharCode(ch.codePointAt(0) - 0x1f1e6 + 65))
         .join("");
       try {
