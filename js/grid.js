@@ -1006,12 +1006,12 @@ const Grid = (() => {
       if (buyModal) buyModal.classList.add("hidden");
     });
 
-    plantBtn?.addEventListener("click", () => {
+    plantBtn?.addEventListener("click", async () => {
       if (pendingTile && typeof Citadels !== "undefined") {
         const corners = Geo.tileBounds(pendingTile.tx, pendingTile.ty, CONFIG.TILE_SIZE_METERS);
         const cLat = (corners[0][0] + corners[2][0]) / 2;
         const cLon = (corners[0][1] + corners[2][1]) / 2;
-        const planted = Citadels.plantCapsule(pendingTile.tx, pendingTile.ty, cLat, cLon);
+        const planted = await Citadels.plantCapsule(pendingTile.tx, pendingTile.ty, cLat, cLon);
         if (planted) {
           pendingTile = null;
           if (buyModal) buyModal.classList.add("hidden");
