@@ -6462,7 +6462,8 @@ body.birds-eye-mode #treasury-ad-container {
   transform: translateX(-50%) scale(0.96);
 }
 
-#exit-birds-eye-btn.hidden {
+#exit-birds-eye-btn.hidden,
+body:not(.birds-eye-mode) #exit-birds-eye-btn {
   display: none !important;
 }
 

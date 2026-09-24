@@ -2410,14 +2410,23 @@
       if (!isBirdsEye || !map || !currentPos) return;
       isBirdsEye = false;
       document.body.classList.remove("birds-eye-mode");
+      // Kill the exit control first so a later cleanup error can't strand it on the main HUD.
+      hideExitBirdsEye();
 
-      // Remove territory overview layers
-      if (map.getLayer("territory-overview-line")) map.removeLayer("territory-overview-line");
-      if (map.getLayer("territory-overview-fill")) map.removeLayer("territory-overview-fill");
-      if (map.getSource("territory-overview-source")) map.removeSource("territory-overview-source");
+      try {
+        // Remove territory overview layers
+        if (map.getLayer("territory-overview-line")) map.removeLayer("territory-overview-line");
+        if (map.getLayer("territory-overview-fill")) map.removeLayer("territory-overview-fill");
+        if (map.getSource("territory-overview-source")) map.removeSource("territory-overview-source");
 
-      // Restore layers from current toggle prefs (not forced-all-on)
-      applyMapLod();
+        // Restore layers from current toggle prefs (applyMapLod is out of scope here)
+        ["empty-grid-fill", "empty-grid-line", "3d-buildings"].forEach(id => {
+          if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
+        });
+        applyBirdsEyeLayerVisibility();
+      } catch (err) {
+        console.warn("[Bird's Eye] exit cleanup:", err);
+      }
 
       // Smooth fly back to player
       map.flyTo({
@@ -2429,7 +2438,6 @@
         essential: true
       });
 
-      hideExitBirdsEye();
       showToast("📍 Back to your location", 2500);
     }
 
@@ -2488,7 +2496,7 @@
 
     function hideExitBirdsEye() {
       const exitBtn = document.getElementById("exit-birds-eye-btn");
-      if (exitBtn) exitBtn.classList.add("hidden");
+      if (exitBtn) exitBtn.remove();
     }
 
     el("birds-eye-trigger-btn")?.addEventListener("click", () => {
