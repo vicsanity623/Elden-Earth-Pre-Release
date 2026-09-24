@@ -331,5 +331,16 @@ const ServerAntiCheat = (() => {
     }
   }
 
-  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData, reconcilePlotData, claimMailbox, plantEldenStop, spinEldenStop, checkChatEligibility, validateUsername, filterChatMessage };
+  async function fixTerritoryNames(opts = {}) {
+    if (!functions) return { fixed: 0, reason: "functions_not_initialized" };
+    try {
+      const fn = functions.httpsCallable("fixTerritoryNames");
+      return (await fn(opts)).data;
+    } catch (e) {
+      console.warn("[ServerAntiCheat] fixTerritoryNames failed:", e.message);
+      return { fixed: 0, reason: e.message };
+    }
+  }
+
+  return { init, sendPosition, validatePurchase, validateCollect, relocatePlot, pickupPlot, spinWheel, activateBoost, claimBoost, recallCitadel, conquerCitadel, spawnDiamonds, citadelAction, claimQuestReward, collectExtractor, claimReferralBonuses, claimReferralRoyalties, isReady, fixAllPlotData, reconcilePlotData, fixTerritoryNames, claimMailbox, plantEldenStop, spinEldenStop, checkChatEligibility, validateUsername, filterChatMessage };
 })();

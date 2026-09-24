@@ -27,6 +27,57 @@ const Leaderboard = (() => {
     return str.replace(/[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu, "").trim().toLowerCase();
   }
 
+  // True when a territory label is pure English/Latin (after stripping flags).
+  // Local-script names (上海市, Москва) return false so dual titles can collapse
+  // to the English badge while fixTerritoryNames backfills the plot docs.
+  function looksEnglishTerritory(str) {
+    const s = String(str || "")
+      .replace(/[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu, "")
+      .trim();
+    if (!s) return false;
+    return /^[\u0020-\u007E\u00A0-\u024F]+$/.test(s);
+  }
+
+  // Collapse a player's same-scope badges down to English-only when both a
+  // local-script and an English label exist (duplicate governor/mayor titles).
+  function preferEnglishBadges(badges) {
+    const fixed = [];
+    const byScope = { country: [], state: [], city: [] };
+    const passthrough = [];
+    for (const b of badges) {
+      if (b && (b.scope === "country" || b.scope === "state" || b.scope === "city")) {
+        byScope[b.scope].push(b);
+      } else {
+        passthrough.push(b);
+      }
+    }
+    fixed.push(...passthrough);
+    for (const scope of ["country", "state", "city"]) {
+      const group = byScope[scope];
+      if (group.length <= 1) {
+        fixed.push(...group);
+        continue;
+      }
+      const english = group.filter((b) => looksEnglishTerritory(b.territory || b.title));
+      // Keep every English badge for this scope; drop local-script duplicates
+      // only when at least one English variant is present for the same player.
+      fixed.push(...(english.length ? english : group));
+    }
+    return fixed;
+  }
+
+  // Exact then clean-key lookup so "SHANGHAI 🇨" and "Shanghai" resolve
+  // to the same ruler even before fixTerritoryNames finishes backfill.
+  function lookupRuler(map, name) {
+    if (!map || !name) return null;
+    if (map[name]) return map[name];
+    const key = cleanTerritoryKey(name);
+    for (const place in map) {
+      if (cleanTerritoryKey(place) === key) return map[place];
+    }
+    return null;
+  }
+
   // Universal Multi-Language Country Normalizer (Supports all 195+ Countries automatically in English!)
   function normalizeCountry(rawCountry, cityStr) {
     const c = (rawCountry || "").toLowerCase().trim();
@@ -299,7 +350,7 @@ const Leaderboard = (() => {
           }
         }
         if (topOid) {
-          results[place] = { ownerId: topOid, plots: maxPlots, name: playerStats[topOid]?.name };
+          results[place] = { ownerId: topOid, plots: maxPlots, name: playerStats[topOid]?.name, place };
         }
       }
       return results;
@@ -351,6 +402,13 @@ const Leaderboard = (() => {
           p.titles.push(`Mayor of ${city}`);
         }
       }
+
+      // Only English governor/mayor/president titles when a player somehow
+      // tops both a local-language and an English group for the same scope.
+      p.badges = preferEnglishBadges(p.badges);
+      p.titles = p.badges
+        .filter((b) => b.scope === "country" || b.scope === "state" || b.scope === "city")
+        .map((b) => b.title);
 
       if (p.badges.length === 0) {
         p.badges.push({ title: "Citizen of the Realm", icon: "🛡️", scope: "realm" });
@@ -575,9 +633,9 @@ const Leaderboard = (() => {
     // Skip dividend awards for plots with unknown/incomplete territory data
     if (!cleanCity || !cleanCountry) return;
 
-    const mayor = data.mayorsMap?.[cleanCity];
-    const governor = data.governorsMap?.[cleanState];
-    const president = data.presidentsMap?.[cleanCountry];
+    const mayor = lookupRuler(data.mayorsMap, cleanCity);
+    const governor = lookupRuler(data.governorsMap, cleanState);
+    const president = lookupRuler(data.presidentsMap, cleanCountry);
 
     const payouts = {};
     function addP(ruler, title, icon) {
@@ -590,9 +648,9 @@ const Leaderboard = (() => {
       payouts[ruler.ownerId].icons.push(icon);
     }
 
-    if (mayor) addP(mayor, `Mayor of ${cleanCity}`, "👑");
-    if (governor) addP(governor, `Governor of ${cleanState}`, "🏛️");
-    if (president) addP(president, `President of ${cleanCountry}`, "🦅");
+    if (mayor) addP(mayor, `Mayor of ${mayor.place || cleanCity}`, "👑");
+    if (governor) addP(governor, `Governor of ${governor.place || cleanState}`, "🏛️");
+    if (president) addP(president, `President of ${president.place || cleanCountry}`, "🦅");
 
     for (const oid in payouts) {
       const p = payouts[oid];
@@ -755,9 +813,9 @@ const Leaderboard = (() => {
   function getLocalTerritoryRulers(city, stateName, country) {
     if (!cachedData) return { mayor: null, governor: null, president: null };
     return {
-      mayor: cachedData.mayorsMap?.[city] || null,
-      governor: cachedData.governorsMap?.[stateName] || null,
-      president: cachedData.presidentsMap?.[country] || null
+      mayor: lookupRuler(cachedData.mayorsMap, city),
+      governor: lookupRuler(cachedData.governorsMap, stateName),
+      president: lookupRuler(cachedData.presidentsMap, country)
     };
   }
 
