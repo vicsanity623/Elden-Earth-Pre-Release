@@ -208,8 +208,11 @@ const Citadels = (() => {
       `;
     }
 
+    wrap.dataset.cid = citadel.id;
     wrap.addEventListener("click", (e) => {
       e.stopPropagation();
+      // Dyson sphere animations only run while the player is interacting
+      wrap.classList.add("is-active");
       openCitadelModal(citadel.id);
     });
 
@@ -226,6 +229,10 @@ const Citadels = (() => {
     if (zoom < 14) {
       activeMarkers.forEach(m => m.remove());
       activeMarkers = [];
+      // Only landplot tiles may remain — clear stronghold ground parcels too
+      if (mapInstance.getSource("citadel-parcels-source")) {
+        mapInstance.getSource("citadel-parcels-source").setData({ type: "FeatureCollection", features: [] });
+      }
       return;
     }
 
@@ -324,6 +331,14 @@ const Citadels = (() => {
         .addTo(mapInstance);
 
       activeMarkers.push(marker);
+    }
+
+    // Keep the tapped monument animating across re-renders while its modal is open
+    if (selectedCitadelId && !document.getElementById("citadel-modal")?.classList.contains("hidden")) {
+      activeMarkers.forEach(m => {
+        const node = m.getElement();
+        if (node && node.dataset.cid === selectedCitadelId) node.classList.add("is-active");
+      });
     }
 
     // 5. Render Ground Stronghold Parcels Layer

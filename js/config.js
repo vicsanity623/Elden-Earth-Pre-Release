@@ -4,7 +4,7 @@
 // ============================================================
 const CONFIG = {
   // --- Game Version (bump on every patch to auto-wipe stale localStorage) ---
-  GAME_VERSION: "0.1.10.59",
+  GAME_VERSION: "0.1.10.60",
 
   // --- Realm Server Epoch ---
   // Bump this timestamp whenever you intentionally wipe the Firestore database.
@@ -133,6 +133,14 @@ const CONFIG = {
   ELDEN_STOP_DIAMOND_RANGE: [1, 20],             // Diamonds per spin (informational)
   ELDEN_STOP_EB_RANGE: [0, 5],                   // EB per spin (informational)
   ELDEN_STOP_PLOT_JACKPOT_CHANCE: 0.015,         // 1.5% Lucky Land Plot drop
+  ELDEN_STOP_BASE_ZOOM: 18,                      // Reference zoom where beacon screen-scale = 1.0
+  ELDEN_STOP_MIN_SCALE: 0.4,                     // Floor scale when zoomed out (before full cull)
+  ELDEN_STOP_MAX_SCALE: 1.15,                    // Ceiling scale when zoomed in
+
+  // --- Map LOD / Far-Zoom Culling (phone GPU heat relief) ---
+  // Below this zoom, ALL decorative 3D/DOM game objects are destroyed/hidden.
+  // Only the landplot tile polygons (plots-fill / plots-line / plots-grass-base) remain.
+  MAP_CULL_MIN_ZOOM: 14,
 
   // --- 3D Character Roster (Heroic Scale) ---
   AVAILABLE_CHARACTERS: [

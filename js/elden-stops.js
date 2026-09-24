@@ -92,10 +92,16 @@ const EldenStops = (() => {
     const building = isConstructing(stop);
     el.className = "elden-stop-marker" + (near ? "" : " far") + (cooling ? " cooling" : "") + (building ? " building" : "");
     el.dataset.stage = building ? "build" : "ready";
+    el.dataset.stopId = stop.id;
+
+    // Inner scale root: MapLibre owns the marker element's transform for
+    // positioning, so zoom-proportional scaling lives on this child instead.
+    const scaleRoot = document.createElement("div");
+    scaleRoot.className = "elden-scale-root";
 
     if (building) {
       // 🏗️ CONSTRUCTION VIEW — holographic billboard + live growth countdown
-      el.innerHTML = `
+      scaleRoot.innerHTML = `
         <div class="elden-construct-anchor">
           <div class="elden-construct-pulse"></div>
           <div class="elden-construct-beam"></div>
@@ -114,7 +120,7 @@ const EldenStops = (() => {
         el.classList.add("just-built");
         setTimeout(() => justActivated.delete(stop.id), 4000);
       }
-      el.innerHTML = `
+      scaleRoot.innerHTML = `
         <div class="elden-ground-pulse"></div>
         <div class="elden-beam"></div>
         <div class="elden-stop-disc" data-stop="${stop.id}">
@@ -130,6 +136,8 @@ const EldenStops = (() => {
         <div class="elden-stop-plate">${stop.poiName || "Elden Stop"}</div>
       `;
     }
+
+    el.appendChild(scaleRoot);
 
     el.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -197,6 +205,8 @@ const EldenStops = (() => {
 
       if (!markers[sid]) {
         const el = createStopElement(stop, near, cooling);
+        // Keep the open/interacted beacon animating across LOD rebuilds
+        if (sid === selectedStopId) el.classList.add("is-active");
         const m = new mapboxgl.Marker({
           element: el,
           anchor: "bottom",
@@ -300,6 +310,9 @@ const EldenStops = (() => {
     }
 
     selectedStopId = stopId;
+    // Dyson disc animations ONLY run while this stop session is open
+    const activeMarker = markers[stopId];
+    if (activeMarker) activeMarker.getElement()?.classList.add("is-active");
     flyIntoStop(stop);
 
     const overlay = document.getElementById("elden-stop-overlay");
@@ -338,6 +351,10 @@ const EldenStops = (() => {
     const overlay = document.getElementById("elden-stop-overlay");
     if (overlay) overlay.classList.add("hidden");
     selectedStopId = null;
+    // Freeze all map-beacon Dyson animations the moment the session ends
+    for (const sid in markers) {
+      markers[sid].getElement()?.classList.remove("is-active");
+    }
     const lucky = document.getElementById("lucky-plot-modal");
     if (lucky && !lucky.classList.contains("hidden")) {
       // Lucky plot modal owns the exit — camera returns when it closes.
@@ -769,7 +786,16 @@ const EldenStops = (() => {
   function renderAllBerries() {
     if (!map || document.hidden) return;
     const state = Store.get();
-    if (!state.liveBerries) return;
+    if (!state.liveBerries) state.liveBerries = {};
+
+    // Far-zoom cull: berries are decorative — destroy markers, keep inventory data
+    if (map.getZoom && map.getZoom() < (CONFIG.MAP_CULL_MIN_ZOOM || 14)) {
+      for (const berryId in berryMarkers) {
+        berryMarkers[berryId].remove();
+        delete berryMarkers[berryId];
+      }
+      return;
+    }
 
     // Remove stale markers
     for (const berryId in berryMarkers) {
@@ -829,6 +855,9 @@ const EldenStops = (() => {
     if (overlay) overlay.classList.add("hidden");
     selectedStopId = null;
     spinning = false;
+    for (const sid in markers) {
+      markers[sid].getElement()?.classList.remove("is-active");
+    }
     returnCameraAndClose();
   }
 

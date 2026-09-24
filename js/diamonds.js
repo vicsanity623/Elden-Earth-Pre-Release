@@ -141,6 +141,15 @@ const Diamonds = (() => {
     if (!state.liveDiamonds) state.liveDiamonds = {};
     const live = state.liveDiamonds;
 
+    // Far-zoom cull: diamonds are decorative — destroy markers, keep data
+    if (map.getZoom && map.getZoom() < (CONFIG.MAP_CULL_MIN_ZOOM || 14)) {
+      for (const mid in markers) {
+        markers[mid].remove();
+        delete markers[mid];
+      }
+      return;
+    }
+
     // Remove stale markers
     for (const mid in markers) {
       if (!live[mid]) {

@@ -62,6 +62,8 @@ const Character3D = (() => {
       },
       render: function (gl, matrix) {
         if (!currentModel || document.hidden) return;
+        // Far-zoom cull: never draw the player model when only plot tiles remain
+        if (document.body.classList.contains("map-culled-far")) return;
 
         const modelCoord = mapboxgl.MercatorCoordinate.fromLngLat(
           [playerCoords.lng, playerCoords.lat],
@@ -108,6 +110,9 @@ const Character3D = (() => {
       }
 
       animFrameId = requestAnimationFrame(animate);
+
+      // Far-zoom cull: freeze the mixer and stop forcing map repaints
+      if (document.body.classList.contains("map-culled-far")) return;
 
       const targetFPS = isWalking ? 60 : 15;
       const minInterval = 1000 / targetFPS;

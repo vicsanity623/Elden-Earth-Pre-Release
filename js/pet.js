@@ -101,6 +101,9 @@ const CompanionPet = (() => {
       render: function (gl, matrix) {
         if (!petModel || document.hidden) return;
 
+        // Far-zoom cull: never draw the pet when only plot tiles remain
+        if (document.body.classList.contains("map-culled-far")) return;
+
         // 🛡️ HARD GATE: Pet must NEVER render if locked (under 75 plots)
         const state = Store.get();
         if (!state.pet || !state.pet.unlocked) return;
@@ -157,6 +160,9 @@ const CompanionPet = (() => {
       }
 
       animFrameId = requestAnimationFrame(animate);
+
+      // Far-zoom cull: freeze pet mixer/AI and stop forcing map repaints
+      if (document.body.classList.contains("map-culled-far")) return;
 
       // 1. Smooth delta time (capped to prevent tab-switch jumps)
       const delta = Math.min(clock.getDelta(), 0.05);

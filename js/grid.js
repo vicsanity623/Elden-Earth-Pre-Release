@@ -49,9 +49,9 @@ const Grid = (() => {
 
     const state = Store.get();
 
-    // ⏳ 60-Second Land Purchase Cooldown (Stops rapid spam & refresh exploits)
+    // ⏳ 5-Second Land Purchase Cooldown (Stops rapid spam & refresh exploits)
     const now = Date.now();
-    const BUY_COOLDOWN_MS = 60000; // 1 Minute Cooldown
+    const BUY_COOLDOWN_MS = 5000; // 5 second Cooldown
     const lastBuy = state.lastLandPurchaseAt || 0;
     if (now - lastBuy < BUY_COOLDOWN_MS) {
       const remSec = Math.ceil((BUY_COOLDOWN_MS - (now - lastBuy)) / 1000);
@@ -513,7 +513,7 @@ const Grid = (() => {
         }
         let msg = "🛡️ Purchase rejected by server.";
         if (reason === "insufficient_eb") msg = "⚠️ Not enough EB — you need 100 EB to claim land.";
-        else if (reason === "cooldown") msg = `⏳ Purchase cooldown active. Wait ${Math.ceil((serverResult?.waitMs || 60000) / 1000)}s.`;
+        else if (reason === "cooldown") msg = `⏳ Purchase cooldown active. Wait ${Math.ceil((serverResult?.waitMs || 5000) / 1000)}s.`;
         else if (reason === "plot_already_claimed") msg = "⚠️ This tile was just claimed by someone else!";
         else if (reason === "too_far_from_tile") msg = "🚶 You must walk closer to claim this tile.";
         else if (reason === "velocity_check_failed") msg = "🚫 Movement anomaly detected.";
@@ -871,7 +871,10 @@ const Grid = (() => {
               </div>
             </div>
           `;
+          beaconEl.dataset.extractor = "1";
           beaconEl.addEventListener("click", () => {
+            // Orbital rings/gem only animate while the extractor modal is open
+            beaconEl.classList.add("is-active");
             const evt = new CustomEvent("openExtractorModal");
             window.dispatchEvent(evt);
           });
@@ -889,6 +892,15 @@ const Grid = (() => {
           activeMarkers.push(extMarker);
         }
       }
+    }
+
+    // Keep the extractor animating across re-renders while its modal is open
+    const extractorModal = document.getElementById("extractor-modal");
+    if (extractorModal && !extractorModal.classList.contains("hidden")) {
+      activeMarkers.forEach(m => {
+        const node = m.getElement();
+        if (node && node.dataset.extractor) node.classList.add("is-active");
+      });
     }
   }
 

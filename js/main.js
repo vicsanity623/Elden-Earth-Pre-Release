@@ -155,6 +155,18 @@
   function closeModal(id) {
     const m = el(id);
     if (m) m.classList.add("hidden");
+    deactivateMapObjectAnimations(id);
+  }
+
+  // Dyson/ring animations on map markers only run while the player is
+  // interacting with that object. Closing its modal freezes them again.
+  function deactivateMapObjectAnimations(modalId) {
+    if (modalId === "extractor-modal") {
+      document.querySelectorAll(".extractor-3d-wrap.is-active").forEach(n => n.classList.remove("is-active"));
+    }
+    if (modalId === "citadel-modal" || modalId === "citadel-upgrade-modal" || modalId === "siege-modal") {
+      document.querySelectorAll(".citadel-3d-monument.is-active").forEach(n => n.classList.remove("is-active"));
+    }
   }
 
   let cachedCashWhole = null;
@@ -1084,6 +1096,10 @@
         toggle3DBuildings(is3D);
         Diamonds.renderAll();
         if (typeof Citadels !== "undefined") Citadels.render();
+        // Style swap recreated layers — force a fresh LOD visibility pass
+        lastCulledState = null;
+        applyMapLod();
+        refreshMapModulesAfterZoom();
       });
       localStorage.setItem("eldenEarth.mapStyle", styleKey);
       document.querySelectorAll(".map-style-btn").forEach(btn => {
@@ -1132,7 +1148,73 @@
     // Re-lock center strictly when gestures finish (never interrupts animations mid-flight)
     map.on("zoomend", () => {
       if (currentPos) map.setCenter([currentPos.lon, currentPos.lat]);
+      applyMapLod();
+      refreshMapModulesAfterZoom();
     });
+
+    // Cheap per-frame LOD toggle while pinching/scrolling (class + CSS var only).
+    // Layer visibility + marker teardown happen on zoomend.
+    map.on("zoom", applyMapLod);
+
+    // ======================== FAR-ZOOM LOD CULLING ========================
+    // When the player zooms out past MAP_CULL_MIN_ZOOM (or enters Bird's Eye),
+    // destroy every decorative 3D/DOM game object. Only landplot tile polygons
+    // stay on the map. This is the main phone-GPU heat relief valve.
+    let lastCulledState = null;
+
+    function applyMapLod() {
+      if (!map || !map.getStyle) return;
+      const zoom = map.getZoom();
+      const cullZoom = CONFIG.MAP_CULL_MIN_ZOOM || 14;
+      const culled = zoom < cullZoom;
+
+      document.body.classList.toggle("map-culled-far", culled);
+
+      // World-anchored beacon scale: shrinks Elden Stops as the player zooms out
+      // so they keep a fixed map size instead of a fixed (massive) screen size.
+      const refZoom = CONFIG.ELDEN_STOP_BASE_ZOOM || 18;
+      const minScale = CONFIG.ELDEN_STOP_MIN_SCALE || 0.4;
+      const maxScale = CONFIG.ELDEN_STOP_MAX_SCALE || 1.15;
+      const scale = Math.min(maxScale, Math.max(minScale, Math.pow(2, zoom - refZoom)));
+      document.documentElement.style.setProperty("--eld-stop-scale", scale.toFixed(3));
+
+      // Layer visibility only when the culled flag actually flips
+      if (culled !== lastCulledState) {
+        lastCulledState = culled;
+        const setVis = (id, visible) => {
+          if (map.getLayer(id)) {
+            map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
+          }
+        };
+        // Keep ONLY landplot tiles when culled
+        setVis("plots-grass-base", true);
+        setVis("plots-fill", true);
+        setVis("plots-line", true);
+        setVis("player-sonar-fill", !culled);
+        setVis("player-sonar-line", !culled);
+        setVis("foliage-layer", !culled);
+        setVis("citadel-parcels-fill", !culled);
+        setVis("citadel-parcels-line", !culled);
+        setVis("empty-grid-fill", !culled);
+        setVis("empty-grid-line", !culled);
+        setVis("3d-buildings", !culled);
+      }
+    }
+
+    function refreshMapModulesAfterZoom() {
+      if (typeof Grid !== "undefined" && Grid.render) Grid.render();
+      if (typeof EldenStops !== "undefined") {
+        EldenStops.renderAll();
+        EldenStops.renderAllBerries();
+      }
+      if (typeof Citadels !== "undefined") Citadels.render();
+      if (typeof Diamonds !== "undefined") Diamonds.renderAll();
+      if (typeof Foliage !== "undefined") Foliage.update();
+      applyMapLod();
+    }
+
+    // Initial LOD pass once the map exists
+    applyMapLod();
 
     // --- Instant Identity Recovery (Pulls Name & Photo from your 25 plots) ---
     const state = Store.get();
@@ -1315,6 +1397,9 @@
       if ((localStorage.getItem("eldenEarth.mapStyle") || "elden-earth") === "3d") {
         toggle3DBuildings(true);
       }
+      // Game layers now exist — apply far-zoom LOD visibility for real
+      lastCulledState = null;
+      applyMapLod();
     });
 
     Wheel.init();
@@ -2178,10 +2263,9 @@
       if (isBirdsEye || !map || !currentPos) return;
       isBirdsEye = true;
 
-      // Hide plot layers
-      ["plots-grass-base", "plots-fill", "plots-line"].forEach(id => {
-        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "none");
-      });
+      // Bird's Eye keeps landplot tiles visible (player wants ONLY the plot
+      // squares on screen when zoomed all the way out — no billboards/3D).
+      // Empty buy-grid is irrelevant at globe zoom.
       ["empty-grid-fill", "empty-grid-line"].forEach(id => {
         if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "none");
       });
@@ -2282,7 +2366,7 @@
       if (map.getLayer("territory-overview-fill")) map.removeLayer("territory-overview-fill");
       if (map.getSource("territory-overview-source")) map.removeSource("territory-overview-source");
 
-      // Restore plot layers
+      // Plot layers were never hidden in Bird's Eye — ensure they're visible anyway
       ["plots-grass-base", "plots-fill", "plots-line"].forEach(id => {
         if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
       });
@@ -2742,7 +2826,12 @@
       btn.addEventListener("click", () => closeModal(btn.dataset.close));
     });
     document.querySelectorAll(".modal").forEach(modal => {
-      modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.classList.add("hidden");
+          deactivateMapObjectAnimations(modal.id);
+        }
+      });
     });
 
     // --- 10X Multi-Spin Toggle Wiring ---

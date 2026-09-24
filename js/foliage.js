@@ -199,6 +199,12 @@ const Foliage = (() => {
     activeMarkers.forEach(m => m.remove());
     activeMarkers = [];
 
+    // Far-zoom cull: mushrooms are decorative DOM markers — drop them entirely
+    if (mapInstance.getZoom && mapInstance.getZoom() < (CONFIG.MAP_CULL_MIN_ZOOM || 14)) {
+      mapInstance.getSource("foliage-source").setData({ type: "FeatureCollection", features: [] });
+      return;
+    }
+
     const allPlots = (typeof Grid !== "undefined" && Grid.getAllPlots) ? Grid.getAllPlots() : {};
 
     // --- CONNECTED LEGENDARY TERRITORY SCANNER (Flood-Fill Clustering) ---

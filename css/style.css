@@ -2643,7 +2643,7 @@ html,body{
   transform-style: preserve-3d;
 }
 
-/* Pulsing Ground Rune */
+/* Pulsing Ground Rune — STATIC until the player taps the extractor */
 .beacon-ground-aura {
   position: absolute;
   bottom: 6px;
@@ -2652,16 +2652,16 @@ html,body{
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(255, 23, 68, 0.9) 0%, transparent 75%);
   box-shadow: 0 0 12px rgba(255, 23, 68, 0.9);
-  animation: groundRunePulse 2s infinite alternate ease-in-out;
+  animation: none;
 }
 
-/* 3D Floating Central Extractor Gem */
+/* 3D Floating Central Extractor Gem — STATIC until tapped */
 .beacon-core-gem {
   position: relative;
   width: 22px;
   height: 28px;
   z-index: 2;
-  animation: beaconGemFloat 2.2s infinite alternate ease-in-out;
+  animation: none;
   filter: drop-shadow(0 0 4px rgba(255, 23, 68, 0.9));
 }
 .beacon-svg {
@@ -2670,7 +2670,7 @@ html,body{
   display: block;
 }
 
-/* Orbital Energy Rings */
+/* Orbital Energy Rings — STATIC until the player taps the extractor */
 .orbit-ring {
   position: absolute;
   top: 14px;
@@ -2685,19 +2685,33 @@ html,body{
 
 .orbit-ring.ring-1 {
   transform: rotateX(65deg) rotateZ(0deg);
-  animation: orbitSpin1 3.5s linear infinite;
+  animation: none;
   border-color: #ff5566;
 }
 
 .orbit-ring.ring-2 {
   transform: rotateX(65deg) rotateY(40deg) rotateZ(0deg);
-  animation: orbitSpin2 4.5s linear infinite reverse;
+  animation: none;
   border-color: #ff5566;
   box-shadow: 0 0 4px rgba(255, 23, 68, 0.9);
   width: 28px;
   height: 28px;
   left: 8px;
   top: 16px;
+}
+
+/* Tap-to-activate: Dyson orbit only spins while the player interacts */
+.extractor-3d-wrap.is-active .beacon-ground-aura {
+  animation: groundRunePulse 2s infinite alternate ease-in-out;
+}
+.extractor-3d-wrap.is-active .beacon-core-gem {
+  animation: beaconGemFloat 2.2s infinite alternate ease-in-out;
+}
+.extractor-3d-wrap.is-active .orbit-ring.ring-1 {
+  animation: orbitSpin1 3.5s linear infinite;
+}
+.extractor-3d-wrap.is-active .orbit-ring.ring-2 {
+  animation: orbitSpin2 4.5s linear infinite reverse;
 }
 
 @keyframes orbitSpin1 {
@@ -4187,7 +4201,7 @@ button[aria-label="Close ad"],
   pointer-events: none;
 }
 
-/* Ground pulse lifted to +4px */
+/* Growth pin STATIC until the player taps the citadel (no idle GPU burn) */
 .growth-ground-pulse {
   position: absolute;
   bottom: 4px;
@@ -4198,7 +4212,7 @@ button[aria-label="Close ad"],
   border-radius: 50%;
   background: radial-gradient(ellipse, var(--r-color, #e85f6a) 0%, transparent 75%);
   box-shadow: 0 0 12px var(--r-color, #e85f6a);
-  animation: groundRunePulse 2s infinite alternate ease-in-out;
+  animation: none;
 }
 
 /* Stem raised and lengthened (+8px base, 28px tall) */
@@ -4214,7 +4228,7 @@ button[aria-label="Close ad"],
   box-shadow: 0 0 8px var(--r-color, #e85f6a);
 }
 
-/* Seed Core elevated to +36px */
+/* Seed Core elevated to +36px — STATIC until tapped */
 .growth-seed-core {
   position: absolute;
   bottom: 36px;
@@ -4222,11 +4236,11 @@ button[aria-label="Close ad"],
   transform: translateX(-50%);
   font-size: 22px;
   filter: drop-shadow(0 0 12px var(--r-color, #e85f6a));
-  animation: coreFloat 2s infinite alternate ease-in-out;
+  animation: none;
   line-height: 1;
 }
 
-/* Compact Timer Pill elevated to +58px */
+/* Compact Timer Pill elevated to +58px — text still updates, but no pulse loop */
 .growth-timer-pill {
   position: absolute;
   bottom: 58px;
@@ -4242,6 +4256,17 @@ button[aria-label="Close ad"],
   white-space: nowrap;
   box-shadow: 0 0 12px var(--r-color, #e85f6a);
   letter-spacing: 0.3px;
+  animation: none;
+}
+
+/* Tap-to-activate growth pin pulse */
+.citadel-3d-monument.is-active .growth-ground-pulse {
+  animation: groundRunePulse 2s infinite alternate ease-in-out;
+}
+.citadel-3d-monument.is-active .growth-seed-core {
+  animation: coreFloat 2s infinite alternate ease-in-out;
+}
+.citadel-3d-monument.is-active .growth-timer-pill {
   animation: boostPulse 2s infinite ease-in-out;
 }
 
@@ -4314,7 +4339,7 @@ button[aria-label="Close ad"],
   100% { transform: rotateY(45deg) rotateZ(360deg); } 
 }
 
-/* Avatar Chamber scaled to fit billboard size */
+/* Avatar Chamber scaled to fit billboard size — STATIC until tapped */
 .dyson-core-avatar {
   position: absolute;
   bottom: 33px;
@@ -4331,11 +4356,11 @@ button[aria-label="Close ad"],
   font-size: 12px;
   z-index: 5;
   box-shadow: 0 0 12px var(--core-color, #e85f6a), 0 0 4px #fff;
-  animation: coreFloat 2.5s infinite alternate ease-in-out;
+  animation: none;
   overflow: hidden;
 }
 
-/* Spire Tip scaled down */
+/* Spire Tip scaled down — STATIC until tapped */
 .dyson-spire-tip {
   position: absolute;
   bottom: 84px;
@@ -4344,6 +4369,14 @@ button[aria-label="Close ad"],
   font-size: 18px;
   color: #ff1744 !important;
   text-shadow: 0 0 8px #ff002b !important;
+  animation: none;
+}
+
+/* Tap-to-activate: Dyson monument only animates while the player interacts */
+.citadel-3d-monument.is-active .dyson-core-avatar {
+  animation: coreFloat 2.5s infinite alternate ease-in-out;
+}
+.citadel-3d-monument.is-active .dyson-spire-tip {
   animation: sparkleTwinkle 2s infinite;
 }
 @keyframes coreFloat { 0% { transform: translate(-50%, 0px); } 100% { transform: translate(-50%, -4px); } }
@@ -5844,7 +5877,7 @@ body.no-shake .boost-timer-badge.super-50x {
   justify-content: flex-end;
 }
 
-/* Ground rune snapped exactly onto the tile anchor (like .dyson-ground-shadow) */
+/* Ground pulse snapped exactly onto the tile anchor — STATIC until stop session opens */
 .elden-ground-pulse {
   position: absolute;
   bottom: 0;
@@ -5855,10 +5888,10 @@ body.no-shake .boost-timer-badge.super-50x {
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(255, 23, 68, 0.85) 0%, transparent 75%);
   box-shadow: 0 0 12px rgba(255, 23, 68, 0.7);
-  animation: groundRunePulse 2s infinite alternate ease-in-out;
+  animation: none;
 }
 
-/* Stem: thin crimson shaft rising from the tile UP into the floating disc */
+/* Stem: thin crimson shaft rising from the tile UP into the floating disc — STATIC */
 .elden-beam {
   position: absolute;
   left: 50%;
@@ -5870,7 +5903,7 @@ body.no-shake .boost-timer-badge.super-50x {
   filter: blur(0.5px);
   border-radius: 2px;
   opacity: 0.95;
-  animation: eldenBeamPulse 2.2s ease-in-out infinite;
+  animation: none;
 }
 @keyframes eldenBeamPulse {
   0%, 100% { transform: scaleY(1); opacity: 0.85; }
@@ -5892,7 +5925,7 @@ body.no-shake .boost-timer-badge.super-50x {
   transition: filter 0.8s, background 0.8s, box-shadow 0.8s;
 }
 
-/* Counter-rotating neon Dyson rings */
+/* Counter-rotating neon Dyson rings — STATIC (never spin) until player taps the stop */
 .elden-ring {
   position: absolute;
   inset: -9px;
@@ -5901,8 +5934,8 @@ body.no-shake .boost-timer-badge.super-50x {
   box-shadow: 0 0 8px rgba(255, 23, 68, 0.9);
   pointer-events: none;
 }
-.elden-ring.elden-ring-a { animation: eldenRingSpinA 3.6s linear infinite; }
-.elden-ring.elden-ring-b { inset: -17px; border-color: rgba(255, 138, 154, 0.8); animation: eldenRingSpinB 5.2s linear infinite reverse; }
+.elden-ring.elden-ring-a { animation: none; }
+.elden-ring.elden-ring-b { inset: -17px; border-color: rgba(255, 138, 154, 0.8); animation: none; }
 @keyframes eldenRingSpinA {
   0% { transform: rotateX(68deg) rotateZ(0deg); }
   100% { transform: rotateX(68deg) rotateZ(360deg); }
@@ -5937,7 +5970,7 @@ body.no-shake .boost-timer-badge.super-50x {
   line-height: 1;
   color: #ff4d6d;
   text-shadow: 0 0 5px #ff1744;
-  animation: eldenRubyTwinkle 1.8s ease-in-out infinite;
+  animation: none;
 }
 .elden-ruby.r1 { top: -2px; left: 50%; transform: translateX(-50%); }
 .elden-ruby.r2 { bottom: -2px; left: 50%; transform: translateX(-50%); animation-delay: 0.4s; }
@@ -5948,7 +5981,50 @@ body.no-shake .boost-timer-badge.super-50x {
   50% { opacity: 1; }
 }
 
-/* Spire tip above the disc (Citadel-style standing 3D silhouette) */
+/* ============================================================
+   TAP-TO-ACTIVATE — Dyson/ring/pulse animations only run while
+   the player has an open session on this Elden Stop. Never idle.
+   ============================================================ */
+.elden-stop-marker.is-active .elden-ground-pulse {
+  animation: groundRunePulse 2s infinite alternate ease-in-out;
+}
+.elden-stop-marker.is-active .elden-beam {
+  animation: eldenBeamPulse 2.2s ease-in-out infinite;
+}
+.elden-stop-marker.is-active .elden-ring.elden-ring-a {
+  animation: eldenRingSpinA 3.6s linear infinite;
+}
+.elden-stop-marker.is-active .elden-ring.elden-ring-b {
+  animation: eldenRingSpinB 5.2s linear infinite reverse;
+}
+.elden-stop-marker.is-active .elden-ruby {
+  animation: eldenRubyTwinkle 1.8s ease-in-out infinite;
+}
+.elden-stop-marker.is-active .elden-ruby.r2 { animation-delay: 0.4s; }
+.elden-stop-marker.is-active .elden-ruby.r3 { animation-delay: 0.8s; }
+.elden-stop-marker.is-active .elden-ruby.r4 { animation-delay: 1.2s; }
+.elden-stop-marker.is-active .elden-spire-tip {
+  animation: sparkleTwinkle 2s infinite;
+}
+
+/* ============================================================
+   ZOOM-PROPORTIONAL BEACON SCALE
+   MapLibre writes the marker element's transform for positioning,
+   so world-anchored scaling lives on this inner root. Shrinks as
+   the player zooms out (fixed map size, not fixed screen size).
+   ============================================================ */
+.elden-scale-root {
+  position: absolute;
+  inset: 0;
+  transform: scale(var(--eld-stop-scale, 1));
+  transform-origin: bottom center;
+  pointer-events: none;
+}
+.elden-scale-root > * {
+  pointer-events: auto;
+}
+
+/* Spire tip above the disc (Citadel-style standing 3D silhouette) — STATIC */
 .elden-spire-tip {
   position: absolute;
   bottom: 100px;
@@ -5958,7 +6034,7 @@ body.no-shake .boost-timer-badge.super-50x {
   line-height: 1;
   color: #ff1744;
   text-shadow: 0 0 8px #fff, 0 0 14px rgba(255, 23, 68, 0.95);
-  animation: sparkleTwinkle 2s infinite;
+  animation: none;
   pointer-events: none;
 }
 
@@ -6031,6 +6107,24 @@ body.no-shake .boost-timer-badge.super-50x {
 .elden-stop-marker.far .elden-stop-plate { display: none; }
 .elden-stop-marker.far .elden-core-coin { width: 16px; height: 16px; }
 .elden-stop-marker.far .elden-disc-core { inset: 7px; }
+
+/* ============================================================
+   FAR-ZOOM CULL (body.map-culled-far)
+   Below CONFIG.MAP_CULL_MIN_ZOOM the only thing left on the map
+   is the landplot tile polygons. Every decorative DOM marker is
+   display:none as a belt-and-suspenders guard while modules
+   tear their markers down on zoomend.
+   ============================================================ */
+body.map-culled-far .elden-stop-marker,
+body.map-culled-far .berry-marker,
+body.map-culled-far .diamond-3d-wrapper,
+body.map-culled-far .citadel-3d-monument,
+body.map-culled-far .standing-plot-sign,
+body.map-culled-far .extractor-3d-wrap,
+body.map-culled-far .parcel-prop-wrap,
+body.map-culled-far .custom-plot-icon {
+  display: none !important;
+}
 
 /* ---------- Disc Spinner Overlay (bottom-center modal matching game UI) ---------- */
 .elden-overlay {
@@ -6241,7 +6335,7 @@ body.no-shake .boost-timer-badge.super-50x {
   pointer-events: none;
 }
 
-/* Pulsing scaffold ring on the ground tile */
+/* Pulsing scaffold ring on the ground tile — construction indicators stay subtle-static */
 .elden-construct-pulse {
   position: absolute;
   bottom: 0;
@@ -6252,14 +6346,14 @@ body.no-shake .boost-timer-badge.super-50x {
   border-radius: 50%;
   border: 2px dashed rgba(255, 23, 68, 0.75);
   box-shadow: 0 0 12px rgba(255, 23, 68, 0.5);
-  animation: eldenScaffoldPulse 1.8s ease-in-out infinite;
+  animation: none;
 }
 @keyframes eldenScaffoldPulse {
   0%, 100% { transform: scale(1); opacity: 0.5; }
   50% { transform: scale(1.35); opacity: 1; }
 }
 
-/* Stem shaft welding the beacon into existence, grounded on the tile */
+/* Stem shaft welding the beacon into existence, grounded on the tile — STATIC */
 .elden-construct-beam {
   position: absolute;
   left: 50%;
@@ -6270,14 +6364,14 @@ body.no-shake .boost-timer-badge.super-50x {
   border-radius: 2px;
   background: linear-gradient(180deg, rgba(255, 23, 68, 0) 0%, rgba(255, 138, 154, 0.9) 60%, #ffd7de 100%);
   filter: blur(0.5px);
-  animation: eldenWeldFlicker 0.9s steps(2, end) infinite;
+  animation: none;
 }
 @keyframes eldenWeldFlicker {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.55; }
 }
 
-/* Floating holographic billboard card */
+/* Floating holographic billboard card — STATIC until stop is tapped */
 .elden-construct-billboard {
   position: absolute;
   bottom: 64px;
@@ -6291,6 +6385,15 @@ body.no-shake .boost-timer-badge.super-50x {
   border: 1.5px solid #ff1744;
   border-radius: 9px;
   box-shadow: 0 0 16px rgba(255, 0, 40, 0.65), 0 4px 10px rgba(0, 0, 0, 0.8);
+  animation: none;
+}
+.elden-stop-marker.is-active .elden-construct-pulse {
+  animation: eldenScaffoldPulse 1.8s ease-in-out infinite;
+}
+.elden-stop-marker.is-active .elden-construct-beam {
+  animation: eldenWeldFlicker 0.9s steps(2, end) infinite;
+}
+.elden-stop-marker.is-active .elden-construct-billboard {
   animation: eldenBillboardHover 2.4s ease-in-out infinite;
 }
 @keyframes eldenBillboardHover {
@@ -6353,6 +6456,7 @@ body.no-shake .boost-timer-badge.super-50x {
   transform: scale(1.2);
 }
 
+/* Berry icon — STATIC (no idle bob/pulse burn); culled entirely at far zoom */
 .berry-icon {
   font-size: 24px;
   position: absolute;
@@ -6360,7 +6464,7 @@ body.no-shake .boost-timer-badge.super-50x {
   left: 50%;
   transform: translate(-50%, -50%);
   filter: drop-shadow(0 0 8px rgba(255, 0, 100, 0.8));
-  animation: berryBob 1.5s ease-in-out infinite;
+  animation: none;
   z-index: 2;
 }
 
@@ -6378,7 +6482,7 @@ body.no-shake .boost-timer-badge.super-50x {
   transform: translate(-50%, -50%);
   background: radial-gradient(circle, rgba(255, 0, 100, 0.6) 0%, transparent 70%);
   border-radius: 50%;
-  animation: berryPulse 2s ease-in-out infinite;
+  animation: none;
   z-index: 1;
 }
 
