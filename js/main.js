@@ -1020,6 +1020,25 @@
     _finishGameLaunch();
   }
 
+  // Shared with applyMapLod inside _finishGameLaunch (outer IIFE scope).
+  function applyBirdsEyeLayerVisibility() {
+    if (typeof map === "undefined" || !map) return;
+    if (!document.body.classList.contains("birds-eye-mode")) return;
+    const off = (k) => document.body.classList.contains("be-off-" + k);
+    const culled = map.getZoom() < (CONFIG.MAP_CULL_MIN_ZOOM || 14);
+    const setVis = (id, visible) => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
+    };
+    setVis("plots-grass-base", !off("plots"));
+    setVis("plots-fill", !off("plots"));
+    setVis("plots-line", !off("plots"));
+    setVis("player-sonar-fill", !off("player") && !culled);
+    setVis("player-sonar-line", !off("player") && !culled);
+    setVis("foliage-layer", !off("foliage") && !culled);
+    setVis("citadel-parcels-fill", !off("citadel") && !culled);
+    setVis("citadel-parcels-line", !off("citadel") && !culled);
+  }
+
   function _finishGameLaunch() {
     const MAP_STYLES = {
       "elden-earth": "https://tiles.openfreemap.org/styles/dark",
@@ -1181,23 +1200,31 @@
       // Layer visibility only when the culled flag actually flips
       if (culled !== lastCulledState) {
         lastCulledState = culled;
+        const beOff = (k) => document.body.classList.contains("be-off-" + k);
         const setVis = (id, visible) => {
           if (map.getLayer(id)) {
             map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
           }
         };
-        // Keep ONLY landplot tiles when culled
-        setVis("plots-grass-base", true);
-        setVis("plots-fill", true);
-        setVis("plots-line", true);
-        setVis("player-sonar-fill", !culled);
-        setVis("player-sonar-line", !culled);
-        setVis("foliage-layer", !culled);
-        setVis("citadel-parcels-fill", !culled);
-        setVis("citadel-parcels-line", !culled);
+        // Keep ONLY landplot tiles when culled (unless Bird's Eye toggle hides them)
+        setVis("plots-grass-base", !beOff("plots"));
+        setVis("plots-fill", !beOff("plots"));
+        setVis("plots-line", !beOff("plots"));
+        setVis("player-sonar-fill", !culled && !beOff("player"));
+        setVis("player-sonar-line", !culled && !beOff("player"));
+        setVis("foliage-layer", !culled && !beOff("foliage"));
+        setVis("citadel-parcels-fill", !culled && !beOff("citadel"));
+        setVis("citadel-parcels-line", !culled && !beOff("citadel"));
         setVis("empty-grid-fill", !culled);
         setVis("empty-grid-line", !culled);
         setVis("3d-buildings", !culled);
+      }
+
+      // Bird's Eye: keep layer toggles authoritative while zooming in/out
+      if (document.body.classList.contains("birds-eye-mode")) {
+        if (typeof applyBirdsEyeLayerVisibility === "function") {
+          applyBirdsEyeLayerVisibility();
+        }
       }
     }
 
@@ -1234,6 +1261,32 @@
     
     function setupGameLayers() {
       if (!map || !map.getStyle()) return;
+
+      // 0. Privacy: hide street / road / address labels on every style
+      try {
+        (map.getStyle().layers || []).forEach((l) => {
+          if (l.type !== "symbol") return;
+          const id = String(l.id || "").toLowerCase();
+          const srcLayer = String(l["source-layer"] || "").toLowerCase();
+          const isStreetLabel =
+            id.includes("road") ||
+            id.includes("street") ||
+            id.includes("highway") ||
+            id.includes("motorway") ||
+            id.includes("address") ||
+            id.includes("housenumber") ||
+            id.includes("path") ||
+            id.includes("track") ||
+            srcLayer.includes("transportation") ||
+            srcLayer.includes("road") ||
+            srcLayer.includes("street");
+          if (isStreetLabel) {
+            try { map.setLayoutProperty(l.id, "visibility", "none"); } catch (_) {}
+          }
+        });
+      } catch (err) {
+        console.warn("[MapEngine] Street label hide notice:", err);
+      }
 
       // 1. Dynamic Street & Road Illuminator (Brightens pitch-black vector tiles)
       try {
@@ -2263,10 +2316,8 @@
       if (isBirdsEye || !map || !currentPos) return;
       isBirdsEye = true;
       document.body.classList.add("birds-eye-mode");
-
-      ["plots-grass-base", "plots-fill", "plots-line"].forEach(id => {
-        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
-      });
+      resetBirdsEyeToggles();
+      showBirdsEyeHub();
 
       // Bird's Eye keeps landplot tiles visible (player wants ONLY the plot
       // squares on screen when zoomed all the way out — no billboards/3D).
@@ -2274,6 +2325,7 @@
       ["empty-grid-fill", "empty-grid-line"].forEach(id => {
         if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "none");
       });
+      applyBirdsEyeLayerVisibility();
 
       // Build anonymized territory fills from ALL plots (grouped by state)
       const state = Store.get();
@@ -2366,14 +2418,19 @@
       if (!isBirdsEye || !map || !currentPos) return;
       isBirdsEye = false;
       document.body.classList.remove("birds-eye-mode");
+      hideBirdsEyeHub();
+      resetBirdsEyeToggles();
 
       // Remove territory overview layers
       if (map.getLayer("territory-overview-line")) map.removeLayer("territory-overview-line");
       if (map.getLayer("territory-overview-fill")) map.removeLayer("territory-overview-fill");
       if (map.getSource("territory-overview-source")) map.removeSource("territory-overview-source");
 
-      // Plot layers were never hidden in Bird's Eye — ensure they're visible anyway
+      // Restore full default 3D view
       ["plots-grass-base", "plots-fill", "plots-line"].forEach(id => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
+      });
+      ["player-sonar-fill", "player-sonar-line", "foliage-layer", "citadel-parcels-fill", "citadel-parcels-line"].forEach(id => {
         if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
       });
 
@@ -2390,6 +2447,39 @@
       hideExitBirdsEye();
       showToast("📍 Back to your location", 2500);
     }
+
+    // ---- Bird's Eye visibility hub ----
+    const BE_KEYS = ["player", "diamonds", "mine", "citadel", "foliage", "stops", "plots"];
+
+    function showBirdsEyeHub() {
+      document.getElementById("be-visibility-hub")?.classList.remove("hidden");
+    }
+
+    function hideBirdsEyeHub() {
+      document.getElementById("be-visibility-hub")?.classList.add("hidden");
+    }
+
+    function resetBirdsEyeToggles() {
+      document.querySelectorAll(".be-toggle").forEach(cb => {
+        cb.checked = true;
+      });
+      BE_KEYS.forEach(k => document.body.classList.remove("be-off-" + k));
+    }
+
+    function syncBirdsEyeToggleClasses() {
+      document.querySelectorAll(".be-toggle").forEach(cb => {
+        const key = cb.dataset.be;
+        if (!key) return;
+        document.body.classList.toggle("be-off-" + key, !cb.checked);
+      });
+    }
+
+    document.querySelectorAll(".be-toggle").forEach(cb => {
+      cb.addEventListener("change", () => {
+        syncBirdsEyeToggleClasses();
+        applyBirdsEyeLayerVisibility();
+      });
+    });
 
     function showExitBirdsEye() {
       let exitBtn = document.getElementById("exit-birds-eye-btn");

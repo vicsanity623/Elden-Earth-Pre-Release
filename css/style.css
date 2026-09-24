@@ -307,7 +307,7 @@ html,body{
 #topbar{
   position:absolute; top:0; left:0; right:0; z-index:5;
   padding: calc(max(12px, env(safe-area-inset-top)) + 4px) 14px 10px;
-  background:linear-gradient(180deg, rgba(10,15,24,0.95) 0%, rgba(10,15,24,0.6) 80%, transparent 100%);
+  background: rgba(0, 0, 0, 0.5);
   display:flex; flex-direction:column; gap:8px;
   pointer-events:none;
 }
@@ -323,7 +323,7 @@ html,body{
   border-radius: 0 !important;
   
   /* 2. Apply your custom frame */
-  background: url('../assets/topbar-frame.png') no-repeat center center / 100% 100%;
+  background: rgba(0, 0, 0, 0.5) url('../assets/topbar-frame.png') no-repeat center center / 100% 100%;
   
   /* 3. Padding to keep the text inside the red lines */
   padding: 10px 24px 12px 24px;
@@ -429,7 +429,7 @@ html,body{
 }
 .sub-stat{
   flex:1;
-  background: url('../assets/substat-chip.png') no-repeat center center / 100% 100%;
+  background: rgba(0, 0, 0, 0.5) url('../assets/substat-chip.png') no-repeat center center / 100% 100%;
   border:none;
   border-radius:0;
   padding:4px 6px;
@@ -451,7 +451,7 @@ html,body{
 
 /* 2. Player Chip (Avatar + Name on the left) */
 .player-chip {
-  background: url('../assets/substat-player-avatar.png') no-repeat center center / 100% 100%;
+  background: rgba(0, 0, 0, 0.5) url('../assets/substat-player-avatar.png') no-repeat center center / 100% 100%;
   border: none !important;
   border-radius: 0 !important;
   height: 38px;
@@ -3235,8 +3235,8 @@ html,body{
   width: auto !important;
   padding: 11px 6px !important;
   border-radius: 0 !important;
-  background: url('../assets/button-frame.png') no-repeat center center / 100% 100% !important;
-  color: #8a0f1d !important;
+  background: url('../assets/button-frame.png') no-repeat center center / 100% 100%, #000 !important;
+  color: #ffffff !important;
   font-family: var(--font-display) !important;
   font-weight: 800 !important;
   font-size: 13.5px !important;
@@ -6447,6 +6447,116 @@ body.birds-eye-mode #treasury-ad-container {
   display: none !important;
 }
 
+/* ============================================================
+   BIRD'S EYE — right-side object visibility hub
+   ============================================================ */
+.be-visibility-hub {
+  position: fixed;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 9997;
+  width: 128px;
+  padding: 8px 8px 10px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 0, 43, 0.75);
+  border-radius: 10px;
+  box-shadow: 0 0 14px rgba(255, 0, 43, 0.35), 0 6px 18px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+
+.be-visibility-hub.hidden,
+body:not(.birds-eye-mode) .be-visibility-hub {
+  display: none !important;
+}
+
+.be-hub-title {
+  font-family: var(--font-display, 'Cinzel', serif);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #ff3344;
+  text-align: center;
+  margin-bottom: 6px;
+  text-shadow: 0 0 8px rgba(255, 0, 40, 0.5);
+}
+
+.be-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.be-toggle-row span {
+  font-family: var(--font-body, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  color: #e8ecf4;
+  line-height: 1.1;
+}
+
+.be-toggle {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.be-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 18px;
+  border-radius: 999px;
+  background: #3a1016;
+  border: 1px solid rgba(255, 0, 43, 0.55);
+  transition: background 0.15s ease;
+}
+
+.be-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #9aa3b5;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.be-toggle:checked + .be-switch {
+  background: #5c0a14;
+  border-color: #ff1744;
+}
+
+.be-toggle:checked + .be-switch::after {
+  transform: translateX(16px);
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 23, 68, 0.9);
+}
+
+/* ---- Hide toggled-off object classes while in Bird's Eye ---- */
+body.birds-eye-mode.be-off-player .custom-plot-icon,
+body.birds-eye-mode.be-off-player .standing-plot-sign,
+body.birds-eye-mode.be-off-player .player-dot,
+body.birds-eye-mode.be-off-diamonds .diamond-3d-wrapper,
+body.birds-eye-mode.be-off-mine .extractor-3d-wrap,
+body.birds-eye-mode.be-off-citadel .citadel-3d-monument,
+body.birds-eye-mode.be-off-foliage .parcel-prop-wrap,
+body.birds-eye-mode.be-off-stops .elden-stop-marker,
+body.birds-eye-mode.be-off-stops .berry-marker {
+  display: none !important;
+}
+
 /* ---------- Disc Spinner Overlay (bottom-center modal matching game UI) ---------- */
 .elden-overlay {
   position: fixed;
@@ -6806,7 +6916,7 @@ body.birds-eye-mode #treasury-ad-container {
 
 /* ===================== COMPANION PET SYSTEM ===================== */
 .pet-btn .side-hud-card {
-  background: url('../assets/button-frame.png') no-repeat center center / 100% 100%;
+  background: #000 url('../assets/button-frame.png') no-repeat center center / 100% 100%;
   border: none !important;
   border-radius: 0 !important;
   position: relative;
