@@ -55,6 +55,7 @@ const Store = (() => {
       totalDividends: 0,
       plots: {},
       plotBag: {},
+      plotBagItems: {},
       plotsVersion: 0,
       eldenStopSeeds: 0,
       eldenStopCooldowns: {},
@@ -304,10 +305,24 @@ const Store = (() => {
           }
           state._epochWiped = true;
           localStorage.setItem(KEY, JSON.stringify(state));
-        } else if (Number.isFinite(Number(result.data?.eldenStopSeeds))) {
-          // Server owns eldenStopSeeds — mirror the authoritative count locally.
-          state.eldenStopSeeds = Math.max(0, Number(result.data.eldenStopSeeds) || 0);
-          localStorage.setItem(KEY, JSON.stringify(state));
+        } else {
+          if (Number.isFinite(Number(result.data?.eldenStopSeeds))) {
+            // Server owns eldenStopSeeds — mirror the authoritative count locally.
+            state.eldenStopSeeds = Math.max(0, Number(result.data.eldenStopSeeds) || 0);
+            localStorage.setItem(KEY, JSON.stringify(state));
+          }
+          let mirrorDirty = false;
+          if (result.data?.plotBag && typeof result.data.plotBag === "object") {
+            // Server owns plotBag — client never writes it; mirror the authoritative bag.
+            state.plotBag = { ...result.data.plotBag };
+            mirrorDirty = true;
+          }
+          if (result.data?.plotBagItems && typeof result.data.plotBagItems === "object") {
+            // Phase 2: authoritative instance-id inventory.
+            state.plotBagItems = { ...result.data.plotBagItems };
+            mirrorDirty = true;
+          }
+          if (mirrorDirty) localStorage.setItem(KEY, JSON.stringify(state));
         }
         if (result.data?.betaSeedsGranted) {
           if (typeof window !== "undefined" && typeof window.showToast === "function") {

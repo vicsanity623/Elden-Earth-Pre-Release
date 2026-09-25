@@ -4,7 +4,7 @@
 // ============================================================
 const CONFIG = {
   // --- Game Version (bump on every patch to auto-wipe stale localStorage) ---
-  GAME_VERSION: "0.1.10.70b",
+  GAME_VERSION: "0.1.10.71b",
 
   // --- Realm Server Epoch ---
   // Bump this timestamp whenever you intentionally wipe the Firestore database.
@@ -111,9 +111,9 @@ const CONFIG = {
   },
   // Upgrade Forge Progression (Balanced: Diamonds as an Active Walking Sink)
   CITADEL_UPGRADE_COSTS: {
-    common: { next: "rare",      eb: 50,  diamonds: 75,  cashRequired: 0.50, nextLabel: "Rare Hold",      nextColor: "#4fd6c4" },
-    rare:   { next: "epic",      eb: 100, diamonds: 125, cashRequired: 0.75, nextLabel: "Epic Hold",      nextColor: "#a86ee0" },
-    epic:   { next: "legendary", eb: 300, diamonds: 400, cashRequired: 1.125, nextLabel: "Legendary Hold", nextColor: "#f0d38a" },
+    common: { next: "rare",      eb: 50,  diamonds: 100,  cashRequired: 0.50, nextLabel: "Rare Hold",      nextColor: "#4fd6c4" },
+    rare:   { next: "epic",      eb: 250, diamonds: 300, cashRequired: 0.75, nextLabel: "Epic Hold",      nextColor: "#a86ee0" },
+    epic:   { next: "legendary", eb: 500, diamonds: 750, cashRequired: 1.125, nextLabel: "Legendary Hold", nextColor: "#f0d38a" },
   },
 
   // --- Land plots (Exact Rates & Odds) ---

@@ -656,7 +656,7 @@ const EldenStops = (() => {
     if (hint) hint.textContent = "⚡ Energy absorbed!";
 
     if (result.wonPlot) {
-      addLuckyPlotToBag(result.wonPlot.rarity);
+      addLuckyPlotToBag(result);
       // Close the stop session first to free up the player, then open lucky plot modal
       closeStopSession();
       setTimeout(() => openLuckyPlotModal(result.wonPlot.rarity), 900);
@@ -815,17 +815,17 @@ const EldenStops = (() => {
   }
 
   // ---------------- LUCKY PLOT ----------------
-  function addLuckyPlotToBag(rarityKey) {
+  function addLuckyPlotToBag(spinResult) {
     const state = Store.get();
-    state.plotBag = state.plotBag || {};
-    let slot = rarityKey;
-    let suffix = 0;
-    while (Number(state.plotBag[slot]) >= 99) {
-      suffix++;
-      slot = `${rarityKey}_${suffix}`;
+    const result = spinResult || {};
+    // Phase 2: mirror the server's authoritative bag (the new instance id).
+    if (result.plotBagItems && typeof result.plotBagItems === "object") {
+      state.plotBagItems = { ...result.plotBagItems };
     }
-    state.plotBag[slot] = (Number(state.plotBag[slot]) || 0) + 1;
-    Store.save(true);
+    if (result.plotBag && typeof result.plotBag === "object") {
+      state.plotBag = { ...result.plotBag };
+    }
+    Store.save(true); // immediate sync response re-mirrors the bag as a backstop
   }
 
   function openLuckyPlotModal(rarityKey) {

@@ -114,19 +114,16 @@ const Grid = (() => {
     if (modal) modal.classList.remove("hidden");
   }
 
-  function hasBagPlots(state) {
-    return Object.values(state.plotBag || {}).some(count => Number(count) > 0);
+  function bagItemCount(state) {
+    const items = state.plotBagItems;
+    if (items && typeof items === "object" && Object.keys(items).length > 0) {
+      return Object.keys(items).length;
+    }
+    return Object.values(state.plotBag || {}).reduce((s, n) => s + (Number(n) || 0), 0);
   }
 
-  function addPlotToBag(state, rarityKey) {
-    state.plotBag = state.plotBag || {};
-    let slot = rarityKey;
-    let suffix = 0;
-    while (Number(state.plotBag[slot]) >= 99) {
-      suffix++;
-      slot = `${rarityKey}_${suffix}`;
-    }
-    state.plotBag[slot] = (Number(state.plotBag[slot]) || 0) + 1;
+  function hasBagPlots(state) {
+    return bagItemCount(state) > 0;
   }
 
   function openPlotModal(tid, plot) {
@@ -206,6 +203,7 @@ const Grid = (() => {
         reason: "ok",
         rarity: rarityKey,
         plotBag: save.plotBag || {},
+        plotBagItems: save.plotBagItems || undefined,
         plots: save.plots || {},
         plotsVersion: Number(save.plotsVersion) || 0,
       };
@@ -220,6 +218,9 @@ const Grid = (() => {
     state.plots = result.plots || state.plots;
     // Always drop the picked-up tid even if the server response omitted plots
     if (state.plots) delete state.plots[tid];
+    if (result.plotBagItems && typeof result.plotBagItems === "object") {
+      state.plotBagItems = { ...result.plotBagItems };
+    }
     state.plotBag = result.plotBag || state.plotBag;
     if (result.plotsVersion !== undefined) {
       state.plotsVersion = result.plotsVersion;
@@ -239,16 +240,29 @@ const Grid = (() => {
     const items = document.getElementById("plot-bag-items");
     if (!items) return;
     items.innerHTML = "";
-    for (const slot in (state.plotBag || {})) {
-      const rarityKey = slot.split("_")[0];
-      const rarity = rarityInfo(rarityKey);
-      const count = Number(state.plotBag[slot]) || 0;
+    // Phase 2: group instance IDs by rarity; fall back to legacy counters.
+    const counts = {};
+    const hasItems = state.plotBagItems && typeof state.plotBagItems === "object" && Object.keys(state.plotBagItems).length > 0;
+    if (hasItems) {
+      for (const id in state.plotBagItems) {
+        const rarity = String(state.plotBagItems[id] || "common").split("_")[0];
+        counts[rarity] = (counts[rarity] || 0) + 1;
+      }
+    } else {
+      for (const slot in (state.plotBag || {})) {
+        const rarity = slot.split("_")[0];
+        counts[rarity] = (counts[rarity] || 0) + (Number(state.plotBag[slot]) || 0);
+      }
+    }
+    for (const rarityKey in counts) {
+      const count = counts[rarityKey];
       if (!count) continue;
+      const rarity = rarityInfo(rarityKey);
       const button = document.createElement("button");
       button.className = "btn btn-primary";
       button.textContent = `${rarity.label} Plot x${count}`;
       button.style.borderColor = rarity.color;
-      button.addEventListener("click", () => placeBagPlot(slot));
+      button.addEventListener("click", () => placeBagPlot(rarityKey));
       items.appendChild(button);
     }
     document.getElementById("buy-modal")?.classList.add("hidden");
@@ -261,8 +275,22 @@ const Grid = (() => {
     const { tx, ty } = pendingTile;
     const tid = tileId(tx, ty);
     const rarityKey = slot.split("_")[0];
-    const count = Number(state.plotBag?.[slot]) || 0;
-    if (!count || getAllPlots()[tid]) return;
+    if (getAllPlots()[tid]) return;
+    // Phase 2: resolve WHICH instance id leaves the bag (items preferred).
+    const itemsMap = (state.plotBagItems && typeof state.plotBagItems === "object" && Object.keys(state.plotBagItems).length > 0)
+      ? state.plotBagItems
+      : null;
+    let plotItemId = null;
+    if (itemsMap) {
+      plotItemId = Object.keys(itemsMap).find((id) => itemsMap[id] === rarityKey) || null;
+      if (!plotItemId) {
+        if (typeof showToast === "function") showToast("⚠️ That plot is no longer in your bag.", 3500);
+        return;
+      }
+    } else {
+      const count = Number(state.plotBag?.[slot]) || 0;
+      if (!count) return;
+    }
 
     const corners = Geo.tileBounds(tx, ty, CONFIG.TILE_SIZE_METERS);
     const centerLat = (corners[0][0] + corners[2][0]) / 2;
@@ -279,7 +307,7 @@ const Grid = (() => {
       return;
     }
 
-    const serverResult = await ServerAntiCheat.relocatePlot(slot, tx, ty);
+    const serverResult = await ServerAntiCheat.relocatePlot(slot, tx, ty, plotItemId);
     if (!serverResult.allowed) {
       if (typeof showToast === "function") showToast("⚠️ Couldn't place plot: " + serverResult.reason, 4000);
       return;
@@ -288,8 +316,10 @@ const Grid = (() => {
     const serverPlotData = serverResult.plotData;
     const serverTid = serverResult.tid;
 
-    state.plotBag[slot] = count - 1;
-    if (!state.plotBag[slot]) delete state.plotBag[slot];
+    // Authoritative inventory from the server (same instance id moved out).
+    if (serverResult.plotBagItems && typeof serverResult.plotBagItems === "object") {
+      state.plotBagItems = { ...serverResult.plotBagItems };
+    }
     state.plots[serverTid] = serverPlotData;
     globalPlots[serverTid] = serverPlotData;
     // Prefer authoritative ledger fields from the server response

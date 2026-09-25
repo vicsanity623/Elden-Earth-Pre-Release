@@ -92,11 +92,11 @@ const ServerAntiCheat = (() => {
     return result.data;
   }
 
-  async function relocatePlot(slot, tx, ty) {
+  async function relocatePlot(slot, tx, ty, plotItemId) {
     if (!functions) return { allowed: false, reason: "functions_not_initialized" };
     try {
       const relocatePlotFn = functions.httpsCallable("relocatePlot");
-      const result = await relocatePlotFn({ slot, tx, ty });
+      const result = await relocatePlotFn({ slot, tx, ty, plotItemId: plotItemId || undefined });
       return result.data;
     } catch (e) {
       console.warn("[ServerAntiCheat] Plot relocation failed:", e.message);

@@ -2722,7 +2722,10 @@
     // Top banner copy: buying land vs relocating a bagged plot
     function updateBuyModeBanner() {
       const state = Store.get();
-      const bagCount = Object.values(state.plotBag || {}).reduce((s, n) => s + (Number(n) || 0), 0);
+      const items = state.plotBagItems;
+      const bagCount = (items && typeof items === "object" && Object.keys(items).length > 0)
+        ? Object.keys(items).length
+        : Object.values(state.plotBag || {}).reduce((s, n) => s + (Number(n) || 0), 0);
       const titleEl = el("buy-mode-title");
       const descEl = el("buy-mode-desc");
       if (bagCount > 0) {

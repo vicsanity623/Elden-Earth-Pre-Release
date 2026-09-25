@@ -684,7 +684,13 @@ const Citadels = (() => {
 
     if (hasEnoughCash) {
       forgeBtns.forEach(b => b.style.display = "");
-      if (forgeLockedNotice) forgeLockedNotice.classList.add("hidden");
+      if (forgeLockedNotice) {
+        forgeLockedNotice.classList.remove("hidden");
+        forgeLockedNotice.innerHTML = cashReq > 0
+          ? `💰 Upgrading consumes <strong>$${cashReq.toFixed(2)}</strong> Cash + ${costs.eb} EB or ${costs.diamonds} ◆`
+          : "";
+        if (cashReq <= 0) forgeLockedNotice.classList.add("hidden");
+      }
     } else {
       forgeBtns.forEach(b => b.style.display = "none");
       if (forgeLockedNotice) {
@@ -726,6 +732,11 @@ const Citadels = (() => {
     }
     state.eb = serverResult.nextEb;
     state.diamonds = serverResult.nextDiamonds;
+    // Mirror the cash sink immediately — if local cash stayed high, the next
+    // sync's max-merge would silently refund the upgrade cost.
+    if (Number.isFinite(Number(serverResult.nextCash))) {
+      state.cash = Math.max(0, Number(serverResult.nextCash));
+    }
     cit.isEvolving = true;
     cit.evolutionFinish = serverResult.evolutionFinish;
     cit.targetRarity = serverResult.targetRarity;
