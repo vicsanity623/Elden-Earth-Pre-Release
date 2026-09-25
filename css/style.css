@@ -14,6 +14,7 @@
   --rare:       #4f9dd6;
   --epic:       #a86ee0;
   --legendary:  #e0a84f;
+  --r-color:    #e85f6a;
   --font-display: 'Cinzel', serif;
   --font-body: 'Manrope', sans-serif;
 }
@@ -178,7 +179,8 @@ html,body{
 }
 
 /* JS may override background when verified — keep green look intact */
-#link-phone-btn[disabled] {
+#link-phone-btn[disabled],
+.btn-link-phone[disabled] {
   opacity: 1;
   cursor: default;
 }
@@ -611,7 +613,7 @@ html,body{
   position: fixed; 
   left: 50%; 
   bottom: calc(135px + env(safe-area-inset-bottom)); 
-  z-index: 999999 !important;
+  z-index: 1005 !important;
   transform: translateX(-50%);
   background: rgba(13, 20, 32, 0.95);
   border: 1.5px solid var(--gold);
@@ -625,11 +627,11 @@ html,body{
   white-space: nowrap;
   pointer-events: none;
 }
-.toast.hidden { opacity: 0; pointer-events: none; }
+.toast.hidden { opacity: 0; pointer-events: none; display: none !important; }
 
 /* ---------- VPN Block Overlay ---------- */
 .vpn-block-overlay {
-  position: fixed; inset: 0; z-index: 999999;
+  position: fixed; inset: 0; z-index: 1000;
   display: flex; align-items: center; justify-content: center;
   background: rgba(6, 10, 16, 0.95);
   backdrop-filter: blur(4px);
@@ -657,7 +659,7 @@ html,body{
 }
 .game-confirm-center{
   align-items:center;
-  z-index:2147483647;
+  z-index:1000;
 }
 .modal-card{
   position:relative;
@@ -682,7 +684,7 @@ html,body{
   width:44px; height:44px; border-radius:50%;
   background:var(--panel-2); border:1px solid var(--line);
   color:var(--parchment); font-size:18px; cursor:pointer;
-  z-index:20; padding:0; line-height:1;
+  z-index:1000; padding:0; line-height:1;
   touch-action:manipulation; -webkit-tap-highlight-color:transparent;
 }
 .close-btn:active{ transform:scale(0.92); }
@@ -697,6 +699,7 @@ html,body{
   box-sizing: border-box !important;
   position: relative !important;
   padding: 20px 16px 28px 16px !important;
+  z-index:1000 !important;
   
   /* CRITICAL FOR INTERNAL SCROLLING */
   overflow-y: auto !important;
@@ -1074,7 +1077,7 @@ html,body{
   right: 16px;
   /* Floats cleanly above the bottom bar & chat button */
   bottom: calc(125px + env(safe-area-inset-bottom));
-  z-index: 9999;
+  z-index: 999;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1234,7 +1237,7 @@ html,body{
   position: absolute;
   left: 14px;
   bottom: calc(122px + env(safe-area-inset-bottom));
-  z-index: 22;
+  z-index: 999;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1327,7 +1330,7 @@ html,body{
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  z-index: 6;
+  z-index: 20;
   pointer-events: none;
 }
 
@@ -1343,7 +1346,7 @@ html,body{
   min-width: 0;
   width: auto;
   max-width: 360px;
-  z-index: 6;
+  z-index: 20;
   /* Almost entirely transparent frosted glass */
   background: rgba(10, 15, 24, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1650,7 +1653,7 @@ html,body{
 
 /* ---------- Fullscreen Conflict Advisory Modal ---------- */
 .modal-fullscreen{
-  position:fixed; inset:0; z-index:99998;
+  position:fixed; inset:0; z-index:1000;
   background:rgba(0,0,0,0.85);
   display:flex; align-items:center; justify-content:center;
   padding:24px;
@@ -1959,7 +1962,7 @@ html,body{
   flex: 1 1 auto;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
-  max-height: calc(85vh - 120px); /* Restricts panel to frame bounds */
+  max-height: calc(85vh - 140px);
   padding-right: 6px;
   padding-bottom: 30px; /* Clean breathing room at the bottom */
   box-sizing: border-box;
@@ -2016,7 +2019,7 @@ html,body{
   position: absolute;
   top: -4px;
   right: -4px;
-  z-index: 5;
+  z-index: 1000;
   width: 26px;
   height: 26px;
   border-radius: 50%;
@@ -2689,7 +2692,7 @@ html,body{
 .gem-explosion-container {
   position: fixed;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 1000;
   transform: translate(-50%, -50%);
 }
 
@@ -3087,7 +3090,7 @@ html,body{
 /* Floating Combat Text Popups */
 .combat-text-popup {
   position: fixed;
-  z-index: 10000;
+  z-index: 1000;
   pointer-events: none;
   transform: translate(-50%, 0);
   font-family: var(--font-display);
@@ -3122,7 +3125,7 @@ html,body{
 /* Flying 3D Gem Particle */
 .flying-3d-gem {
   position: fixed;
-  z-index: 10001;
+  z-index: 1000;
   pointer-events: none;
   width: 22px;
   height: 26px;
@@ -3488,7 +3491,7 @@ body.buy-mode #treasury-ad-container {
 /* Flying +EB Particle Effect */
 .flying-eb-particle {
   position: fixed;
-  z-index: 10002;
+  z-index: 1000;
   pointer-events: none;
   font-family: var(--font-display);
   font-weight: 800;
@@ -3514,7 +3517,7 @@ body.buy-mode #treasury-ad-container {
 /* ================= FLYING EB COIN CASCADE ================= */
 .flying-eb-coin {
   position: fixed;
-  z-index: 10002;
+  z-index: 1000;
   pointer-events: none;
   width: 28px;
   height: 28px;
@@ -3685,13 +3688,16 @@ body.buy-mode #treasury-ad-container {
   border: 2px solid #ffffff;
   border-radius: 50%;
   box-shadow: 0 0 10px #ff3b30, 0 0 16px rgba(255, 59, 48, 0.8);
-  z-index: 5;
+  z-index: 23;
   animation: redPulse 1.6s infinite alternate ease-in-out;
 }
 
 /* Leaderboard Modal Card */
 .leaderboard-modal-card {
   max-width: 420px;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 .lb-header-trophy {
@@ -4465,7 +4471,7 @@ div[aria-label="Advertisement"] {
   height: 20px !important;
   pointer-events: auto !important;
   cursor: pointer !important;
-  z-index: 100 !important;
+  z-index: 20 !important;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5733,7 +5739,7 @@ body.no-shake .boost-timer-badge.super-50x {
    PUBLIC LANDING PAGE
    ============================================================ */
 .lp{
-  position:fixed; inset:0; z-index:9999;
+  position:fixed; inset:0; z-index:1000;
   background:var(--ink);
   overflow-y:auto; overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
@@ -6192,7 +6198,7 @@ body.no-shake .boost-timer-badge.super-50x {
   height: 20px !important;
   pointer-events: auto !important;
   cursor: pointer;
-  z-index: 100;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -6467,7 +6473,7 @@ body.birds-eye-mode #treasury-ad-container {
   left: 50%;
   bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
-  z-index: 9998;
+  z-index: 1000;
   padding: 14px 28px;
   border: none;
   border-radius: 0;
@@ -7307,7 +7313,7 @@ body.birds-eye-mode .top-hud-row {
 .cashout-page {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7358,7 +7364,7 @@ body.birds-eye-mode .top-hud-row {
   transition: all 0.2s ease;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .cashout-close-btn:hover {
