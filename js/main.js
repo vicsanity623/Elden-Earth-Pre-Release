@@ -2845,9 +2845,7 @@
         const wheelSub = el("wheel-sub");
         if (wheelSub) wheelSub.textContent = `Free spins — no diamonds needed!`;
       } else {
-        spinBtn.innerHTML = `Spin (2 <span class="hud-gem-icon"></span>)`;
-        const wheelSub = el("wheel-sub");
-        if (wheelSub) wheelSub.innerHTML = `2 <span class="hud-gem-icon"></span> per spin`;
+        updateSpinButtonState();
       }
     });
     el("land-btn").addEventListener("click", () => { updateLandModal(); openModal("land-modal"); });
@@ -2884,7 +2882,7 @@
       const adContainer = el("treasury-ad-container");
       if (!adContainer) return;
 
-      const REFRESH_INTERVAL_MS = 60000; // Strictly 60-second compliant interval
+      const REFRESH_INTERVAL_MS = 30000; // Strictly 30-second compliant interval
       let lastAdRefreshTime = Date.now();
 
       function refreshAd() {
