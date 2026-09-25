@@ -492,7 +492,7 @@ const Citadels = (() => {
     if (def && def.id === myId) {
       const recallBtn = document.createElement("button");
       recallBtn.className = "btn btn-primary";
-      recallBtn.innerHTML = `Recall Defender & Collect Loot (+${spoils.diamonds} <span class="hud-gem-icon"></span> & +${spoils.eb} <span class="eb-coin-icon"></span>)`;
+      recallBtn.innerHTML = `Recall (+${spoils.diamonds} <span class="hud-gem-icon"></span> & +${spoils.eb} <span class="eb-coin-icon"></span>)`;
       recallBtn.addEventListener("click", () => recallDefender(cid));
       actionsWrap.appendChild(recallBtn);
 
