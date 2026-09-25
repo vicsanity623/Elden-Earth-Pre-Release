@@ -69,6 +69,71 @@ const Feed = (() => {
 
   let renderScheduled = false;
 
+  // ---- Feed Message Sanitization ---------------------------------------
+  // Feed messages are HTML strings persisted in Firestore and rendered by
+  // every client, so they are attacker-influenced (player names, territory
+  // labels, Elden Stop names). Only a tiny set of presentational tags is
+  // ever produced by broadcast(), so everything else is unwrapped/removed
+  // before the message touches innerHTML.
+  const ALLOWED_TAGS = new Set(["STRONG", "B", "EM", "I", "U", "SMALL", "BR", "SPAN"]);
+  // These carry no user-visible text worth keeping (script/style payloads,
+  // replaced/embedded resources) — drop the element AND its contents.
+  const DROP_CONTENT_TAGS = new Set([
+    "SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "TEMPLATE", "NOSCRIPT",
+    "LINK", "META", "BASE", "SVG", "MATH", "CANVAS", "PICTURE", "MAP", "AREA",
+    "VIDEO", "AUDIO", "SOURCE", "TRACK", "APPLET", "FORM", "INPUT", "BUTTON",
+    "SELECT", "TEXTAREA", "OPTION", "FRAME", "FRAMESET"
+  ]);
+
+  function sanitizeNode(parent) {
+    const children = Array.from(parent.childNodes);
+    for (const child of children) {
+      if (child.nodeType === Node.COMMENT_NODE) {
+        child.remove();
+        continue;
+      }
+      if (child.nodeType === Node.TEXT_NODE) continue;
+      if (child.nodeType !== Node.ELEMENT_NODE) {
+        child.remove();
+        continue;
+      }
+      if (DROP_CONTENT_TAGS.has(child.tagName)) {
+        child.remove();
+        continue;
+      }
+      if (!ALLOWED_TAGS.has(child.tagName)) {
+        // Unwrap the disallowed element (drop the tag, keep readable text)
+        // and re-run over this level so the promoted children are inspected.
+        while (child.firstChild) parent.insertBefore(child.firstChild, child);
+        child.remove();
+        sanitizeNode(parent);
+        return;
+      }
+      // Presentational tags keep no attributes in our own templates —
+      // strip everything (class/style/on* handlers) defensively.
+      for (const attr of Array.from(child.attributes)) child.removeAttribute(attr.name);
+      sanitizeNode(child);
+    }
+  }
+
+  function sanitizeHtml(html) {
+    if (!html) return "";
+    const tpl = document.createElement("template");
+    tpl.innerHTML = String(html);
+    sanitizeNode(tpl.content);
+    return tpl.innerHTML;
+  }
+
+  // Escape a dynamic value before it is embedded in a message template.
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   // High-Performance Batched DOM Renderer (Zero Reflow Stutter)
   function renderFeedList() {
     // Battery Saver: Don't spend CPU building DOM elements if phone is in pocket!
@@ -86,8 +151,8 @@ const Feed = (() => {
       const row = document.createElement("div");
       row.className = "feed-item";
       row.innerHTML = `
-        <div class="feed-item-content">${ev.message}</div>
-        <div class="feed-item-time">${formatTime(ev.timestamp)}</div>
+        <div class="feed-item-content">${sanitizeHtml(ev.message)}</div>
+        <div class="feed-item-time">${escapeHtml(formatTime(ev.timestamp))}</div>
       `;
       fragment.appendChild(row);
     });
@@ -163,27 +228,27 @@ const Feed = (() => {
     if (type === "land") {
       const location = details.location || "the Realm 🌐";
       const rarityLabel = details.rarity || "land";
-      message = `<strong>${playerName}</strong> claimed a ${rarityLabel} plot in <em>${location}</em>`;
+      message = `<strong>${escapeHtml(playerName)}</strong> claimed a ${escapeHtml(rarityLabel)} plot in <em>${escapeHtml(location)}</em>`;
     } else if (type === "citadel_evolve") {
       const creator = details.creatorName || playerName;
       const tier = details.tierName || "Legendary Hold";
       const location = details.location || "the Realm 🌐";
-      message = `✨ <strong>${creator}</strong> ascended their Hold to a <strong>${tier}</strong> in <em>${location}</em>!`;
+      message = `✨ <strong>${escapeHtml(creator)}</strong> ascended their Hold to a <strong>${escapeHtml(tier)}</strong> in <em>${escapeHtml(location)}</em>!`;
     } else if (type === "jackpot") {
       const amount = details.amount || 25;
-      message = `🎉 <strong>${playerName}</strong> hit the <strong>${amount} EB</strong> Jackpot on the Wheel!`;
+      message = `🎉 <strong>${escapeHtml(playerName)}</strong> hit the <strong>${escapeHtml(amount)} EB</strong> Jackpot on the Wheel!`;
     } else if (type === "diamond_jackpot") {
       const amount = details.amount || 12;
-      message = `💎 <strong>${playerName}</strong> hit the <strong>+${amount} Diamond Jackpot</strong> on the Wheel! 🚀`;
+      message = `💎 <strong>${escapeHtml(playerName)}</strong> hit the <strong>+${escapeHtml(amount)} Diamond Jackpot</strong> on the Wheel! 🚀`;
     } else if (type === "daily") {
       const day = details.day || 1;
-      message = `📅 <strong>${playerName}</strong> has logged in for <strong>${day} day${day > 1 ? "s" : ""} in a row!</strong> Welcome back! 🔥`;
+      message = `📅 <strong>${escapeHtml(playerName)}</strong> has logged in for <strong>${escapeHtml(day)} day${day > 1 ? "s" : ""} in a row!</strong> Welcome back! 🔥`;
     } else if (type === "elden_stop_planted") {
       const name = details.name || "a public landmark";
-      message = `🗼 <strong>${playerName}</strong> planted a new <em>Elden Stop</em> Dyson Beacon at ${name}!`;
+      message = `🗼 <strong>${escapeHtml(playerName)}</strong> planted a new <em>Elden Stop</em> Dyson Beacon at ${escapeHtml(name)}!`;
     } else if (type === "elden_stop_lucky") {
       const rarityLabel = details.rarityLabel || (details.rarity ? String(details.rarity).toUpperCase() : "LUCKY");
-      message = `🍀 <strong>${playerName}</strong> discovered a <strong>${rarityLabel} Lucky Land Plot</strong> spinning an Elden Stop!`;
+      message = `🍀 <strong>${escapeHtml(playerName)}</strong> discovered a <strong>${escapeHtml(rarityLabel)} Lucky Land Plot</strong> spinning an Elden Stop!`;
     } else if (type === "dividend") {
       const ruler = details.rulerName || details.mayorName || "The Ruler";
       const territory = details.territory || details.city || "the Realm";
@@ -191,7 +256,7 @@ const Feed = (() => {
       const titleBadge = details.titleBadge || "Royalty";
       const titleIcon = details.titleIcon || "👑";
 
-      message = `${titleIcon} <strong>${ruler}</strong> (<em>${titleBadge}</em>) collected <strong>+${amount} EB</strong> royalty from land in <em>${territory}</em>!`;
+      message = `${escapeHtml(titleIcon)} <strong>${escapeHtml(ruler)}</strong> (<em>${escapeHtml(titleBadge)}</em>) collected <strong>+${escapeHtml(amount)} EB</strong> royalty from land in <em>${escapeHtml(territory)}</em>!`;
     }
 
     const now = Date.now();

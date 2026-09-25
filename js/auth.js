@@ -6,11 +6,26 @@ const Auth = (() => {
   let signInInProgress = false; // In-flight guard: prevents duplicate concurrent sign-in attempts
 
   // --- Server-side email validation (no hardcoded emails in client) ---
+  // Bound every outbound check: an unreachable access-control host (e.g. the
+  // Tailscale endpoint when the client is off-network) or a hanging IP lookup
+  // must never stall the sign-in flow.
+  const NETWORK_TIMEOUT_MS = 6000;
+
+  async function fetchWithTimeout(url, options = {}, timeoutMs = NETWORK_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function checkEmailAllowed(email) {
     // First, try server-side validation
     try {
       const serverUrl = (typeof CONFIG !== "undefined" && CONFIG.ACCESS_CONTROL_URL) || "http://localhost:8877";
-      const res = await fetch(`${serverUrl}/check-email`, {
+      const res = await fetchWithTimeout(`${serverUrl}/check-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -78,7 +93,7 @@ const Auth = (() => {
 
   async function logPlayerIP(uid, email) {
     try {
-      const res = await fetch("https://api.ipify.org?format=json");
+      const res = await fetchWithTimeout("https://api.ipify.org?format=json", {}, 5000);
       const data = await res.json();
       const ip = data.ip;
 

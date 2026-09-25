@@ -73,8 +73,8 @@ const Chat = (() => {
       row.className = "chat-message-row" + (isSelf ? " self" : "");
 
       const avatarContent = msg.avatar && msg.avatar.startsWith("img:")
-        ? `<img src="${msg.avatar.slice(4)}" style="width:100%;height:100%;object-fit:cover;">`
-        : `<span>${msg.avatar || "🙂"}</span>`;
+        ? `<img src="${escapeHtml(msg.avatar.slice(4))}" style="width:100%;height:100%;object-fit:cover;">`
+        : `<span>${escapeHtml(msg.avatar || "🙂")}</span>`;
 
       row.innerHTML = `
         <div class="chat-msg-avatar">${avatarContent}</div>

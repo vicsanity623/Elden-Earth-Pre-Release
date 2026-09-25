@@ -486,6 +486,7 @@ const CompanionPet = (() => {
   let petHudAnimations = {};
   let petHudCurrentAction = null;
   let petHudAnimFrameId = null;
+  let petModalAnimFrameId = null;
   let petMorphTargets = {};
 
   function startIdleRoaming() {
@@ -1123,7 +1124,9 @@ const CompanionPet = (() => {
       loadPetModalModel();
     }
 
-    animatePetModal();
+    // Only ever run ONE modal render loop — previously every modal open
+    // stacked another requestAnimationFrame loop on top of the last one.
+    if (!petModalAnimFrameId) animatePetModal();
   }
 
   function loadPetModalModel() {
@@ -1165,7 +1168,7 @@ const CompanionPet = (() => {
   function animatePetModal() {
     if (!petModalRenderer || !petModalScene || !petModalCamera) return;
 
-    requestAnimationFrame(animatePetModal);
+    petModalAnimFrameId = requestAnimationFrame(animatePetModal);
 
     if (petModalMixer) {
       const delta = 0.016;
@@ -1195,6 +1198,12 @@ const CompanionPet = (() => {
   function closePetModal() {
     const modal = document.getElementById("pet-modal");
     if (modal) modal.classList.add("hidden");
+
+    // Stop burning GPU while the modal is hidden (restarted on next open)
+    if (petModalAnimFrameId) {
+      cancelAnimationFrame(petModalAnimFrameId);
+      petModalAnimFrameId = null;
+    }
   }
 
   function renamePet() {

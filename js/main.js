@@ -243,7 +243,7 @@
       if (pAvatar.startsWith("img:")) {
         const imgSrc = pAvatar.slice(4);
         if (!playerAvatarEl.querySelector("img") || playerAvatarEl.querySelector("img").src !== imgSrc) {
-          playerAvatarEl.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+          playerAvatarEl.innerHTML = `<img src="${escapeHtmlFallback(imgSrc)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
         }
       } else if (playerAvatarEl.textContent !== pAvatar) {
         playerAvatarEl.textContent = pAvatar;
@@ -296,7 +296,7 @@
     // Avatar
     const av = el("info-avatar");
     if (avatar && avatar.startsWith("img:")) {
-      av.innerHTML = `<img src="${avatar.slice(4)}">`;
+      av.innerHTML = `<img src="${escapeHtmlFallback(avatar.slice(4))}">`;
     } else {
       av.textContent = avatar || "🙂";
     }

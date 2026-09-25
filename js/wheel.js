@@ -238,7 +238,7 @@ let spinTimeoutId = null;
       finished = true;
       isCurrentlySpinning = false;
       canvas.removeEventListener("transitionend", finishSpin);
-      if (spinTimeoutId === canvas) clearTimeout(spinTimeoutId);
+      if (spinTimeoutId !== null) clearTimeout(spinTimeoutId);
       spinTimeoutId = null;
       callback(CONFIG.WHEEL_SLICES[targetIndex]);
     };

@@ -4,11 +4,11 @@
 // ============================================================
 const CONFIG = {
   // --- Game Version (bump on every patch to auto-wipe stale localStorage) ---
-  GAME_VERSION: "0.1.10.72b",
+  GAME_VERSION: "0.1.10.73b",
 
   // --- Realm Server Epoch ---
   // Bump this timestamp whenever you intentionally wipe the Firestore database.
-  // Any local or cloud save created before git statusthis epoch is treated as stale.
+  // Any local or cloud save created before this epoch is treated as stale.
   REALM_SERVER_EPOCH: 1735689600000, // milliseconds — must match functions/index.js
 
   // --- Map Tile Engine & Rate Limit Fallback ---

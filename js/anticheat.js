@@ -14,6 +14,7 @@ const AntiCheat = (() => {
   const MAX_PURCHASES_PER_MINUTE = 5; // Hard cap on purchases per 60s window
   const BALANCE_MAX_EB = 500000;      // Impossible EB balance threshold
   const BALANCE_MAX_DIAMONDS = 10000; // Impossible diamond threshold
+  const MAX_TRACKED_PURCHASE_IDS = 500; // Replay-protection ring buffer size
 
   // ======================== EMBARGO LIST ========================
   const EMBARGOED_COUNTRIES = [
@@ -234,10 +235,16 @@ const AntiCheat = (() => {
     purchaseTimestamps.push(now);
 
     if (purchaseId) {
+      // Re-insert so the ID moves to the end of the insertion-ordered Set
+      purchaseIdSet.delete(purchaseId);
       purchaseIdSet.add(purchaseId);
-      // Clean up old IDs after 1 hour
-      if (purchaseIdSet.size > 500) {
-        purchaseIdSet.clear();
+      // Evict the OLDEST tracked IDs one at a time. Wiping the whole set on
+      // threshold (the previous behaviour) re-opened a replay window for every
+      // ID still inside its validity period.
+      while (purchaseIdSet.size > MAX_TRACKED_PURCHASE_IDS) {
+        const oldest = purchaseIdSet.values().next().value;
+        if (oldest === undefined) break;
+        purchaseIdSet.delete(oldest);
       }
     }
   }
@@ -250,10 +257,16 @@ const AntiCheat = (() => {
   function validateBalance(eb, diamonds) {
     const issues = [];
 
-    if (eb < 0) issues.push("Negative EB balance");
-    if (eb > BALANCE_MAX_EB) issues.push(`EB balance impossibly high: ${eb}`);
-    if (diamonds < 0) issues.push("Negative diamond balance");
-    if (diamonds > BALANCE_MAX_DIAMONDS) issues.push(`Diamond balance impossibly high: ${diamonds}`);
+    const ebNum = Number(eb);
+    const diaNum = Number(diamonds);
+
+    // NaN/Infinity bypass every `<` / `>` comparison, so reject them up front.
+    if (!Number.isFinite(ebNum)) issues.push("EB balance is not a finite number");
+    if (!Number.isFinite(diaNum)) issues.push("Diamond balance is not a finite number");
+    if (Number.isFinite(ebNum) && ebNum < 0) issues.push("Negative EB balance");
+    if (Number.isFinite(ebNum) && ebNum > BALANCE_MAX_EB) issues.push(`EB balance impossibly high: ${eb}`);
+    if (Number.isFinite(diaNum) && diaNum < 0) issues.push("Negative diamond balance");
+    if (Number.isFinite(diaNum) && diaNum > BALANCE_MAX_DIAMONDS) issues.push(`Diamond balance impossibly high: ${diamonds}`);
 
     return {
       valid: issues.length === 0,
@@ -265,8 +278,23 @@ const AntiCheat = (() => {
    * Validate a transaction won't create an impossible state.
    */
   function validateTransaction(currentEB, currentDiamonds, costEB, costDiamonds, earnEB, earnDiamonds) {
-    const newEB = currentEB - (costEB || 0) + (earnEB || 0);
-    const newDiamonds = currentDiamonds - (costDiamonds || 0) + (earnDiamonds || 0);
+    const num = (v) => {
+      const x = Number(v);
+      return Number.isFinite(x) ? x : 0;
+    };
+    const safeCostEB = num(costEB);
+    const safeCostDiamonds = num(costDiamonds);
+    const safeEarnEB = num(earnEB);
+    const safeEarnDiamonds = num(earnDiamonds);
+
+    const curEB = Number(currentEB);
+    const curDiamonds = Number(currentDiamonds);
+    if (!Number.isFinite(curEB) || !Number.isFinite(curDiamonds)) {
+      return { valid: false, reason: "Current balance is not a finite number" };
+    }
+
+    const newEB = curEB - safeCostEB + safeEarnEB;
+    const newDiamonds = curDiamonds - safeCostDiamonds + safeEarnDiamonds;
 
     if (newEB < 0) return { valid: false, reason: `Insufficient EB: need ${costEB}, have ${currentEB}` };
     if (newDiamonds < 0) return { valid: false, reason: `Insufficient diamonds: need ${costDiamonds}, have ${currentDiamonds}` };
@@ -283,7 +311,14 @@ const AntiCheat = (() => {
    */
   function generatePurchaseId(type, tx, ty) {
     const ts = Date.now();
-    const rand = Math.random().toString(36).slice(2, 8);
+    let rand;
+    if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+      const buf = new Uint32Array(2);
+      crypto.getRandomValues(buf);
+      rand = buf[0].toString(36) + buf[1].toString(36);
+    } else {
+      rand = Math.random().toString(36).slice(2, 8);
+    }
     return `${type}_${tx || 0}_${ty || 0}_${ts}_${rand}`;
   }
 

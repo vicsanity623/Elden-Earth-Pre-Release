@@ -1,5 +1,5 @@
 // Bump this version string whenever you deploy an update!
-const CACHE_NAME = 'elden-EARTH-v22.81';
+const CACHE_NAME = 'elden-EARTH-v22.82';
 
 const ASSETS_TO_CACHE = [
     './',
@@ -40,7 +40,15 @@ self.addEventListener('install', (e) => {
     self.skipWaiting();
     e.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS_TO_CACHE);
+            // Cache assets individually: one failed fetch must not abort the
+            // whole install (cache.addAll() is all-or-nothing).
+            return Promise.all(
+                ASSETS_TO_CACHE.map((url) =>
+                    cache.add(url).catch((err) => {
+                        console.warn(`[SW] Could not precache ${url}:`, err);
+                    })
+                )
+            );
         })
     );
 });
@@ -78,10 +86,31 @@ self.addEventListener('message', (e) => {
     }
 });
 
-// 3. Network-First with cache-busting
+// 3. Cache-First for immutable binaries, Network-First for everything else
 self.addEventListener('fetch', (e) => {
     if (e.request.method !== 'GET') return;
     if (!e.request.url.startsWith(self.location.origin)) return;
+
+    // Immutable binary assets only change when CACHE_NAME is bumped on deploy,
+    // so they never need a network round-trip on every page load.
+    const path = new URL(e.request.url).pathname;
+    if (/\.(glb|gltf|woff2?|ttf|png|jpg|jpeg|webp|avif|mp3|wasm)$/.test(path)) {
+        e.respondWith(
+            caches.match(e.request).then((cached) => {
+                if (cached) return cached;
+                return fetch(e.request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
+                        const responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(e.request, responseClone);
+                        });
+                    }
+                    return networkResponse;
+                });
+            })
+        );
+        return;
+    }
 
     e.respondWith(
         fetch(e.request, { cache: 'no-store' })

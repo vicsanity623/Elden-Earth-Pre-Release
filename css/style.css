@@ -1743,6 +1743,8 @@ html,body{
   font-weight: 700;
   color: var(--gold-hi);
   letter-spacing: 0.5px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Info Sections */
@@ -4324,6 +4326,7 @@ body.buy-mode #treasury-ad-container {
   font-size: 12.5px;
   color: var(--parchment);
   line-height: 1.4;
+  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
@@ -4414,15 +4417,6 @@ div[aria-label="Advertisement"] {
   box-sizing: border-box !important;
 }
 
-/* Force Google's [X] Close Button below the Camera Notch & Status Bar Clock */
-div.google-anno-skip,
-div[aria-label="Close ad"],
-button[aria-label="Close ad"],
-[id*="dismiss-button"] {
-  top: max(54px, calc(env(safe-area-inset-top) + 12px)) !important;
-  right: 16px !important;
-  z-index: 2147483647 !important;
-}
 
 /* ---------- Territory Scope Bar ---------- */
 .lb-scope-row {
@@ -5536,19 +5530,20 @@ button[aria-label="Close ad"],
   text-shadow: 0 0 10px rgba(79, 214, 196, 0.4);
 }
 
-/* Hardened Calm Mode (Accessibility: No Shaking) */
+/* Hardened Calm Mode (Accessibility: No Shaking, No Pulsing) */
 body.no-shake .hero-balance-card,
 body.no-shake .hero-balance-card.super-50x,
 body.no-shake .boost-timer-badge,
 body.no-shake .boost-timer-badge.super-50x {
-  animation: badgePulse 0.9s infinite alternate ease-in-out !important;
+  animation: none !important;
   transform: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .boost-timer-badge.super-50x,
   .hero-balance-card.super-50x {
-    animation: badgePulse 0.9s infinite alternate ease-in-out !important;
+    animation: none !important;
+    transform: none !important;
   }
 }
 

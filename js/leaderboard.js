@@ -9,6 +9,17 @@ const Leaderboard = (() => {
   let lastFetchTime = 0;
   const CACHE_TTL_MS = 60000;
 
+  // Player names / badges / avatar URLs come from Firestore player documents,
+  // so they are untrusted. Escape before any innerHTML interpolation.
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   // Universal Flag Calculator: Converts any ISO country code ("JP", "FR", "US", "BR") into its Flag Emoji!
   function getFlagEmoji(countryCode) {
     if (!countryCode || countryCode.length !== 2) return "🌐";
@@ -567,16 +578,16 @@ const Leaderboard = (() => {
       const badgeIcon = activeBadge ? activeBadge.icon : "🛡️";
       const badgeText = activeBadge ? activeBadge.title : "Citizen of the Realm";
       const rentDisplay = Number(p.lifetimeRent || p.cash) || 0;
-      const metricVal = currentTab === "plots" ? `${displayCount} <span class="lb-unit">Plots</span>` : `$${rentDisplay.toFixed(6)}`;
+      const metricVal = currentTab === "plots" ? `${escapeHtml(displayCount)} <span class="lb-unit">Plots</span>` : `$${escapeHtml(rentDisplay.toFixed(6))}`;
 
       const row = document.createElement("div");
       row.className = "lb-row" + (isSelf ? " self-row" : "");
       row.innerHTML = `
-        <div class="lb-rank">${rankMedal}</div>
+        <div class="lb-rank">${escapeHtml(rankMedal)}</div>
         <div class="lb-avatar">${renderAvatar(p.avatar)}</div>
         <div class="lb-info">
-          <span class="lb-name">${p.name} ${isSelf ? "<em>(You)</em>" : ""}</span>
-          <span class="lb-sub lb-title-glow">${badgeIcon} ${badgeText}</span>
+          <span class="lb-name">${escapeHtml(p.name)} ${isSelf ? "<em>(You)</em>" : ""}</span>
+          <span class="lb-sub lb-title-glow">${escapeHtml(badgeIcon)} ${escapeHtml(badgeText)}</span>
         </div>
         <div class="lb-metric ${currentTab === "rent" ? "gold" : ""}">${metricVal}</div>
       `;
@@ -614,9 +625,9 @@ const Leaderboard = (() => {
 
   function renderAvatar(avatar) {
     if (avatar && avatar.startsWith("img:")) {
-      return `<img src="${avatar.slice(4)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      return `<img src="${escapeHtml(avatar.slice(4))}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
     }
-    return `<span>${avatar || "🙂"}</span>`;
+    return `<span>${escapeHtml(avatar || "🙂")}</span>`;
   }
 
   // Drops royalty payouts into the global dividends mailbox with Multi-Language support

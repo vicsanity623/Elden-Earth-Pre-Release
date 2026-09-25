@@ -187,7 +187,7 @@ const Multiplier = (() => {
     document.body.classList.toggle("no-shake", disabled);
 
     // Synchronize all checkboxes across all modals
-    document.querySelectorAll("#toggle-shake-fx, .toggle-switch-input").forEach((box) => {
+    document.querySelectorAll("#toggle-shake-fx, #toggle-shake-fx-pool, .toggle-switch-input").forEach((box) => {
       box.checked = !disabled;
     });
 
@@ -202,7 +202,7 @@ const Multiplier = (() => {
   function initShakeState() {
     const initialDisabled = Boolean(Store.get()?.disableShake);
     document.body.classList.toggle("no-shake", initialDisabled);
-    document.querySelectorAll("#toggle-shake-fx, .toggle-switch-input").forEach((box) => {
+    document.querySelectorAll("#toggle-shake-fx, #toggle-shake-fx-pool, .toggle-switch-input").forEach((box) => {
       box.checked = !initialDisabled;
     });
   }
@@ -381,7 +381,7 @@ const Multiplier = (() => {
   function wireShakeToggle() {
     // Delegated click listener (Guaranteed to catch clicks in Weekly Pool modal!)
     document.addEventListener("change", (e) => {
-      if (e.target && (e.target.id === "toggle-shake-fx" || e.target.classList.contains("toggle-switch-input"))) {
+      if (e.target && (e.target.id === "toggle-shake-fx" || e.target.id === "toggle-shake-fx-pool" || e.target.classList.contains("toggle-switch-input"))) {
         setShakePreference(!e.target.checked);
       }
     });

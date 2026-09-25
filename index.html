@@ -6,12 +6,17 @@
 <title>Elden Earth</title>
 <meta name="description" content="Walk the real world, claim the tile beneath your feet." />
 
+<!-- Content Security Policy: restricts script/style/connect/frame origins.
+     Note: `frame-ancestors` cannot be delivered via <meta>, so it is set as an
+     HTTP header in firebase.json instead. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' blob: https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://apis.google.com https://accounts.google.com https://www.gstatic.com https://ssl.gstatic.com https://oauth2.googleapis.com https://www.google.com https://www.googleadservices.com https://*.adtrafficquality.google https://*.googlesyndication.com https://*.doubleclick.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: https://apis.google.com https://api.ipify.org https://ip-api.com https://nominatim.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://tiles.openfreemap.org https://accounts.google.com https://www.gstatic.com https://ssl.gstatic.com https://oauth2.googleapis.com https://www.google.com https://*.googleapis.com https://*.cloudfunctions.net https://*.googlesyndication.com https://*.doubleclick.net https://www.googleadservices.com https://*.adtrafficquality.google https://vics-imac-1.tail37b4f2.ts.net; frame-src 'self' https://accounts.google.com https://www.google.com https://*.firebaseapp.com https://*.firebase.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google; media-src 'self' blob: data:; form-action 'self'" />
+
 <!-- Free Open-Source MapLibre Engine (100% Drop-In Replacement for Mapbox, No Token Lock) -->
-<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>window.mapboxgl = maplibregl;</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" integrity="sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -209,7 +214,7 @@
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.10.72b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.10.73b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -1052,7 +1057,7 @@
     <!-- 50X Motion Sensitivity Accessibility Toggle -->
     <div class="shake-toggle-row">
       <span class="shake-toggle-label">⚡ 50X Screen Shake Effect</span>
-      <input type="checkbox" id="toggle-shake-fx" class="toggle-switch-input" checked />
+      <input type="checkbox" id="toggle-shake-fx-pool" class="toggle-switch-input" checked />
     </div>
 
     <!-- Distribution Tier Breakdown -->
@@ -1355,14 +1360,12 @@
   <button id="signout-btn">Sign out</button>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-
 <!-- Firebase SDKs (Global Compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-functions-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js" integrity="sha384-4wjwRVXHcU7+m4SEQz7OtKOi21milB7+BDIWtIr6w7UlffPQ6Qf9X8Xu2IgqIjDC" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js" integrity="sha384-hZn4DJoHPbuD7TxE6V6AFzbwbIYN72v84GTuwZM1gbgVxKFkGlaapi/rwsPY7D80" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js" integrity="sha384-V+JDBdDUVJZg+P+FfMHPBpwRwZ/naAJin/v9bip69lHtHGBcZWXLCLA7SyOBX3QF" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-functions-compat.js" integrity="sha384-Ucb3YOESY5OZ6iOy6tdveLanBeTESs1sGVrHkLWpAP+zRYbBnOgsk2eQ9u8eWDDx" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js" integrity="sha384-nTT69180wF6j2ZwBDbXzByFz0TFsSjMChXkzK9o1gUzu9o6WopS8RN0utzpRIcj9" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script src="js/config.js"></script>
 <script src="js/geo.js"></script>
