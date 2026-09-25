@@ -16,3 +16,4 @@ firestore.rules
 functions/
 server/
 SCPR.md
+PEER.md
