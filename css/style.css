@@ -3267,31 +3267,62 @@ html,body{
 .btn-buy-land:active { transform: scale(0.94); }
 
 .buy-mode-banner {
-  position: absolute;
-  /* Floats centered cleanly above the raised controller bar */
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 130px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  /* Framed top message — sits below the safe-area notch */
+  top: calc(max(14px, env(safe-area-inset-top)) + 14px);
+  left: 12px;
+  right: 12px;
   width: auto;
-  max-width: 90%;
-  z-index: 30;
-  background: rgba(13, 20, 32, 0.94);
-  border: 1.5px solid var(--gold);
-  border-radius: 999px;
-  padding: 8px 14px 8px 18px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.8), 0 0 16px rgba(255, 43, 67, 0.4);
+  z-index: 25;
+  box-sizing: border-box;
+  background: rgba(6, 10, 18, 0.95) url('../assets/modal-frame.png') no-repeat center center / 100% 100%;
+  border: none;
+  border-radius: 0;
+  padding: 13px 15px;
+  display: block;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 18px rgba(255, 43, 67, 0.4);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
 }
 
-.buy-mode-instruction {
-  font-size: 12px;
-  font-weight: 700;
+.buy-mode-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.buy-mode-title {
+  font-family: var(--font-display, 'Cinzel', serif);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
   color: var(--parchment);
-  white-space: nowrap;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.buy-mode-desc {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: rgba(245, 237, 224, 0.92);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* Clean map while buying: hide every HUD element except the top banner */
+body.buy-mode #topbar,
+body.buy-mode #bottombar,
+body.buy-mode .side-hud-stack,
+body.buy-mode .top-hud-row,
+body.buy-mode #boost-btn,
+body.buy-mode #multiplier-btn,
+body.buy-mode #weekly-pool-hud-btn,
+body.buy-mode #treasury-ad-container {
+  display: none !important;
 }
 
 .btn-exit-buy {

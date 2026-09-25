@@ -2719,8 +2719,25 @@
     const exitBuyBtn = el("exit-buy-mode-btn");
     const buyBanner = el("buy-mode-banner");
 
+    // Top banner copy: buying land vs relocating a bagged plot
+    function updateBuyModeBanner() {
+      const state = Store.get();
+      const bagCount = Object.values(state.plotBag || {}).reduce((s, n) => s + (Number(n) || 0), 0);
+      const titleEl = el("buy-mode-title");
+      const descEl = el("buy-mode-desc");
+      if (bagCount > 0) {
+        if (titleEl) titleEl.textContent = "Place Plot";
+        if (descEl) descEl.textContent = "These squares represent land around you in the real world. Tap an empty tile inside your circle to relocate a plot from your Bag.";
+      } else {
+        if (titleEl) titleEl.textContent = "Buy Land";
+        if (descEl) descEl.textContent = "These squares represent land around you in the real world. Tap an empty tile inside your circle to claim it for 100 EB.";
+      }
+    }
+
     function enterBuyLandMode() {
       if (!map || !currentPos) return;
+      document.body.classList.add("buy-mode");
+      updateBuyModeBanner();
       buyBanner?.classList.remove("hidden");
       Grid.setBuyMode(true, currentPos);
 
@@ -2728,21 +2745,22 @@
       map.setMinPitch(0);
       map.setMaxPitch(0); // Physically impossible to tilt into 3D!
 
-      // 2. Tight 75-Yard Framing
-      map.setMinZoom(18.2);
+      // 2. Wide framing — whole 75m reach circle visible at once (Atlas Earth style)
+      map.setMinZoom(17.5);
       map.setMaxZoom(20.0);
 
       map.flyTo({
         center: [currentPos.lon, currentPos.lat],
         pitch: 0,
         bearing: 0,
-        zoom: 19.2,
+        zoom: 18.0,
         duration: 800,
         essential: true,
       });
     }
 
     function exitBuyLandMode() {
+      document.body.classList.remove("buy-mode");
       buyBanner?.classList.add("hidden");
       Grid.setBuyMode(false);
 

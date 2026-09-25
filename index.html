@@ -533,7 +533,7 @@ Modern Extraction Model:
     <div class="hero-balance-card" id="hero-balance-card">
       <div class="hero-top-line">
         <div class="hero-brand-title">
-          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.10.69b</span>
+          <span class="hero-brand-gem">◆</span> ELDEN EARTH <span class="hero-version-tag">0.1.10.70b</span>
         </div>
         <div id="boost-timer-badge" class="boost-timer-badge hidden">⚡ 30X BOOST <span id="boost-countdown">00:00:00</span></div>
       </div>
@@ -703,10 +703,13 @@ Modern Extraction Model:
     </aside>
   </div>
 
-  <!-- Floating Done Pill (Appears centered right above BUY LAND & EARN buttons) -->
+  <!-- Framed Top Instruction Banner (Appears while in Buy Land / Place Plot mode) -->
   <div id="buy-mode-banner" class="buy-mode-banner hidden">
-    <span class="buy-mode-instruction">Tap tile to claim (100 <span class="eb-coin-icon"></span>)</span>
-    <button id="exit-buy-mode-btn" class="btn btn-exit-buy">Done ✓</button>
+    <div class="buy-mode-head">
+      <span class="buy-mode-title" id="buy-mode-title">Buy Land</span>
+      <button id="exit-buy-mode-btn" class="btn-exit-buy" aria-label="Exit buy mode">✕</button>
+    </div>
+    <p class="buy-mode-desc" id="buy-mode-desc">These squares represent land around you in the real world. Tap an empty tile inside your circle to claim it.</p>
   </div>
 
   <!-- Bottom bar with Community Chat Button -->
