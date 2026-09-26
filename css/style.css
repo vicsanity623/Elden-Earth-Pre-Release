@@ -7597,3 +7597,116 @@ body.birds-eye-mode .top-hud-row {
   letter-spacing: 2px;
   cursor: not-allowed;
 }
+
+/* ================= RICKROLL BAN GATE ================= */
+#rickroll-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#rickroll-gate .rr-video-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#rickroll-gate iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 110vw;
+  height: 110vh;
+  min-width: 110vw;
+  min-height: 110vh;
+  border: none;
+  pointer-events: none;
+}
+
+#rickroll-gate .rr-tap-hint {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  color: #fff;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 4vw, 28px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px rgba(255, 0, 60, 0.9), 0 0 60px rgba(255, 0, 60, 0.5);
+  animation: rrPulse 0.8s ease-in-out infinite alternate;
+  text-align: center;
+  padding: 0 20px;
+}
+
+#rickroll-gate .rr-top-text {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  color: #ff003c;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(20px, 5vw, 40px);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  text-shadow: 0 0 30px rgba(255, 0, 60, 0.8);
+  animation: rrShake 0.15s infinite;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#rickroll-gate.rr-active iframe {
+  pointer-events: auto;
+  filter: saturate(2.5) contrast(1.8) hue-rotate(0deg);
+  animation: rrDistort 0.3s infinite;
+}
+
+#rickroll-gate.rr-active .rr-top-text {
+  animation: rrShake 0.08s infinite, rrColorCycle 0.2s infinite;
+  font-size: clamp(24px, 6vw, 52px);
+}
+
+#rickroll-gate.rr-active .rr-tap-hint {
+  display: none;
+}
+
+@keyframes rrPulse {
+  from { opacity: 0.5; transform: translateX(-50%) scale(0.95); }
+  to   { opacity: 1;   transform: translateX(-50%) scale(1.05); }
+}
+
+@keyframes rrShake {
+  0%   { transform: translateX(-50%) translate(0, 0) rotate(0deg); }
+  25%  { transform: translateX(-50%) translate(-3px, 2px) rotate(-1deg); }
+  50%  { transform: translateX(-50%) translate(3px, -2px) rotate(1deg); }
+  75%  { transform: translateX(-50%) translate(-2px, -3px) rotate(-0.5deg); }
+  100% { transform: translateX(-50%) translate(2px, 3px) rotate(0.5deg); }
+}
+
+@keyframes rrDistort {
+  0%   { filter: saturate(2.5) contrast(1.8) hue-rotate(0deg); }
+  25%  { filter: saturate(3)   contrast(2)   hue-rotate(90deg); }
+  50%  { filter: saturate(2)   contrast(2.2) hue-rotate(180deg); }
+  75%  { filter: saturate(3.5) contrast(1.6) hue-rotate(270deg); }
+  100% { filter: saturate(2.5) contrast(1.8) hue-rotate(360deg); }
+}
+
+@keyframes rrColorCycle {
+  0%   { color: #ff003c; text-shadow: 0 0 30px #ff003c; }
+  25%  { color: #ff00ff; text-shadow: 0 0 30px #ff00ff; }
+  50%  { color: #00ffff; text-shadow: 0 0 30px #00ffff; }
+  75%  { color: #ffff00; text-shadow: 0 0 30px #ffff00; }
+  100% { color: #ff003c; text-shadow: 0 0 30px #ff003c; }
+}

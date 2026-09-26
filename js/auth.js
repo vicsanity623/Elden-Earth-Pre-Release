@@ -44,37 +44,200 @@ const Auth = (() => {
     return true;
   }
 
+  // --- RICKROLL BAN GATE ---
+  // Instant fullscreen takeover with YouTube embed. Autoplay muted (browser
+  // requirement), then on ANY tap unmute at max volume with CSS distortion.
   function showCWOODBanScreen() {
-    document.body.innerHTML = `
-      <div style="position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;font-family:system-ui,-apple-system,sans-serif;text-align:center;padding:24px;">
-        <div style="max-width:520px;">
-          <div style="font-size:64px;margin-bottom:16px;">🔒</div>
-          <h1 style="color:#ff0000;font-size:28px;font-weight:900;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:2px;">ACCESS DENIED</h1>
-          <p style="color:#ff4444;font-size:18px;font-weight:700;margin:0 0 20px 0;">
-            This account is blocked from the Realm.
-          </p>
-          <div style="background:rgba(255,0,0,0.1);border:1px solid rgba(255,0,0,0.3);border-radius:8px;padding:16px;margin-bottom:20px;">
-            <p style="color:#ccc;font-size:14px;margin:0 0 12px 0;">If you know Vic, call him up and be like:<br><span style="color:#fff;font-weight:700;">"Yo, let me play that dope ass game, bro!"</span></p>
-            <p style="color:#888;font-size:13px;margin:0;">If you don't know him — then your loss, not ours.</p>
-          </div>
-          <p style="color:#666;font-size:11px;">This session has been terminated.</p>
-        </div>
-      </div>`;
     try { firebase.auth().signOut(); } catch (e) {}
+
+    // Nuke the entire page — nothing survives
+    document.body.innerHTML = "";
+    document.body.style.cssText = "margin:0;padding:0;overflow:hidden;background:#000;";
+
+    // Kill every timer/interval the game may have started
+    for (let i = 1; i < 99999; i++) { clearInterval(i); clearTimeout(i); }
+
+    // Build the rickroll gate
+    const gate = document.createElement("div");
+    gate.id = "rickroll-gate";
+    gate.innerHTML = `
+      <div class="rr-video-wrap">
+        <iframe
+          src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1&playlist=dQw4w9WgXcQ&controls=0&modestbranding=1&rel=0&showinfo=0&disablekb=1&iv_load_policy=3&playsinline=1"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+      </div>
+      <div class="rr-top-text">GET RICKROLLED</div>
+      <div class="rr-tap-hint">TAP ANYWHERE TO UNMUTE</div>
+    `;
+    document.body.appendChild(gate);
+
+    // On ANY tap/click: unmute at max volume + activate distortion chaos
+    let unmuted = false;
+    const unmute = () => {
+      if (unmuted) return;
+      unmuted = true;
+      gate.classList.add("rr-active");
+
+      const iframe = gate.querySelector("iframe");
+      if (iframe) {
+        // Unmute via YouTube postMessage API
+        iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', "*");
+        iframe.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[100]}', "*");
+        iframe.contentWindow.postMessage('{"event":"command","func":"play","args":""}', "*");
+      }
+    };
+    gate.addEventListener("click", unmute, { once: false });
+    gate.addEventListener("touchstart", unmute, { once: false });
+
+    // Prevent ANY escape: block back button, escape key, swipe-down gestures
+    window.addEventListener("popstate", () => history.pushState(null, "", location.href));
+    history.pushState(null, "", location.href);
+    document.addEventListener("keydown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      unmute(); // any key also unmutes
+      return false;
+    }, true);
+
+    // Block all touch gestures that could dismiss
+    document.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+
+    // Prevent page hide / visibility change from doing anything useful
+    document.addEventListener("visibilitychange", () => {
+      document.title = "GET RICKROLLED";
+    });
+  }
+
+  // --- BAN EVASION: Device fingerprint + integrity checks ---
+  const BAN_EVASION_KEY = "eldenEarth.banIntegrity";
+
+  function generateDeviceFingerprint() {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    ctx.textBaseline = "top";
+    ctx.font = "14px Arial";
+    ctx.fillText("fingerprint", 2, 2);
+    const canvasHash = canvas.toDataURL().length.toString(36);
+
+    const ua = navigator.userAgent || "";
+    const screenRes = `${screen.width}x${screen.height}`;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    const lang = navigator.language || "";
+    const cores = navigator.hardwareConcurrency || 0;
+    const platform = navigator.platform || "";
+
+    const raw = `${canvasHash}:${screenRes}:${timezone}:${lang}:${cores}:${platform}:${ua.length}`;
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+      const chr = raw.charCodeAt(i);
+      hash = ((hash << 5) - hash) + chr;
+      hash |= 0;
+    }
+    return "fp_" + Math.abs(hash).toString(36);
+  }
+
+  function storeBanIntegrity(uid, email) {
+    try {
+      const fingerprint = generateDeviceFingerprint();
+      const record = {
+        uid,
+        email: email || "",
+        fingerprint,
+        bannedAt: Date.now(),
+        userAgent: navigator.userAgent || "",
+        screen: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+      };
+      localStorage.setItem(BAN_EVASION_KEY, JSON.stringify(record));
+      // Also store under a secondary key in case they clear the primary
+      localStorage.setItem("eldenEarth." + fingerprint, "1");
+    } catch (e) {}
+  }
+
+  function isDevicePreviouslyBanned() {
+    try {
+      // Check primary ban marker
+      const raw = localStorage.getItem(BAN_EVASION_KEY);
+      if (raw) return true;
+
+      // Check fingerprint-based marker
+      const fp = generateDeviceFingerprint();
+      if (localStorage.getItem("eldenEarth." + fp) === "1") return true;
+
+      // Check for tampered/cleared localStorage (ban evasion indicator)
+      const keys = Object.keys(localStorage);
+      const hasGameKeys = keys.some(k => k.startsWith("eldenEarth.save"));
+      const hasNoSession = !keys.some(k => k.includes("sessionId"));
+      if (hasGameKeys && hasNoSession) return true; // Save exists but session was wiped — suspicious
+
+    } catch (e) {}
+    return false;
+  }
+
+  function detectBanEvasionPatterns(uid, email) {
+    const emailLower = (email || "").toLowerCase().trim();
+
+    // 1. Check if this device was previously banned
+    if (isDevicePreviouslyBanned()) {
+      console.warn(`[BanEvasion] Device fingerprint matched previous ban`);
+      return true;
+    }
+
+    // 2. Check for suspicious email patterns (throwaway / alias abuse)
+    const disposableDomains = ["guerrillamail", "tempmail", "throwaway", "yopmail", "mailinator", "guerrillamailblock", "sharklasers", "grr.la", "dispostable", "tempail", "tempr.email", "10minutemail"];
+    if (disposableDomains.some(d => emailLower.includes(d))) {
+      console.warn(`[BanEvasion] Disposable email detected: ${emailLower}`);
+      return true;
+    }
+
+    // 3. Check if multiple accounts tried from this device (stored locally)
+    try {
+      const multiAccountKey = "eldenEarth.seenAccounts";
+      const seen = JSON.parse(localStorage.getItem(multiAccountKey) || "[]");
+      if (!seen.includes(uid)) {
+        seen.push(uid);
+        localStorage.setItem(multiAccountKey, JSON.stringify(seen.slice(-10))); // keep last 10
+      }
+      if (seen.length >= 3) {
+        console.warn(`[BanEvasion] ${seen.length} accounts used on this device`);
+        return true; // 3+ accounts on same device = suspicious
+      }
+    } catch (e) {}
+
+    return false;
   }
 
   async function checkBan(uid, email) {
     const emailLower = String(email || "").toLowerCase().trim();
 
-    // 1. SERVER-SIDE WHITELIST CHECK (primary — emails never in client code)
-    const isAllowed = await checkEmailAllowed(emailLower);
-    if (!isAllowed) {
-      console.warn(`[Auth] ACCESS DENIED: ${uid} (${emailLower}) — not on server whitelist`);
+    // 0. DEVICE BAN EVASION CHECK (fastest — blocks known banned devices instantly)
+    if (isDevicePreviouslyBanned()) {
+      console.warn(`[Auth] BANNED DEVICE detected: ${uid} (${emailLower})`);
+      storeBanIntegrity(uid, emailLower);
       showCWOODBanScreen();
       return true;
     }
 
-    // 2. Firestore banned_users collection check (belt-and-suspenders)
+    // 1. SERVER-SIDE WHITELIST CHECK (primary — emails never in client code)
+    const isAllowed = await checkEmailAllowed(emailLower);
+    if (!isAllowed) {
+      console.warn(`[Auth] ACCESS DENIED: ${uid} (${emailLower}) — not on server whitelist`);
+      storeBanIntegrity(uid, emailLower);
+      showCWOODBanScreen();
+      return true;
+    }
+
+    // 2. BAN EVASION PATTERN DETECTION (throwaway emails, multi-account abuse)
+    if (detectBanEvasionPatterns(uid, emailLower)) {
+      console.warn(`[Auth] BAN EVASION detected: ${uid} (${emailLower})`);
+      storeBanIntegrity(uid, emailLower);
+      showCWOODBanScreen();
+      return true;
+    }
+
+    // 3. Firestore banned_users collection check (belt-and-suspenders)
     try {
       const firestore = Store.getDb();
       if (!firestore) return false;
@@ -82,6 +245,7 @@ const Auth = (() => {
       if (banDoc.exists) {
         const ban = banDoc.data();
         console.warn(`[Auth] BANNED user attempted login: ${uid} (${emailLower}) — reason: ${ban.reason || "none"}`);
+        storeBanIntegrity(uid, emailLower);
         showCWOODBanScreen();
         return true;
       }
@@ -183,21 +347,8 @@ const Auth = (() => {
   }
 
   function showBannedScreen(reason) {
-    document.body.innerHTML = `
-      <div style="position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;font-family:system-ui,-apple-system,sans-serif;text-align:center;padding:24px;">
-        <div style="max-width:520px;">
-          <div style="font-size:64px;margin-bottom:16px;">🚫</div>
-          <h1 style="color:#ff0000;font-size:28px;font-weight:900;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:2px;">ACCESS DENIED</h1>
-          <p style="color:#ff4444;font-size:18px;font-weight:700;margin:0 0 20px 0;">
-            This account is blocked from the Realm.
-          </p>
-          <div style="background:rgba(255,0,0,0.1);border:1px solid rgba(255,0,0,0.3);border-radius:8px;padding:16px;margin-bottom:20px;">
-            <p style="color:#ccc;font-size:14px;margin:0 0 12px 0;">If you know Vic, call him up and be like:<br><span style="color:#fff;font-weight:700;">"Yo, let me play that dope ass game, bro!"</span></p>
-            <p style="color:#888;font-size:13px;margin:0;">If you don't know him — then your loss, not ours.</p>
-          </div>
-          <p style="color:#666;font-size:11px;">This session has been terminated.</p>
-        </div>
-      </div>`;
+    showCWOODBanScreen(); // Same rickroll gate for all ban paths
+  }
     try { firebase.auth().signOut(); } catch (e) {}
   }
 
@@ -303,8 +454,17 @@ const Auth = (() => {
             const isAllowed = await checkEmailAllowed(userEmail);
             if (!isAllowed) {
               console.warn(`[Auth] ACCESS DENIED (early): ${user.uid} (${userEmail})`);
+              storeBanIntegrity(user.uid, userEmail);
               showCWOODBanScreen();
               return; // STOP — no cloud sync, no save, nothing
+            }
+
+            // --- EARLY DEVICE BAN EVASION CHECK ---
+            if (isDevicePreviouslyBanned()) {
+              console.warn(`[Auth] BANNED DEVICE (early): ${user.uid}`);
+              storeBanIntegrity(user.uid, userEmail);
+              showCWOODBanScreen();
+              return;
             }
 
             const s = Store.get();
