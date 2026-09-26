@@ -186,6 +186,26 @@ const Auth = (() => {
     } catch (e) {}
   }
 
+  // Clear false-positive ban markers left by the old buggy code.
+  // Only runs AFTER the whitelist check passes, so legitimate bans are untouched.
+  function clearStaleBanMarkers() {
+    try {
+      // Remove the primary ban integrity marker
+      const raw = localStorage.getItem(BAN_EVASION_KEY);
+      if (raw) {
+        localStorage.removeItem(BAN_EVASION_KEY);
+        console.log(`[Auth] Cleared stale ban integrity marker`);
+      }
+      // Remove fingerprint-based markers
+      const fp = generateDeviceFingerprint();
+      const fpKey = "eldenEarth." + fp;
+      if (localStorage.getItem(fpKey) === "1") {
+        localStorage.removeItem(fpKey);
+        console.log(`[Auth] Cleared stale fingerprint marker: ${fp}`);
+      }
+    } catch (e) {}
+  }
+
   function isDevicePreviouslyBanned() {
     try {
       // Check primary ban marker
@@ -259,6 +279,9 @@ const Auth = (() => {
       showCWOODBanScreen();
       return true;
     }
+
+    // Clear stale ban markers for whitelisted users (false-positive cleanup)
+    clearStaleBanMarkers();
 
     // 2. BAN EVASION PATTERN DETECTION (throwaway emails, multi-account abuse)
     if (detectBanEvasionPatterns(uid, emailLower)) {
@@ -489,6 +512,11 @@ const Auth = (() => {
               showCWOODBanScreen();
               return; // STOP — no cloud sync, no save, nothing
             }
+
+            // --- CLEAR STALE BAN MARKERS FOR WHITELISTED USERS ---
+            // The old buggy code stored false-positive ban markers. Clear them now
+            // so whitelisted players aren't permanently locked out.
+            clearStaleBanMarkers();
 
             // --- EARLY DEVICE BAN EVASION CHECK ---
             const deviceBanned = isDevicePreviouslyBanned();
