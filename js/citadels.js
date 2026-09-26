@@ -410,14 +410,14 @@ const Citadels = (() => {
 
     // Guaranteed Progressive Yields based on Rarity Tier
     if (rarity === "legendary") {
-      diamondsEarned = fullHours;          // 1 Diamond every 1 hr
-      ebEarned = fullHours * 3;             // Guaranteed +3 EB every 1 hr
+      diamondsEarned = fullHours * 2;          // 2 Diamond every 1 hr
+      ebEarned = fullHours * 5;             // Guaranteed +5 EB every 1 hr
     } else if (rarity === "epic") {
       diamondsEarned = Math.floor(hours / 1.5); // 1 Diamond every 1.5 hrs
-      ebEarned = fullHours * 2;                 // Guaranteed +2 EB every 1 hr
+      ebEarned = fullHours * 3;                 // Guaranteed +3 EB every 1 hr
     } else if (rarity === "rare") {
       diamondsEarned = Math.floor(hours / 2.0); // 1 Diamond every 2 hrs
-      ebEarned = fullHours * 1;                 // Guaranteed +1 EB every 1 hr
+      ebEarned = fullHours * 2;                 // Guaranteed +2 EB every 1 hr
     } else {
       // Common
       diamondsEarned = Math.floor(hours / 3.0); // 1 Diamond every 3 hrs
