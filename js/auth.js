@@ -349,8 +349,6 @@ const Auth = (() => {
   function showBannedScreen(reason) {
     showCWOODBanScreen(); // Same rickroll gate for all ban paths
   }
-    try { firebase.auth().signOut(); } catch (e) {}
-  }
 
   /**
    * Show session-lock block on the sign-in screen itself
