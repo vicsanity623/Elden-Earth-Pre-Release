@@ -4398,8 +4398,7 @@ body.buy-mode #treasury-ad-container {
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(52px + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  height: 52px;
   background: rgba(10, 15, 24, 0.98);
   border-top: 1px solid rgba(255, 43, 67, 0.25);
   display: flex;

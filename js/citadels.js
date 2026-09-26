@@ -442,8 +442,8 @@ const Citadels = (() => {
     document.getElementById("citadel-modal-name").textContent = `${cit.creatorName}'s Hold`;
     document.getElementById("citadel-modal-coords").textContent = `Coords: [${cit.lat.toFixed(4)}, ${cit.lon.toFixed(4)}]`;
 
-    const ebRateDesc = cit.rarity === "legendary" ? "+3 EB / hr" : cit.rarity === "epic" ? "+2 EB / hr" : cit.rarity === "rare" ? "+1 EB / hr" : "+1 EB / 2 hrs";
-    const rateText = `Mining Rate: 1 Diamond / ${rConfig.diamondHours} Hrs & Guaranteed ${ebRateDesc}`;
+    const ebRateDesc = cit.rarity === "legendary" ? "+5 EB / hr" : cit.rarity === "epic" ? "+3 EB / hr" : cit.rarity === "rare" ? "+2 EB / hr" : "+1 EB / 2 hrs";
+    const rateText = `Mining Rate: 2 Diamond / ${rConfig.diamondHours} Hrs & Guaranteed ${ebRateDesc}`;
     const rateDescEl = document.getElementById("citadel-rate-desc");
     if (rateDescEl) rateDescEl.textContent = rateText;
 
