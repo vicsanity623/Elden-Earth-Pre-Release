@@ -1507,6 +1507,7 @@
     let lastTickTime = Date.now();
     let lastIncomeCloudSave = Date.now();
     let lastLeaderboardRefresh = Date.now();
+    let lastSessionCheck = Date.now();
     setInterval(() => {
       if (document.hidden) return; // Sleep income ticker calculations when app is minimized
       if (typeof Store !== "undefined" && !Store.isSessionActive()) return; // Session paused, stop earning
@@ -1538,6 +1539,12 @@
         lastIncomeCloudSave = now;
         if (state.sessionLock) state.sessionLock.lockedAt = now;
         Store.save(true);
+      }
+
+      // Check every 45s if another tab stole the session lock
+      if (now - lastSessionCheck >= 45000) {
+        lastSessionCheck = now;
+        if (typeof Store !== "undefined" && Store.checkSessionLock) Store.checkSessionLock();
       }
 
       // 🔥 CRITICAL: Update 30X/50X button label and countdown timers every second!
@@ -2882,7 +2889,7 @@
       const adContainer = el("treasury-ad-container");
       if (!adContainer) return;
 
-      const REFRESH_INTERVAL_MS = 30000; // Strictly 30-second compliant interval
+      const REFRESH_INTERVAL_MS = 30000; // Strictly 30-second compliant interval (was 60s)
       let lastAdRefreshTime = Date.now();
 
       function refreshAd() {
@@ -2907,7 +2914,7 @@
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       } catch (e) {}
 
-      // 60-Second Refresh Ticker
+      // 30-Second Refresh Ticker
       setInterval(() => {
         const now = Date.now();
         if (now - lastAdRefreshTime >= REFRESH_INTERVAL_MS) {
@@ -2915,7 +2922,7 @@
         }
       }, REFRESH_INTERVAL_MS);
 
-      // Refresh when waking up if 60 seconds have elapsed
+      // Refresh when waking up if 30 seconds have elapsed
       document.addEventListener("visibilitychange", () => {
         if (!document.hidden && (Date.now() - lastAdRefreshTime >= REFRESH_INTERVAL_MS)) {
           refreshAd();
@@ -2927,12 +2934,13 @@
 
     // --- PWA Standalone Status Bar & Battery Guard for Fullscreen Ads ---
     const adObserver = new MutationObserver(() => {
-      const overlays = document.querySelectorAll('body > div[style*="2147483647"], body > div[id*="aswift"]');
+      const overlays = document.querySelectorAll('body > div[style*="2147483647"], body > div[id*="aswift"], body > ins[style*="2147483647"]');
       overlays.forEach(el => {
-        if (el.style.top !== "54px") {
-          el.style.setProperty("top", "max(54px, env(safe-area-inset-top))", "important");
-          el.style.setProperty("height", "calc(100vh - 54px)", "important");
-        }
+        if (el.dataset.adSafe) return;
+        el.dataset.adSafe = "1";
+        el.style.setProperty("top", "env(safe-area-inset-top, 0px)", "important");
+        el.style.setProperty("height", "calc(100dvh - env(safe-area-inset-top, 0px))", "important");
+        el.style.setProperty("bottom", "0", "important");
       });
     });
     adObserver.observe(document.body, { childList: true, subtree: false });

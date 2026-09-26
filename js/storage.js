@@ -537,6 +537,8 @@ const Store = (() => {
           const prevLastDiamondSpawn = state.lastDiamondSpawn || 0;
           const prevLastDiamondMovementAt = state.lastDiamondMovementAt || 0;
           const prevLastDiamondPlayerPosition = state.lastDiamondPlayerPosition || null;
+          const prevBoostExpiry = Number(state.boostExpiry) || 0;
+          const prevBoostMultiplier = Number(state.boostMultiplier) || 30;
           if (cloudData.plots) {
             if (!state.plots) state.plots = {};
             for (const plotId in cloudData.plots) {
@@ -574,6 +576,8 @@ const Store = (() => {
           const prevLastDiamondMovementAt = state.lastDiamondMovementAt || 0;
           const prevLastDiamondPlayerPosition = state.lastDiamondPlayerPosition || null;
           const prevBerries = Number(state.berries) || 0;
+          const prevBoostExpiry = Number(state.boostExpiry) || 0;
+          const prevBoostMultiplier = Number(state.boostMultiplier) || 30;
           state = Object.assign(defaultState(), cloudData);
           state._gameVersion = (typeof CONFIG !== "undefined" && CONFIG.GAME_VERSION) || "0.0.0";
           state.calendar = mergedCalendar;
@@ -615,6 +619,12 @@ const Store = (() => {
           if (cloudData.berries === undefined && prevBerries > 0) {
             state.berries = prevBerries;
             console.log(`[Cloud] Preserved local berries (${prevBerries}) — cloud save missing field.`);
+          }
+
+          const cloudBoostExpiry = Number(state.boostExpiry) || 0;
+          if (prevBoostExpiry > cloudBoostExpiry) {
+            state.boostExpiry = prevBoostExpiry;
+            state.boostMultiplier = prevBoostMultiplier;
           }
 
           localStorage.setItem(KEY, JSON.stringify(state));
@@ -1042,5 +1052,27 @@ let lastConflictCheck = {};
 
   function isCloudSyncComplete() { return cloudSyncComplete; }
 
-  return { load, save, get, reset, totalRate, applyOfflineProgress, syncFromCloud, getDb, isSessionActive, resumeSession, isCloudSyncComplete, syncSafeStateToCloud };
+  /**
+   * Check if this tab's session lock is still valid in Firestore.
+   * If another tab took over, freeze this session immediately.
+   */
+  async function checkSessionLock() {
+    if (isSessionPaused) return;
+    const playerId = state?.player?.id;
+    const firestore = getDb();
+    if (!firestore || !playerId) return;
+    try {
+      const doc = await firestore.collection("saves").doc(playerId).get();
+      if (!doc.exists) return;
+      const lock = doc.data()?.sessionLock;
+      if (lock && lock.sessionId !== localSessionId) {
+        isSessionPaused = true;
+        if (typeof showToast === "function") {
+          showToast("🔒 Session taken over by another tab or device. Reload to resume.", 6000);
+        }
+      }
+    } catch (e) { /* silent — network hiccup, skip this cycle */ }
+  }
+
+  return { load, save, get, reset, totalRate, applyOfflineProgress, syncFromCloud, getDb, isSessionActive, resumeSession, isCloudSyncComplete, syncSafeStateToCloud, checkSessionLock };
 })();
