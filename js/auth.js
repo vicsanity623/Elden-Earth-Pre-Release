@@ -21,21 +21,11 @@ const Auth = (() => {
     }
   }
 
-  // --- LOCAL FALLBACK WHITELIST (belt-and-suspenders if server is unreachable) ---
-  // This list MUST mirror server/access-control.js ALLOWED_EMAILS exactly.
-  const LOCAL_WHITELIST = [
-    "vicsanity623@gmail.com",
-    "davinci8587@gmail.com",
-    "ja1070133@gmail.com",
-    "zeno.minsohn@gmail.com",
-    "sajc9498@gmail.com",
-  ];
-
   async function checkEmailAllowed(email) {
     const emailLower = String(email || "").toLowerCase().trim();
     console.log(`[Auth] checkEmailAllowed called for: ${emailLower}`);
 
-    // 1. Try server-side validation
+    // 1. Try access control server (Tailscale)
     try {
       const serverUrl = (typeof CONFIG !== "undefined" && CONFIG.ACCESS_CONTROL_URL) || "http://localhost:8877";
       console.log(`[Auth] Fetching access control: ${serverUrl}/check-email`);
@@ -54,15 +44,20 @@ const Auth = (() => {
       console.warn("[Auth] Access control server unreachable:", e.message);
     }
 
-    // 2. Local fallback: check hardcoded whitelist if server is down
-    const localMatch = LOCAL_WHITELIST.some(e => e.toLowerCase().trim() === emailLower);
-    if (localMatch) {
-      console.log(`[Auth] Local whitelist MATCH for: ${emailLower} (server was unreachable)`);
-      return true;
+    // 2. Firebase Cloud Function fallback (whitelist stored in Firestore, not in code)
+    try {
+      if (typeof firebase !== "undefined" && firebase.functions) {
+        const checkWhitelist = firebase.functions().httpsCallable("checkWhitelist");
+        const result = await checkWhitelist({ email: emailLower });
+        console.log(`[Auth] Cloud Function whitelist result:`, result.data);
+        return result.data.allowed === true;
+      }
+    } catch (e) {
+      console.warn("[Auth] Cloud Function whitelist check failed:", e.message);
     }
 
-    // 3. Not on local whitelist either -- block
-    console.warn(`[Auth] ACCESS DENIED: ${emailLower} — not on server OR local whitelist`);
+    // 3. All servers unreachable — deny access (safe default, no hardcoded emails)
+    console.warn(`[Auth] ACCESS DENIED: ${emailLower} — all servers unreachable, denying access`);
     return false;
   }
 
