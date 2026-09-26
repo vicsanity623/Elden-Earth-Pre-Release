@@ -497,17 +497,21 @@ const Auth = (() => {
       let cameraStream = null;
       let faceApiReady = false;
 
-      // Load face-api.js tiny face detector models
+      // Load face-api.js models: face detection + age/gender estimation
       async function loadFaceApi() {
         try {
           if (typeof faceapi === "undefined") {
-            console.warn("[AgeGate] face-api.js not loaded");
+            console.warn("[AgeGate] face-api.js not loaded — CDN may be blocked");
             return false;
           }
           const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
-          await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+          // Load both the face detector AND the age/gender model
+          await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
+          ]);
           faceApiReady = true;
-          console.log("[AgeGate] Face detection models loaded");
+          console.log("[AgeGate] Face detection + age estimation models loaded");
           return true;
         } catch (e) {
           console.warn("[AgeGate] Failed to load face models:", e);
@@ -529,21 +533,19 @@ const Auth = (() => {
         }
       }
 
-      function fail(msg) {
-        cleanupCamera();
-        modal.classList.add("hidden");
-        resolve({ verified: false, reason: msg });
-      }
-
       // Step 1: Yes/No
       showStep(1);
       modal.classList.remove("hidden");
 
       document.getElementById("age-gate-yes").onclick = async () => {
         showStep(2);
-        statusEl.textContent = "Loading face detection...";
+        statusEl.textContent = "Loading face analysis AI...";
         captureBtn.disabled = true;
-        await loadFaceApi();
+        const loaded = await loadFaceApi();
+        if (!loaded) {
+          statusEl.textContent = "Failed to load face analysis. Please refresh and try again.";
+          return;
+        }
         startCamera();
       };
 
@@ -560,9 +562,7 @@ const Auth = (() => {
           });
           video.srcObject = cameraStream;
           await video.play();
-          statusEl.textContent = faceApiReady
-            ? "Position your face in the circle and tap Capture"
-            : "Camera ready — tap Capture";
+          statusEl.textContent = "Position your face in the circle and tap Capture";
           captureBtn.disabled = false;
         } catch (e) {
           statusEl.textContent = "Camera access denied. Please allow camera and try again.";
@@ -572,71 +572,83 @@ const Auth = (() => {
 
       captureBtn.onclick = async () => {
         captureBtn.disabled = true;
-        statusEl.textContent = "Analyzing...";
+        statusEl.textContent = "Scanning face...";
 
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // --- BLANK FRAME CHECK ---
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        let totalBrightness = 0;
-        for (let i = 0; i < imageData.data.length; i += 16384) {
-          totalBrightness += imageData.data[i] + imageData.data[i+1] + imageData.data[i+2];
-        }
-        const avgBrightness = totalBrightness / (imageData.data.length / 16384 / 3);
-        if (avgBrightness < 5) {
-          statusEl.textContent = "Image too dark — allow camera access and try again.";
+        // --- MANDATORY FACE + AGE DETECTION ---
+        if (!faceApiReady) {
+          statusEl.textContent = "Face analysis failed to load. Please refresh.";
           captureBtn.disabled = false;
           return;
         }
 
-        // --- FACE DETECTION ---
-        if (faceApiReady) {
-          try {
-            const detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({
-              inputSize: 320,
+        try {
+          const detection = await faceapi
+            .detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({
+              inputSize: 416,
               scoreThreshold: 0.4,
-            }));
+            }))
+            .withAgeAndGender();
 
-            console.log(`[AgeGate] Faces detected: ${detections.length}`);
+          console.log(`[AgeGate] Detection result:`, detection);
 
-            if (detections.length === 0) {
-              statusEl.textContent = "No face detected — position your face in the circle and try again.";
-              captureBtn.disabled = false;
-              return;
-            }
-
-            // Check face is reasonably centered/large (not a tiny face in the corner)
-            const face = detections[0];
-            const faceArea = face.box.width * face.box.height;
-            const frameArea = canvas.width * canvas.height;
-            const faceRatio = faceArea / frameArea;
-
-            console.log(`[AgeGate] Face ratio: ${(faceRatio * 100).toFixed(1)}%`);
-
-            if (faceRatio < 0.02) {
-              statusEl.textContent = "Face too small — move closer to the camera.";
-              captureBtn.disabled = false;
-              return;
-            }
-          } catch (e) {
-            console.warn("[AgeGate] Face detection error:", e);
-            // Continue without face check if detection fails
+          if (!detection) {
+            statusEl.textContent = "No face detected — look directly at the camera and try again.";
+            captureBtn.disabled = false;
+            return;
           }
+
+          const estimatedAge = Math.round(detection.age);
+          const gender = detection.gender;
+          const confidence = detection.genderProbability;
+
+          console.log(`[AgeGate] Estimated age: ${estimatedAge}, gender: ${gender}, confidence: ${confidence.toFixed(2)}`);
+
+          // Face must be reasonably large in frame
+          const faceBox = detection.detection.box;
+          const faceArea = faceBox.width * faceBox.height;
+          const frameArea = canvas.width * canvas.height;
+          const faceRatio = faceArea / frameArea;
+
+          if (faceRatio < 0.03) {
+            statusEl.textContent = "Face too small — move closer to the camera.";
+            captureBtn.disabled = false;
+            return;
+          }
+
+          // --- AGE GATE: Must be 18+ ---
+          if (estimatedAge < 18) {
+            statusEl.textContent = `Estimated age: ${estimatedAge}. You must be 18 or older.`;
+            cleanupCamera();
+            // Show under-18 block after 2 seconds
+            setTimeout(() => showStep(4), 2000);
+            return;
+          }
+
+          // --- VERIFIED: Age 18+ ---
+          cleanupCamera();
+          statusEl.textContent = `Age verified (${estimatedAge}+). Welcome!`;
+          storeAgeVerification(uid);
+
+          // Show estimated age on confirmation screen
+          const ageDisplay = document.getElementById("age-gate-verified-age");
+          if (ageDisplay) ageDisplay.textContent = `Estimated Age: ${estimatedAge}`;
+
+          showStep(3);
+          document.getElementById("age-gate-continue").onclick = () => {
+            modal.classList.add("hidden");
+            resolve({ verified: true });
+          };
+
+        } catch (e) {
+          console.error("[AgeGate] Detection error:", e);
+          statusEl.textContent = "Face analysis failed — try again with good lighting.";
+          captureBtn.disabled = false;
         }
-
-        // --- VERIFIED ---
-        cleanupCamera();
-        statusEl.textContent = "Verifying...";
-        storeAgeVerification(uid);
-
-        showStep(3);
-        document.getElementById("age-gate-continue").onclick = () => {
-          modal.classList.add("hidden");
-          resolve({ verified: true });
-        };
       };
 
       document.getElementById("age-gate-back").onclick = () => {
