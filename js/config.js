@@ -19,9 +19,8 @@ const CONFIG = {
 
   GOOGLE_CLIENT_ID: "231253239262-l1ep169u103iuitvl1i6gonrn2k9a69a.apps.googleusercontent.com",
 
-  // --- Access Control Server (serves allowed player list) ---
-  // Server runs on iMac, funnelled via Tailscale to the internet
-  ACCESS_CONTROL_URL: "https://vics-imac-1.tail37b4f2.ts.net/ac",
+  // --- Access Control Server (DEPRECATED — migrated to Firebase Cloud Functions) ---
+  ACCESS_CONTROL_URL: "",
 
   // --- Firebase Cloud Save Config ---
   FIREBASE_CONFIG: {

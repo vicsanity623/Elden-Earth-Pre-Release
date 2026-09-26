@@ -25,10 +25,23 @@ const Auth = (() => {
     const emailLower = String(email || "").toLowerCase().trim();
     console.log(`[Auth] checkEmailAllowed called for: ${emailLower}`);
 
-    // 1. Try access control server (Tailscale)
+    // 1. Firebase Cloud Function (primary — whitelist stored in Firestore)
     try {
-      const serverUrl = (typeof CONFIG !== "undefined" && CONFIG.ACCESS_CONTROL_URL) || "http://localhost:8877";
-      console.log(`[Auth] Fetching access control: ${serverUrl}/check-email`);
+      if (typeof firebase !== "undefined" && firebase.functions) {
+        const checkWhitelist = firebase.functions().httpsCallable("checkWhitelist");
+        const result = await checkWhitelist({ email: emailLower });
+        console.log(`[Auth] Cloud Function result:`, result.data);
+        return result.data.allowed === true;
+      }
+    } catch (e) {
+      console.warn("[Auth] Cloud Function check failed:", e.message);
+    }
+
+    // 2. Legacy access control server fallback (optional — will be removed)
+    try {
+      const serverUrl = (typeof CONFIG !== "undefined" && CONFIG.ACCESS_CONTROL_URL) || "";
+      if (!serverUrl) return false;
+      console.log(`[Auth] Trying legacy server: ${serverUrl}/check-email`);
       const res = await fetchWithTimeout(`${serverUrl}/check-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -36,28 +49,15 @@ const Auth = (() => {
       });
       if (res.ok) {
         const data = await res.json();
-        console.log(`[Auth] Server response:`, data);
+        console.log(`[Auth] Legacy server response:`, data);
         return data.allowed === true;
       }
-      console.warn(`[Auth] Server returned status ${res.status}`);
     } catch (e) {
-      console.warn("[Auth] Access control server unreachable:", e.message);
+      console.warn("[Auth] Legacy server unreachable:", e.message);
     }
 
-    // 2. Firebase Cloud Function fallback (whitelist stored in Firestore, not in code)
-    try {
-      if (typeof firebase !== "undefined" && firebase.functions) {
-        const checkWhitelist = firebase.functions().httpsCallable("checkWhitelist");
-        const result = await checkWhitelist({ email: emailLower });
-        console.log(`[Auth] Cloud Function whitelist result:`, result.data);
-        return result.data.allowed === true;
-      }
-    } catch (e) {
-      console.warn("[Auth] Cloud Function whitelist check failed:", e.message);
-    }
-
-    // 3. All servers unreachable — deny access (safe default, no hardcoded emails)
-    console.warn(`[Auth] ACCESS DENIED: ${emailLower} — all servers unreachable, denying access`);
+    // 3. All servers unreachable — deny access
+    console.warn(`[Auth] ACCESS DENIED: ${emailLower} — all checks failed`);
     return false;
   }
 
