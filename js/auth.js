@@ -21,27 +21,49 @@ const Auth = (() => {
     }
   }
 
+  // --- LOCAL FALLBACK WHITELIST (belt-and-suspenders if server is unreachable) ---
+  // This list MUST mirror server/access-control.js ALLOWED_EMAILS exactly.
+  const LOCAL_WHITELIST = [
+    "vicsanity623@gmail.com",
+    "davinci8587@gmail.com",
+    "ja1070133@gmail.com",
+    "zeno.minsohn@gmail.com",
+    "sajc9498@gmail.com",
+  ];
+
   async function checkEmailAllowed(email) {
-    // First, try server-side validation
+    const emailLower = String(email || "").toLowerCase().trim();
+    console.log(`[Auth] checkEmailAllowed called for: ${emailLower}`);
+
+    // 1. Try server-side validation
     try {
       const serverUrl = (typeof CONFIG !== "undefined" && CONFIG.ACCESS_CONTROL_URL) || "http://localhost:8877";
+      console.log(`[Auth] Fetching access control: ${serverUrl}/check-email`);
       const res = await fetchWithTimeout(`${serverUrl}/check-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: emailLower }),
       });
       if (res.ok) {
         const data = await res.json();
+        console.log(`[Auth] Server response:`, data);
         return data.allowed === true;
       }
+      console.warn(`[Auth] Server returned status ${res.status}`);
     } catch (e) {
-      console.warn("[Auth] Access control server unreachable, using fallback check:", e.message);
+      console.warn("[Auth] Access control server unreachable:", e.message);
     }
 
-    // Fallback: if the gate server is down, fail OPEN — the game is public and
-    // banned emails are still blocked by the Firestore banned_users check above.
-    console.warn("[Auth] No server response — allowing access (bans still enforced via Firestore)");
-    return true;
+    // 2. Local fallback: check hardcoded whitelist if server is down
+    const localMatch = LOCAL_WHITELIST.some(e => e.toLowerCase().trim() === emailLower);
+    if (localMatch) {
+      console.log(`[Auth] Local whitelist MATCH for: ${emailLower} (server was unreachable)`);
+      return true;
+    }
+
+    // 3. Not on local whitelist either -- block
+    console.warn(`[Auth] ACCESS DENIED: ${emailLower} — not on server OR local whitelist`);
+    return false;
   }
 
   // --- RICKROLL BAN GATE ---
@@ -63,7 +85,8 @@ const Auth = (() => {
     gate.innerHTML = `
       <div class="rr-video-wrap">
         <iframe
-          src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1&playlist=dQw4w9WgXcQ&controls=0&modestbranding=1&rel=0&showinfo=0&disablekb=1&iv_load_policy=3&playsinline=1"
+          id="rr-yt-player"
+          src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1&playlist=dQw4w9WgXcQ&controls=0&modestbranding=1&rel=0&showinfo=0&disablekb=1&iv_load_policy=3&playsinline=1&enablejsapi=1&origin=*"
           allow="autoplay; encrypted-media"
           allowfullscreen
         ></iframe>
@@ -75,18 +98,25 @@ const Auth = (() => {
 
     // On ANY tap/click: unmute at max volume + activate distortion chaos
     let unmuted = false;
+    const sendYTCommand = (func, args) => {
+      const iframe = document.getElementById("rr-yt-player");
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func, args: args || "" }), "*");
+      }
+    };
+
     const unmute = () => {
       if (unmuted) return;
       unmuted = true;
       gate.classList.add("rr-active");
 
-      const iframe = gate.querySelector("iframe");
-      if (iframe) {
-        // Unmute via YouTube postMessage API
-        iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', "*");
-        iframe.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[100]}', "*");
-        iframe.contentWindow.postMessage('{"event":"command","func":"play","args":""}', "*");
-      }
+      // Fire multiple unmute attempts with delays for reliability
+      sendYTCommand("unMute");
+      sendYTCommand("setVolume", [100]);
+      sendYTCommand("play");
+      setTimeout(() => { sendYTCommand("unMute"); sendYTCommand("setVolume", [100]); }, 500);
+      setTimeout(() => { sendYTCommand("unMute"); sendYTCommand("setVolume", [100]); }, 1500);
+      setTimeout(() => { sendYTCommand("play"); sendYTCommand("unMute"); sendYTCommand("setVolume", [100]); }, 3000);
     };
     gate.addEventListener("click", unmute, { once: false });
     gate.addEventListener("touchstart", unmute, { once: false });
@@ -160,17 +190,17 @@ const Auth = (() => {
     try {
       // Check primary ban marker
       const raw = localStorage.getItem(BAN_EVASION_KEY);
-      if (raw) return true;
+      if (raw) {
+        console.log(`[BanEvasion] Primary ban marker found`);
+        return true;
+      }
 
       // Check fingerprint-based marker
       const fp = generateDeviceFingerprint();
-      if (localStorage.getItem("eldenEarth." + fp) === "1") return true;
-
-      // Check for tampered/cleared localStorage (ban evasion indicator)
-      const keys = Object.keys(localStorage);
-      const hasGameKeys = keys.some(k => k.startsWith("eldenEarth.save"));
-      const hasNoSession = !keys.some(k => k.includes("sessionId"));
-      if (hasGameKeys && hasNoSession) return true; // Save exists but session was wiped — suspicious
+      if (localStorage.getItem("eldenEarth." + fp) === "1") {
+        console.log(`[BanEvasion] Fingerprint ban marker found: ${fp}`);
+        return true;
+      }
 
     } catch (e) {}
     return false;
@@ -200,9 +230,10 @@ const Auth = (() => {
         seen.push(uid);
         localStorage.setItem(multiAccountKey, JSON.stringify(seen.slice(-10))); // keep last 10
       }
-      if (seen.length >= 3) {
-        console.warn(`[BanEvasion] ${seen.length} accounts used on this device`);
-        return true; // 3+ accounts on same device = suspicious
+      console.log(`[BanEvasion] Accounts seen on device: ${seen.length} (${seen.join(", ")})`);
+      if (seen.length >= 5) {
+        console.warn(`[BanEvasion] ${seen.length} accounts used on this device — blocking`);
+        return true; // 5+ accounts on same device = ban evasion
       }
     } catch (e) {}
 
@@ -449,7 +480,9 @@ const Auth = (() => {
 
             // --- EARLY WHITELIST CHECK: Block non-allowed emails BEFORE any cloud sync ---
             const userEmail = String(user.email || "").toLowerCase().trim();
+            console.log(`[Auth] Early whitelist check for: ${userEmail}`);
             const isAllowed = await checkEmailAllowed(userEmail);
+            console.log(`[Auth] Whitelist result for ${userEmail}: ${isAllowed}`);
             if (!isAllowed) {
               console.warn(`[Auth] ACCESS DENIED (early): ${user.uid} (${userEmail})`);
               storeBanIntegrity(user.uid, userEmail);
@@ -458,7 +491,9 @@ const Auth = (() => {
             }
 
             // --- EARLY DEVICE BAN EVASION CHECK ---
-            if (isDevicePreviouslyBanned()) {
+            const deviceBanned = isDevicePreviouslyBanned();
+            console.log(`[Auth] Device ban check: ${deviceBanned}`);
+            if (deviceBanned) {
               console.warn(`[Auth] BANNED DEVICE (early): ${user.uid}`);
               storeBanIntegrity(user.uid, userEmail);
               showCWOODBanScreen();
