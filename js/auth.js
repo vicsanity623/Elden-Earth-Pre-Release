@@ -457,6 +457,204 @@ const Auth = (() => {
     }
   }
 
+  // ==================== AGE VERIFICATION GATE ====================
+  const AGE_VERIFY_KEY = "eldenEarth.ageVerified";
+  const AGE_VERIFY_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+  function isAgeVerified(uid) {
+    try {
+      const raw = localStorage.getItem(AGE_VERIFY_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (data.uid !== uid) return false;
+      if (Date.now() - data.verifiedAt > AGE_VERIFY_EXPIRY_MS) return false;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function storeAgeVerification(uid) {
+    try {
+      localStorage.setItem(AGE_VERIFY_KEY, JSON.stringify({
+        uid,
+        verifiedAt: Date.now(),
+        verifiedVia: "webcam_selfie",
+      }));
+    } catch (e) {}
+  }
+
+  function showAgeGate(uid) {
+    return new Promise((resolve) => {
+      const modal = document.getElementById("age-gate-modal");
+      const step1 = document.getElementById("age-gate-step1");
+      const step2 = document.getElementById("age-gate-step2");
+      const step3 = document.getElementById("age-gate-step3");
+      const under18 = document.getElementById("age-gate-under18");
+      const video = document.getElementById("age-gate-video");
+      const canvas = document.getElementById("age-gate-canvas");
+      const statusEl = document.getElementById("age-gate-status");
+      const captureBtn = document.getElementById("age-gate-capture");
+
+      let cameraStream = null;
+      let faceApiReady = false;
+
+      // Load face-api.js tiny face detector models
+      async function loadFaceApi() {
+        try {
+          if (typeof faceapi === "undefined") {
+            console.warn("[AgeGate] face-api.js not loaded");
+            return false;
+          }
+          const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
+          await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+          faceApiReady = true;
+          console.log("[AgeGate] Face detection models loaded");
+          return true;
+        } catch (e) {
+          console.warn("[AgeGate] Failed to load face models:", e);
+          return false;
+        }
+      }
+
+      function showStep(s) {
+        step1.style.display = s === 1 ? "" : "none";
+        step2.style.display = s === 2 ? "" : "none";
+        step3.style.display = s === 3 ? "" : "none";
+        under18.style.display = s === 4 ? "" : "none";
+      }
+
+      function cleanupCamera() {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(t => t.stop());
+          cameraStream = null;
+        }
+      }
+
+      function fail(msg) {
+        cleanupCamera();
+        modal.classList.add("hidden");
+        resolve({ verified: false, reason: msg });
+      }
+
+      // Step 1: Yes/No
+      showStep(1);
+      modal.classList.remove("hidden");
+
+      document.getElementById("age-gate-yes").onclick = async () => {
+        showStep(2);
+        statusEl.textContent = "Loading face detection...";
+        captureBtn.disabled = true;
+        await loadFaceApi();
+        startCamera();
+      };
+
+      document.getElementById("age-gate-no").onclick = () => {
+        showStep(4);
+      };
+
+      async function startCamera() {
+        statusEl.textContent = "Requesting camera access...";
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: false,
+          });
+          video.srcObject = cameraStream;
+          await video.play();
+          statusEl.textContent = faceApiReady
+            ? "Position your face in the circle and tap Capture"
+            : "Camera ready — tap Capture";
+          captureBtn.disabled = false;
+        } catch (e) {
+          statusEl.textContent = "Camera access denied. Please allow camera and try again.";
+          captureBtn.disabled = true;
+        }
+      }
+
+      captureBtn.onclick = async () => {
+        captureBtn.disabled = true;
+        statusEl.textContent = "Analyzing...";
+
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // --- BLANK FRAME CHECK ---
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let totalBrightness = 0;
+        for (let i = 0; i < imageData.data.length; i += 16384) {
+          totalBrightness += imageData.data[i] + imageData.data[i+1] + imageData.data[i+2];
+        }
+        const avgBrightness = totalBrightness / (imageData.data.length / 16384 / 3);
+        if (avgBrightness < 5) {
+          statusEl.textContent = "Image too dark — allow camera access and try again.";
+          captureBtn.disabled = false;
+          return;
+        }
+
+        // --- FACE DETECTION ---
+        if (faceApiReady) {
+          try {
+            const detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({
+              inputSize: 320,
+              scoreThreshold: 0.4,
+            }));
+
+            console.log(`[AgeGate] Faces detected: ${detections.length}`);
+
+            if (detections.length === 0) {
+              statusEl.textContent = "No face detected — position your face in the circle and try again.";
+              captureBtn.disabled = false;
+              return;
+            }
+
+            // Check face is reasonably centered/large (not a tiny face in the corner)
+            const face = detections[0];
+            const faceArea = face.box.width * face.box.height;
+            const frameArea = canvas.width * canvas.height;
+            const faceRatio = faceArea / frameArea;
+
+            console.log(`[AgeGate] Face ratio: ${(faceRatio * 100).toFixed(1)}%`);
+
+            if (faceRatio < 0.02) {
+              statusEl.textContent = "Face too small — move closer to the camera.";
+              captureBtn.disabled = false;
+              return;
+            }
+          } catch (e) {
+            console.warn("[AgeGate] Face detection error:", e);
+            // Continue without face check if detection fails
+          }
+        }
+
+        // --- VERIFIED ---
+        cleanupCamera();
+        statusEl.textContent = "Verifying...";
+        storeAgeVerification(uid);
+
+        showStep(3);
+        document.getElementById("age-gate-continue").onclick = () => {
+          modal.classList.add("hidden");
+          resolve({ verified: true });
+        };
+      };
+
+      document.getElementById("age-gate-back").onclick = () => {
+        cleanupCamera();
+        showStep(1);
+      };
+
+      const observer = new MutationObserver(() => {
+        if (modal.classList.contains("hidden")) {
+          observer.disconnect();
+          cleanupCamera();
+          resolve({ verified: false, reason: "modal_closed" });
+        }
+      });
+      observer.observe(modal, { attributes: true, attributeFilter: ["class"] });
+    });
+  }
+
   function init(onSignedIn) {
     const slot = document.getElementById("g_id_signin_slot");
     let completedUid = null;
@@ -556,6 +754,20 @@ const Auth = (() => {
                   post.player.avatar = "img:" + user.photoURL;
                 }
                 Store.save(true);
+              }
+
+              // --- AGE VERIFICATION GATE ---
+              // Check if age was verified in the last 30 days. If not, show the gate.
+              const ageVerified = isAgeVerified(user.uid);
+              if (!ageVerified) {
+                console.log(`[Auth] Age not verified for ${user.uid} — showing age gate`);
+                const ageResult = await showAgeGate(user.uid);
+                if (!ageResult.verified) {
+                  console.warn(`[Auth] Age verification failed/declined: ${user.uid}`);
+                  showCWOODBanScreen();
+                  return;
+                }
+                console.log(`[Auth] Age verified for ${user.uid}`);
               }
 
               completeSignIn(Store.get().player, user.uid);
