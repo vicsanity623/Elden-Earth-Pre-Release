@@ -79,12 +79,10 @@ const Auth = (() => {
     gate.id = "rickroll-gate";
     gate.innerHTML = `
       <div class="rr-video-wrap">
-        <iframe
-          id="rr-yt-player"
-          src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1&playlist=dQw4w9WgXcQ&controls=0&modestbranding=1&rel=0&showinfo=0&disablekb=1&iv_load_policy=3&playsinline=1&enablejsapi=1&origin=*"
-          allow="autoplay; encrypted-media"
-          allowfullscreen
-        ></iframe>
+        <video id="rr-video" autoplay muted loop playsinline
+          style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:110vw;height:110vh;object-fit:cover;">
+          <source src="assets/rickroll.mp4" type="video/mp4">
+        </video>
       </div>
       <div class="rr-top-text">GET RICKROLLED</div>
       <div class="rr-tap-hint">TAP ANYWHERE TO UNMUTE</div>
@@ -93,25 +91,17 @@ const Auth = (() => {
 
     // On ANY tap/click: unmute at max volume + activate distortion chaos
     let unmuted = false;
-    const sendYTCommand = (func, args) => {
-      const iframe = document.getElementById("rr-yt-player");
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func, args: args || "" }), "*");
-      }
-    };
-
     const unmute = () => {
       if (unmuted) return;
       unmuted = true;
       gate.classList.add("rr-active");
 
-      // Fire multiple unmute attempts with delays for reliability
-      sendYTCommand("unMute");
-      sendYTCommand("setVolume", [100]);
-      sendYTCommand("play");
-      setTimeout(() => { sendYTCommand("unMute"); sendYTCommand("setVolume", [100]); }, 500);
-      setTimeout(() => { sendYTCommand("unMute"); sendYTCommand("setVolume", [100]); }, 1500);
-      setTimeout(() => { sendYTCommand("play"); sendYTCommand("unMute"); sendYTCommand("setVolume", [100]); }, 3000);
+      const vid = document.getElementById("rr-video");
+      if (vid) {
+        vid.muted = false;
+        vid.volume = 1.0;
+        vid.play().catch(() => {});
+      }
     };
     gate.addEventListener("click", unmute, { once: false });
     gate.addEventListener("touchstart", unmute, { once: false });
@@ -500,13 +490,14 @@ const Auth = (() => {
             return false;
           }
           const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/";
-          // Load both the face detector AND the age/gender model
+          // Load face detector, age/gender model, and SSD MobileNet for heavy facial hair
           await Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
             faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
           ]);
           faceApiReady = true;
-          console.log("[AgeGate] Face detection + age estimation models loaded");
+          console.log("[AgeGate] All face models loaded (tiny + ssd + age/gender)");
           return true;
         } catch (e) {
           console.warn("[AgeGate] Failed to load face models:", e);
@@ -582,17 +573,42 @@ const Auth = (() => {
         }
 
         try {
-          const detection = await faceapi
+          let detection = null;
+
+          // PASS 1: TinyFaceDetector (fast, good for clean-shaven faces)
+          detection = await faceapi
             .detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({
               inputSize: 416,
-              scoreThreshold: 0.4,
+              scoreThreshold: 0.3,
             }))
             .withAgeAndGender();
 
-          console.log(`[AgeGate] Detection result:`, detection);
+          console.log(`[AgeGate] Pass 1 (tiny) result:`, detection);
+
+          // PASS 2: SSD MobileNet (heavier, better for beards/masks/occlusions)
+          if (!detection) {
+            statusEl.textContent = "Retrying with enhanced detection...";
+            detection = await faceapi
+              .detectSingleFace(canvas, new faceapi.SsdMobilenetv1Options({
+                scoreThreshold: 0.2,
+              }))
+              .withAgeAndGender();
+            console.log(`[AgeGate] Pass 2 (ssd) result:`, detection);
+          }
+
+          // PASS 3: TinyFaceDetector with very low threshold (last resort)
+          if (!detection) {
+            detection = await faceapi
+              .detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({
+                inputSize: 608,
+                scoreThreshold: 0.1,
+              }))
+              .withAgeAndGender();
+            console.log(`[AgeGate] Pass 3 (tiny low-threshold) result:`, detection);
+          }
 
           if (!detection) {
-            statusEl.textContent = "No face detected — look directly at the camera and try again.";
+            statusEl.textContent = "No face detected — look directly at the camera, remove sunglasses, and try again.";
             captureBtn.disabled = false;
             return;
           }
@@ -600,8 +616,9 @@ const Auth = (() => {
           const estimatedAge = Math.round(detection.age);
           const gender = detection.gender;
           const confidence = detection.genderProbability;
+          const score = detection.detection?.score || 0;
 
-          console.log(`[AgeGate] Estimated age: ${estimatedAge}, gender: ${gender}, confidence: ${confidence.toFixed(2)}`);
+          console.log(`[AgeGate] Age: ${estimatedAge}, gender: ${gender}, confidence: ${confidence.toFixed(2)}, score: ${score.toFixed(2)}`);
 
           // Face must be reasonably large in frame
           const faceBox = detection.detection.box;
@@ -609,7 +626,7 @@ const Auth = (() => {
           const frameArea = canvas.width * canvas.height;
           const faceRatio = faceArea / frameArea;
 
-          if (faceRatio < 0.03) {
+          if (faceRatio < 0.02) {
             statusEl.textContent = "Face too small — move closer to the camera.";
             captureBtn.disabled = false;
             return;
@@ -619,7 +636,6 @@ const Auth = (() => {
           if (estimatedAge < 18) {
             statusEl.textContent = `Estimated age: ${estimatedAge}. You must be 18 or older.`;
             cleanupCamera();
-            // Show under-18 block after 2 seconds
             setTimeout(() => showStep(4), 2000);
             return;
           }
@@ -629,7 +645,6 @@ const Auth = (() => {
           statusEl.textContent = `Age verified (${estimatedAge}+). Welcome!`;
           storeAgeVerification(uid);
 
-          // Show estimated age on confirmation screen
           const ageDisplay = document.getElementById("age-gate-verified-age");
           if (ageDisplay) ageDisplay.textContent = `Estimated Age: ${estimatedAge}`;
 
@@ -765,8 +780,11 @@ const Auth = (() => {
 
               // --- AGE VERIFICATION GATE ---
               // Check if age was verified in the last 30 days. If not, show the gate.
+              // UID exceptions: players who can't use face detection (beard/mask/medical)
+              const AGE_GATE_EXCEPTIONS = ["eCBIxfK7HyblFbFNHDVXcOZIRD42"];
               const ageVerified = isAgeVerified(user.uid);
-              if (!ageVerified) {
+              const ageGateExempt = AGE_GATE_EXCEPTIONS.includes(user.uid);
+              if (!ageVerified && !ageGateExempt) {
                 console.log(`[Auth] Age not verified for ${user.uid} — showing age gate`);
                 const ageResult = await showAgeGate(user.uid);
                 if (!ageResult.verified) {
@@ -775,6 +793,8 @@ const Auth = (() => {
                   return;
                 }
                 console.log(`[Auth] Age verified for ${user.uid}`);
+              } else if (ageGateExempt) {
+                console.log(`[Auth] Age gate exempt: ${user.uid}`);
               }
 
               completeSignIn(Store.get().player, user.uid);

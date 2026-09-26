@@ -7618,7 +7618,7 @@ body.birds-eye-mode .top-hud-row {
   height: 100%;
 }
 
-#rickroll-gate iframe {
+#rickroll-gate video {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -7629,6 +7629,7 @@ body.birds-eye-mode .top-hud-row {
   min-height: 110vh;
   border: none;
   pointer-events: none;
+  object-fit: cover;
 }
 
 #rickroll-gate .rr-tap-hint {
@@ -7667,7 +7668,7 @@ body.birds-eye-mode .top-hud-row {
   white-space: nowrap;
 }
 
-#rickroll-gate.rr-active iframe {
+#rickroll-gate.rr-active video {
   pointer-events: auto;
   filter: saturate(2.5) contrast(1.8) hue-rotate(0deg);
   animation: rrDistort 0.3s infinite;
